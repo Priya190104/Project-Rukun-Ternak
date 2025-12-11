@@ -1,0 +1,30 @@
+/* Import Tailwind CSS directives - standard Tailwind v3 setup */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global custom styles */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure anchor tags don't show default blue underline */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.main-fallback {
+  max-width: 680px;
+  margin: 48px auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(2,6,23,0.08);
+}
