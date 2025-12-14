@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getReports } from '../services/reportService';
+import client from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { Filter, FileText } from 'lucide-react';
 
-const jenisLaporan = ['Budidaya', 'Kelahiran', 'Kematian', 'Kurban-Aqiqah'];
-const kelompokList = ['Semua Kelompok', 'KLP1', 'KLP2', 'KLP3'];
+const jenisLaporan = ['Budidaya', 'Kelahiran', 'Kematian', 'Penjualan'];
 
 export default function DaftarSemuaLaporan() {
   const { user, appRole } = useAuth();
@@ -13,11 +13,14 @@ export default function DaftarSemuaLaporan() {
   const [filteredReports, setFilteredReports] = useState([]);
   const [filterKelompok, setFilterKelompok] = useState('Semua Kelompok');
   const [filterJenis, setFilterJenis] = useState('Semua Jenis');
+  const [filterBulan, setFilterBulan] = useState('Semua Bulan');
+  const [filterSubJenis, setFilterSubJenis] = useState('Semua');
+  const [kelompokOptions, setKelompokOptions] = useState(['Semua Kelompok']);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
-      const data = await getReports({ userId: user?.id, role: appRole });
+      const data = await getReports();
       if (mounted) {
         setReports(data);
         setFilteredReports(data);
@@ -26,6 +29,18 @@ export default function DaftarSemuaLaporan() {
     load();
     return () => { mounted = false; };
   }, [user, appRole]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await client.get('/api/kelompok');
+        const list = res.data?.data?.map(k => k.name) || [];
+        setKelompokOptions(['Semua Kelompok', ...list]);
+      } catch (err) {
+        // ignore
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     let filtered = reports;
@@ -38,15 +53,39 @@ export default function DaftarSemuaLaporan() {
       filtered = filtered.filter(r => r.jenis === filterJenis);
     }
 
+    if (filterBulan !== 'Semua Bulan') {
+      const now = new Date();
+      filtered = filtered.filter(r => {
+        if (!r.tanggal) return false;
+        const reportDate = new Date(r.tanggal);
+        
+        if (filterBulan === 'Bulan Ini') {
+          return reportDate.getMonth() === now.getMonth() && reportDate.getFullYear() === now.getFullYear();
+        } else if (filterBulan === 'Bulan Kemarin') {
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
+          return reportDate.getMonth() === lastMonth.getMonth() && reportDate.getFullYear() === lastMonth.getFullYear();
+        } else {
+          // Filter untuk bulan tertentu (Januari - Desember)
+          const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+          const monthIndex = monthNames.indexOf(filterBulan);
+          return monthIndex >= 0 && reportDate.getMonth() === monthIndex && reportDate.getFullYear() === now.getFullYear();
+        }
+      });
+    }
+
+    if (filterSubJenis !== 'Semua' && filterJenis === 'Penjualan') {
+      filtered = filtered.filter(r => r.data?.jenis_penjualan === filterSubJenis);
+    }
+
     setFilteredReports(filtered);
-  }, [filterKelompok, filterJenis, reports]);
+  }, [filterKelompok, filterJenis, filterBulan, filterSubJenis, reports]);
 
   const getJenisIcon = (jenis) => {
     const icons = {
       'Budidaya': '🐑',
       'Kelahiran': '👶',
       'Kematian': '⚰️',
-      'Kurban-Aqiqah': '🙏',
+      'Penjualan': '💰',
     };
     return icons[jenis] || '📄';
   };
@@ -56,7 +95,7 @@ export default function DaftarSemuaLaporan() {
       'Budidaya': 'bg-blue-50 border-blue-200 text-blue-700',
       'Kelahiran': 'bg-green-50 border-green-200 text-green-700',
       'Kematian': 'bg-red-50 border-red-200 text-red-700',
-      'Kurban-Aqiqah': 'bg-yellow-50 border-yellow-200 text-yellow-700',
+      'Penjualan': 'bg-yellow-50 border-yellow-200 text-yellow-700',
     };
     return colors[jenis] || 'bg-gray-50 border-gray-200 text-gray-700';
   };
@@ -75,7 +114,7 @@ export default function DaftarSemuaLaporan() {
           <Filter size={20} className="text-emerald-600" />
           <h2 className="text-lg font-semibold text-gray-900">Filter Laporan</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Filter Kelompok</label>
             <select
@@ -83,7 +122,7 @@ export default function DaftarSemuaLaporan() {
               onChange={(e) => setFilterKelompok(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
-              {kelompokList.map(k => (
+              {kelompokOptions.map(k => (
                 <option key={k} value={k}>{k}</option>
               ))}
             </select>
@@ -92,13 +131,59 @@ export default function DaftarSemuaLaporan() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Filter Jenis Laporan</label>
             <select
               value={filterJenis}
-              onChange={(e) => setFilterJenis(e.target.value)}
+              onChange={(e) => {
+                setFilterJenis(e.target.value);
+                if (e.target.value !== 'Penjualan') {
+                  setFilterSubJenis('Semua');
+                }
+              }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="Semua Jenis">Semua Jenis</option>
               {jenisLaporan.map(j => (
                 <option key={j} value={j}>{j}</option>
               ))}
+            </select>
+          </div>
+          
+          {filterJenis === 'Penjualan' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sub Jenis Penjualan</label>
+              <select
+                value={filterSubJenis}
+                onChange={(e) => setFilterSubJenis(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="Semua">Semua</option>
+                <option value="Aqiqah">Aqiqah</option>
+                <option value="Kurban">Kurban</option>
+                <option value="Retail">Retail</option>
+              </select>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filter Bulan</label>
+            <select
+              value={filterBulan}
+              onChange={(e) => setFilterBulan(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="Semua Bulan">Semua Bulan</option>
+              <option value="Bulan Ini">Bulan Ini</option>
+              <option value="Bulan Kemarin">Bulan Kemarin</option>
+              <option value="Januari">Januari</option>
+              <option value="Februari">Februari</option>
+              <option value="Maret">Maret</option>
+              <option value="April">April</option>
+              <option value="Mei">Mei</option>
+              <option value="Juni">Juni</option>
+              <option value="Juli">Juli</option>
+              <option value="Agustus">Agustus</option>
+              <option value="September">September</option>
+              <option value="Oktober">Oktober</option>
+              <option value="November">November</option>
+              <option value="Desember">Desember</option>
             </select>
           </div>
         </div>
@@ -133,8 +218,8 @@ export default function DaftarSemuaLaporan() {
                       <div className="font-medium text-gray-900">{report.kelompok || '-'}</div>
                     </div>
                     <div>
-                      <div className="text-gray-500">Pemilik</div>
-                      <div className="font-medium text-gray-900">{report.createdBy || '-'}</div>
+                      <div className="text-gray-500">Pemilik (user_id)</div>
+                      <div className="font-medium text-gray-900">{report.user_id || '-'}</div>
                     </div>
                     <div>
                       <div className="text-gray-500">Status</div>

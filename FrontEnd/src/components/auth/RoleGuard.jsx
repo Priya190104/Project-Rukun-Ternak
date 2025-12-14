@@ -13,15 +13,16 @@ export default function RoleGuard({ allowedRoles = [], children }) {
     );
   }
 
-  // user has no assigned role
-  if (!appRole) {
+  // User has no assigned role or role is explicitly "belum ditentukan"
+  if (!appRole || appRole === 'belum ditentukan' || appRole === 'pending') {
     return <Navigate to="/menunggu" replace />;
   }
 
+  // Check if user's role is in the allowed roles
   if (allowedRoles.includes(appRole)) {
     return children;
   }
 
-  // role not permitted
+  // Role not permitted
   return <Navigate to="/menunggu" replace />;
 }

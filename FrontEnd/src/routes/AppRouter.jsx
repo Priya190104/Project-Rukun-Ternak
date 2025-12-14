@@ -5,8 +5,9 @@ import Login from '../pages/Login';
 import Dashboard from '../pages/Dashboard';
 import ClientDashboard from '../pages/ClientDashboard';
 import KelolaUser from '../pages/KelolaUser';
+import KelolaBerita from '../pages/KelolaBerita';
 import DaftarSemuaLaporan from '../pages/DaftarSemuaLaporan';
-import ClientLihatLaporan from '../pages/ClientLihatLaporan';
+import DetailLaporan from '../pages/DetailLaporan';
 import ClientPilihJenisLaporan from '../pages/ClientPilihJenisLaporan';
 import MenungguHakAkses from '../pages/MenungguHakAkses';
 import Analisis from '../pages/Analisis';
@@ -50,10 +51,23 @@ export default function AppRouter() {
           />
 
           <Route
-            path="/laporan"
+            path="/kelola-berita"
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={[ 'admin' ]}>
+                  <AppLayout>
+                    <KelolaBerita />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/laporan"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'admin', 'kelompok' ]}>
                   <AppLayout>
                     <DaftarSemuaLaporan />
                   </AppLayout>
@@ -75,14 +89,12 @@ export default function AppRouter() {
             }
           />
 
-          {/* Kelompok routes - /client maps to ListKelompok for admin view */}
           <Route
             path="/client"
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={[ 'admin', 'kelompok' ]}>
                   <AppLayout>
-                    {/* Will render based on role logic in page */}
                     <ClientDashboard />
                   </AppLayout>
                 </RoleGuard>
@@ -120,9 +132,9 @@ export default function AppRouter() {
             path="/laporan/:id"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin', 'kelompok' ]}>
+                <RoleGuard allowedRoles={[ 'admin', 'kelompok', 'client' ]}>
                   <AppLayout>
-                    <ClientLihatLaporan />
+                    <DetailLaporan />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>

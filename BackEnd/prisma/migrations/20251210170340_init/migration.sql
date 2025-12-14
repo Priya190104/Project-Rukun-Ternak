@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "User" (
+CREATE TABLE "users" (
     "id" SERIAL NOT NULL,
     "username" TEXT NOT NULL,
     "password" TEXT NOT NULL,
@@ -7,36 +7,36 @@ CREATE TABLE "User" (
     "role" TEXT NOT NULL,
     "kelompok" TEXT,
 
-    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Kelompok" (
+CREATE TABLE "kelompok" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
 
-    CONSTRAINT "Kelompok_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "kelompok_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Laporan" (
+CREATE TABLE "laporan" (
     "id" SERIAL NOT NULL,
     "jenis" TEXT,
     "kelompok" TEXT,
     "data" JSONB,
     "tanggal" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "Laporan_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "laporan_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Notifikasi" (
+CREATE TABLE "notifikasi" (
     "id" SERIAL NOT NULL,
     "message" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "Notifikasi_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "notifikasi_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+CREATE UNIQUE INDEX "users_username_key" ON "users"("username");

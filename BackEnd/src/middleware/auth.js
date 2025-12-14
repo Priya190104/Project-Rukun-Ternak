@@ -9,10 +9,21 @@ async function attachUser(req, res, next) {
   const token = auth.split(' ')[1];
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    const { rows } = await db.query('SELECT id, username, full_name, role, kelompok FROM users WHERE id=$1', [payload.userId]);
+    const { rows } = await db.query('SELECT id, username, full_name, role, kelompok_id FROM users WHERE id=$1', [payload.userId]);
     const user = rows[0];
     if (user) {
-      req.user = user; // fields already match frontend shape
+      // if user has kelompok_id, fetch kelompok name
+      if (user.kelompok_id) {
+        try {
+          const k = await db.query('SELECT id, name FROM kelompok WHERE id=$1', [user.kelompok_id]);
+          user.kelompok = k.rows[0] ? k.rows[0].name : null;
+        } catch (err) {
+          user.kelompok = null;
+        }
+      } else {
+        user.kelompok = null;
+      }
+      req.user = user; // attach id, username, full_name, role, kelompok_id, kelompok
     }
   } catch (e) {
     console.warn('Invalid token', e.message);

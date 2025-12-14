@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import NotificationBell from '../notification/NotificationBell';
+import KelompokBadge from '../kelompok/KelompokBadge';
 import { useAuth } from '../../hooks/useAuth';
 import { Menu, X, LogOut, Home, FileText, Users, BarChart3, User } from 'lucide-react';
 
@@ -21,6 +22,7 @@ export default function AppLayout({ children }) {
     { key: 'kelompok', label: 'Kelompok', to: '/kelompok', icon: Users },
     { key: 'analisis', label: 'Analisis', to: '/analisis', icon: BarChart3 },
     { key: 'pengguna', label: 'Pengguna', to: '/kelola-user', icon: User },
+    { key: 'berita', label: 'Kelola Berita', to: '/kelola-berita', icon: FileText },
   ];
 
   const kelompokMenu = [
@@ -67,19 +69,8 @@ export default function AppLayout({ children }) {
           })}
         </nav>
 
-        {/* User Info Section */}
-        <div className="p-4 border-t border-gray-200 space-y-4 bg-gray-50">
-          <div className="px-3 py-3 bg-white rounded-lg border border-gray-200">
-            <p className="text-sm font-semibold text-gray-900 truncate">{user?.full_name || user?.name || 'User'}</p>
-            <p className="text-xs text-gray-600 mt-1 truncate">{user?.username || 'username'}</p>
-            <div className="mt-2">
-              <span className={`inline-block px-2.5 py-1 rounded-full text-white text-xs font-bold ${
-                appRole === 'admin' ? 'bg-purple-600' : 'bg-emerald-600'
-              }`}>
-                {appRole === 'admin' ? '👤 Admin' : '🐑 Kelompok'}
-              </span>
-            </div>
-          </div>
+        {/* User Info Section - REMOVED, moved to dashboard */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition font-medium text-sm"
@@ -103,17 +94,30 @@ export default function AppLayout({ children }) {
                 {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
 
-              <h1 className="text-xl font-bold text-gray-900 hidden md:block">
-                {appRole === 'admin' ? '📊 Dashboard Admin' : '🐑 Dashboard Kelompok'}
-              </h1>
+              <div className="hidden md:block">
+                <h1 className="text-xl font-bold text-gray-900">
+                  {appRole === 'admin' ? '📊 Dashboard Admin' : '🐑 Dashboard Kelompok'}
+                </h1>
+                {appRole === 'kelompok' && user?.kelompok && (
+                  <div className="mt-1">
+                    <KelompokBadge kelompokName={user.kelompok} />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-4">
+              {user && (
+                <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-gray-900">{user.full_name || user.username}</div>
+                    <div className="text-xs text-gray-500">
+                      {user.username} • {appRole === 'admin' ? '👤 Admin' : '🐑 Kelompok'}
+                    </div>
+                  </div>
+                </div>
+              )}
               {isAdmin && <NotificationBell />}
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-sm font-medium text-emerald-700">
-                <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
-                {user?.full_name || user?.name || 'User'}
-              </div>
             </div>
           </div>
         </header>

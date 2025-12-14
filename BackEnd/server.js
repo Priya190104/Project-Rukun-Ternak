@@ -8,6 +8,7 @@ const port = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(require('path').join(__dirname, 'uploads')));
 
 // routes
 app.use('/api/auth', require('./src/routes/auth'));
@@ -15,6 +16,9 @@ app.use('/api/laporan', require('./src/routes/laporan'));
 app.use('/api/users', require('./src/routes/users'));
 app.use('/api/kelompok', require('./src/routes/kelompok'));
 app.use('/api/notifikasi', require('./src/routes/notifikasi'));
+app.use('/api/stats', require('./src/routes/stats'));
+app.use('/api/public', require('./src/routes/public'));
+app.use('/api/berita', require('./src/routes/berita'));
 
 app.get('/api/health', (req, res) => res.json({ success: true, data: 'ok' }));
 

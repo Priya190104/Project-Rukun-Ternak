@@ -7,7 +7,12 @@ async function login(req, res) {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ success: false, message: 'username and password required' });
   try {
-    const { rows } = await db.query('SELECT id, username, password, full_name, role, kelompok FROM users WHERE username=$1', [username]);
+    const { rows } = await db.query(`
+      SELECT u.id, u.username, u.password, u.full_name, u.role, u.kelompok_id, k.name as kelompok 
+      FROM users u 
+      LEFT JOIN kelompok k ON u.kelompok_id = k.id 
+      WHERE u.username=$1
+    `, [username]);
     const user = rows[0];
     if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials' });
     const ok = await bcrypt.compare(password, user.password);
@@ -20,6 +25,7 @@ async function login(req, res) {
       username: user.username,
       full_name: user.full_name,
       role: user.role,
+      kelompok_id: user.kelompok_id,
       kelompok: user.kelompok,
     };
 

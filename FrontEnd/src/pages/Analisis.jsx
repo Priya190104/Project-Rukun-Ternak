@@ -1,15 +1,39 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BarChart3, TrendingUp, Users, Activity } from 'lucide-react';
-
-const mockData = {
-  populasi: 1,
-  kelahiran: 1,
-  kematian: 0,
-  pertumbuhan: '+100.0%',
-};
+import client from '../api/client';
 
 export default function Analisis() {
   const [filterKelompok, setFilterKelompok] = useState('Semua Kelompok');
+  const [stats, setStats] = useState({ totals: { laporan: 0, users: 0, kelompok: 0 }, latest: [], perMonth: [] });
+  const [kelahiran, setKelahiran] = useState(0);
+  const [kematian, setKematian] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await client.get('/api/stats');
+        if (!mounted) return;
+        setStats(res.data?.data || { totals: { laporan: 0, users: 0, kelompok: 0 }, latest: [], perMonth: [] });
+      } catch (err) {
+        console.warn('Failed to load stats', err.message || err);
+      }
+
+      try {
+        const res2 = await client.get('/api/laporan');
+        if (!mounted) return;
+        const all = res2.data?.data || [];
+        setKelahiran(all.filter(r => (r.jenis || '').toLowerCase() === 'kelahiran').length);
+        setKematian(all.filter(r => (r.jenis || '').toLowerCase() === 'kematian').length);
+      } catch (err) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  const populasi = stats.totals?.laporan || 0;
+  const pertumbuhan = stats.perMonth && stats.perMonth.length > 1 ? `${Math.round(((stats.perMonth[stats.perMonth.length-1].count - stats.perMonth[0].count) / Math.max(1, stats.perMonth[0].count)) * 100)}%` : '0%';
 
   return (
     <div className="space-y-6">
@@ -47,7 +71,7 @@ export default function Analisis() {
           <div className="flex items-start justify-between">
             <div>
               <div className="text-sm font-medium text-gray-600">Populasi Saat Ini</div>
-              <div className="text-3xl font-bold text-gray-900 mt-2">{mockData.populasi}</div>
+              <div className="text-3xl font-bold text-gray-900 mt-2">{populasi}</div>
             </div>
             <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-purple-50 text-purple-600">
               <Users size={24} />
@@ -60,7 +84,7 @@ export default function Analisis() {
           <div className="flex items-start justify-between">
             <div>
               <div className="text-sm font-medium text-gray-600">Total Kelahiran</div>
-              <div className="text-3xl font-bold text-green-600 mt-2">{mockData.kelahiran}</div>
+              <div className="text-3xl font-bold text-green-600 mt-2">{kelahiran}</div>
             </div>
             <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-green-50 text-green-600">
               <TrendingUp size={24} />
@@ -73,7 +97,7 @@ export default function Analisis() {
           <div className="flex items-start justify-between">
             <div>
               <div className="text-sm font-medium text-gray-600">Total Kematian</div>
-              <div className="text-3xl font-bold text-red-600 mt-2">{mockData.kematian}</div>
+              <div className="text-3xl font-bold text-red-600 mt-2">{kematian}</div>
             </div>
             <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-red-50 text-red-600">
               <Activity size={24} />
@@ -86,7 +110,7 @@ export default function Analisis() {
           <div className="flex items-start justify-between">
             <div>
               <div className="text-sm font-medium text-gray-600">Pertumbuhan</div>
-              <div className="text-3xl font-bold text-blue-600 mt-2">{mockData.pertumbuhan}</div>
+              <div className="text-3xl font-bold text-blue-600 mt-2">{pertumbuhan}</div>
             </div>
             <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600">
               <BarChart3 size={24} />

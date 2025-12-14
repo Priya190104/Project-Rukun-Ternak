@@ -16,6 +16,9 @@ client.interceptors.request.use(
     const token = localStorage.getItem('rukun_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
+    } else {
+      console.log(`[API] ${config.method?.toUpperCase()} ${config.url} (no token)`);
     }
     return config;
   },
@@ -26,9 +29,13 @@ client.interceptors.request.use(
 
 // Add response interceptor to handle 401 errors (expired/invalid token)
 client.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API] Response ${response.status} from ${response.config.url}`);
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
+      console.error('[API] 401 Unauthorized - clearing auth');
       // Token expired or invalid, clear auth
       localStorage.removeItem('rukun_token');
       localStorage.removeItem('rukun_user');

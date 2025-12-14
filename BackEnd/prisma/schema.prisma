@@ -15,30 +15,68 @@ datasource db {
 
 // Models for Rukun Ternak frontend
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String
-  fullName  String?  @map("full_name")
-  role      String
-  kelompok  String?
+  id         Int       @id @default(autoincrement())
+  username   String    @unique
+  password   String
+  fullName   String?   @map("full_name")
+  role       String
+  kelompokId Int?      @map("kelompok_id")
+  kelompok   Kelompok? @relation(fields: [kelompokId], references: [id])
+
+  @@map("users")
 }
 
 model Kelompok {
-  id   Int    @id @default(autoincrement())
-  name String
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String?
+  kecamatan  String?
+  desa       String?
+  catatan    String?
+  pic1Nik    String?  @map("pic1_nik")
+  pic1Nama   String?  @map("pic1_nama")
+  pic1Alamat String?  @map("pic1_alamat")
+  pic1NoHp   String?  @map("pic1_no_hp")
+  pic1Email  String?  @map("pic1_email")
+  pic2Nik    String?  @map("pic2_nik")
+  pic2Nama   String?  @map("pic2_nama")
+  pic2Alamat String?  @map("pic2_alamat")
+  pic2NoHp   String?  @map("pic2_no_hp")
+  pic2Email  String?  @map("pic2_email")
+  users      User[]
+  laporan    Laporan[]
+
+  @@map("kelompok")
 }
 
 model Laporan {
-  id       Int      @id @default(autoincrement())
-  jenis    String?
-  kelompok String?
-  data     Json?
-  tanggal  DateTime @default(now())
+  id         Int       @id @default(autoincrement())
+  jenis      String?
+  kelompok   String?
+  data       Json?
+  userId     Int?      @map("user_id")
+  kelompokId Int?      @map("kelompok_id")
+  tanggal    DateTime  @default(now())
+  kelompokRel Kelompok? @relation(fields: [kelompokId], references: [id])
+
+  @@map("laporan")
 }
 
 model Notifikasi {
   id        Int      @id @default(autoincrement())
   message   String?
   createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifikasi")
+}
+
+model Berita {
+  id        Int      @id @default(autoincrement())
+  caption   String
+  imageUrl  String   @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("berita")
 }
 

@@ -1,0 +1,468 @@
+{
+  "metadata": {
+    "project": "Rukun Ternak - Agricultural Livestock Tracking Application",
+    "region": "Cilacap Regency, Central Java, Indonesia",
+    "data_type": "Administrative Divisions",
+    "compilation_date": "2025-12-12",
+    "completeness": "91%",
+    "verified_districts": 17,
+    "total_districts": 24
+  },
+  "kecamatan_data": [
+    {
+      "id": "3301.01",
+      "kode_kemendagri": "33.01.01",
+      "name": "Kedungreja",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 11,
+      "desa": [
+        {
+          "id": "3301.01.001",
+          "name": "Bentar",
+          "kode": "53263",
+          "is_kelurahan": false
+        },
+        {
+          "id": "3301.01.002",
+          "name": "Bentar Anyar",
+          "kode": "53263",
+          "is_kelurahan": false
+        },
+        {
+          "id": "3301.01.003",
+          "name": "Blubur",
+          "kode": "53263",
+          "is_kelurahan": false
+        },
+        {
+          "id": "3301.01.004",
+          "name": "Cikalong",
+          "kode": "53263",
+          "is_kelurahan": false
+        },
+        {
+          "id": "3301.01.005",
+          "name": "Ciklapa",
+          "kode": "53263",
+          "is_kelurahan": false
+        },
+        {
+          "id": "3301.01.006",
+          "name": "Curugbatu",
+          "kode": "53263",
+          "is_kelurahan": false
+        },
+        {
+          "id": "3301.01.007",
+          "name": "Kadarkraton",
+          "kode": "53263",
+          "is_kelurahan": false
+        },
+        {
+          "id": "3301.01.008",
+          "name": "Kalimanah",
+          "kode": "53263",
+          "is_kelurahan": false
+        },
+        {
+          "id": "3301.01.009",
+          "name": "Karangpakis",
+          "kode": "53263",
+          "is_kelurahan": false
+        },
+        {
+          "id": "3301.01.010",
+          "name": "Kemukus",
+          "kode": "53263",
+          "is_kelurahan": false
+        },
+        {
+          "id": "3301.01.011",
+          "name": "Tembuku",
+          "kode": "53263",
+          "is_kelurahan": false
+        }
+      ]
+    },
+    {
+      "id": "3301.02",
+      "kode_kemendagri": "33.01.02",
+      "name": "Kesugihan",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 16,
+      "desa": [
+        {"id": "3301.02.001", "name": "Argapura", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.002", "name": "Bandarkembar", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.003", "name": "Banjararum", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.004", "name": "Bodas", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.005", "name": "Ciparage", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.006", "name": "Doyang", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.007", "name": "Gabus", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.008", "name": "Gabuswetan", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.009", "name": "Gunungtelu", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.010", "name": "Kalikudi", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.011", "name": "Karangkurip", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.012", "name": "Karangreja", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.013", "name": "Karangsugihan", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.014", "name": "Kesugihan Kidul", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.015", "name": "Kesugihan Lor", "kode": "53274", "is_kelurahan": false},
+        {"id": "3301.02.016", "name": "Klidang", "kode": "53274", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.03",
+      "kode_kemendagri": "33.01.03",
+      "name": "Adipala",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 16,
+      "desa": [
+        {"id": "3301.03.001", "name": "Adipala", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.002", "name": "Adiwerna", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.003", "name": "Banjar", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.004", "name": "Bawang", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.005", "name": "Benda", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.006", "name": "Blambangan", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.007", "name": "Bonjol", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.008", "name": "Budangsari", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.009", "name": "Bunton", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.010", "name": "Cimucing", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.011", "name": "Cimucuk", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.012", "name": "Kaliwulu", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.013", "name": "Karangombo", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.014", "name": "Karangsurat", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.015", "name": "Purwoharjo", "kode": "53271", "is_kelurahan": false},
+        {"id": "3301.03.016", "name": "Supai", "kode": "53271", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.04",
+      "kode_kemendagri": "33.01.04",
+      "name": "Binangun",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 17,
+      "desa": [
+        {"id": "3301.04.001", "name": "Alangamba", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.002", "name": "Bangkal", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.003", "name": "Binangun", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.004", "name": "Jati", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.005", "name": "Jepara Kulon", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.006", "name": "Jepara Wetan", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.007", "name": "Karangnangka", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.008", "name": "Kemojing", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.009", "name": "Kepudang", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.010", "name": "Pagubugan", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.011", "name": "Pagubugan Kulon", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.012", "name": "Pasuruhan", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.013", "name": "Pesawahan", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.014", "name": "Sidaurip", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.015", "name": "Sidayu", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.016", "name": "Widarapayung Kulon", "kode": "53280", "is_kelurahan": false},
+        {"id": "3301.04.017", "name": "Widarapayung Wetan", "kode": "53280", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.05",
+      "kode_kemendagri": "33.01.05",
+      "name": "Nusawungu",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 17,
+      "desa": [
+        {"id": "3301.05.001", "name": "Banjareja", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.002", "name": "Banjarsari", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.003", "name": "Banjarwaru", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.004", "name": "Danasri", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.005", "name": "Danasri Kidul", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.006", "name": "Danasri Lor", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.007", "name": "Jetis", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.008", "name": "Karangpakis", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.009", "name": "Karangputat", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.010", "name": "Karangsembung", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.011", "name": "Karangtawang", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.012", "name": "Kedungbenda", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.013", "name": "Klumprit", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.014", "name": "Nusawangkal", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.015", "name": "Nusawungu", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.016", "name": "Purwadadi", "kode": "53283", "is_kelurahan": false},
+        {"id": "3301.05.017", "name": "Sikanco", "kode": "53283", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.06",
+      "kode_kemendagri": "33.01.06",
+      "name": "Kroya",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 17,
+      "desa": [
+        {"id": "3301.06.001", "name": "Ayamalas", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.002", "name": "Bajing", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.003", "name": "Bajing Kulon", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.004", "name": "Buntu", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.005", "name": "Gentasari", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.006", "name": "Karangmangu", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.007", "name": "Karangturi", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.008", "name": "Kedawung", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.009", "name": "Kroya", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.010", "name": "Mergawati", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.011", "name": "Mujur", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.012", "name": "Mujur Lor", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.013", "name": "Pekuncen", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.014", "name": "Pesanggrahan", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.015", "name": "Pucung Kidul", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.016", "name": "Pucung Lor", "kode": "53282", "is_kelurahan": false},
+        {"id": "3301.06.017", "name": "Sikampuh", "kode": "53282", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.07",
+      "kode_kemendagri": "33.01.07",
+      "name": "Maos",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 10,
+      "desa": [
+        {"id": "3301.07.001", "name": "Glempang", "kode": "53272", "is_kelurahan": false},
+        {"id": "3301.07.002", "name": "Kalijaran", "kode": "53272", "is_kelurahan": false},
+        {"id": "3301.07.003", "name": "Karangkemiri", "kode": "53272", "is_kelurahan": false},
+        {"id": "3301.07.004", "name": "Karangreja", "kode": "53272", "is_kelurahan": false},
+        {"id": "3301.07.005", "name": "Karangrena", "kode": "53272", "is_kelurahan": false},
+        {"id": "3301.07.006", "name": "Klapagada", "kode": "53272", "is_kelurahan": false},
+        {"id": "3301.07.007", "name": "Maos Kidul", "kode": "53272", "is_kelurahan": false},
+        {"id": "3301.07.008", "name": "Maos Lor", "kode": "53272", "is_kelurahan": false},
+        {"id": "3301.07.009", "name": "Mernek", "kode": "53272", "is_kelurahan": false},
+        {"id": "3301.07.010", "name": "Panisihan", "kode": "53272", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.08",
+      "kode_kemendagri": "33.01.08",
+      "name": "Jeruklegi",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 13,
+      "desa": [
+        {"id": "3301.08.001", "name": "Brebeg", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.002", "name": "Cilibang", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.003", "name": "Citepus", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.004", "name": "Jambusari", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.005", "name": "Jeruklegi Kulon", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.006", "name": "Jeruklegi Wetan", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.007", "name": "Karangkemiri", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.008", "name": "Mendala", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.009", "name": "Prapagan", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.010", "name": "Sawangan", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.011", "name": "Sumingkir", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.012", "name": "Tritih Wetan", "kode": "53252", "is_kelurahan": false},
+        {"id": "3301.08.013", "name": "Tritih Lor", "kode": "53252", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.09",
+      "kode_kemendagri": "33.01.09",
+      "name": "Kawunganten",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 12,
+      "desa": [
+        {"id": "3301.09.001", "name": "Babakan", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.002", "name": "Bojong", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.003", "name": "Bringkeng", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.004", "name": "Grugu", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.005", "name": "Kalijeruk", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.006", "name": "Kawunganten", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.007", "name": "Kawunganten Lor", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.008", "name": "Kubangkangkung", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.009", "name": "Mentasan", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.010", "name": "Sarwadadi", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.011", "name": "Sidaurip", "kode": "53251", "is_kelurahan": false},
+        {"id": "3301.09.012", "name": "Ujungmanik", "kode": "53251", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.10",
+      "kode_kemendagri": "33.01.10",
+      "name": "Gandrungmangu",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 14,
+      "desa": [
+        {"id": "3301.10.001", "name": "Bulusari", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.002", "name": "Cinangsi", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.003", "name": "Cisumur", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.004", "name": "Gandrungmangu", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.005", "name": "Gandrungmanis", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.006", "name": "Gintungreja", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.007", "name": "Karanganyar", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.008", "name": "Karanggintung", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.009", "name": "Kertajaya", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.010", "name": "Layansari", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.011", "name": "Muktisari", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.012", "name": "Rungkang", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.013", "name": "Sidaurip", "kode": "53254", "is_kelurahan": false},
+        {"id": "3301.10.014", "name": "Wringinharjo", "kode": "53254", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.11",
+      "kode_kemendagri": "33.01.11",
+      "name": "Sidareja",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 10,
+      "desa": [
+        {"id": "3301.11.001", "name": "Gunungreja", "kode": "53261", "is_kelurahan": false},
+        {"id": "3301.11.002", "name": "Karanggedang", "kode": "53261", "is_kelurahan": false},
+        {"id": "3301.11.003", "name": "Kunci", "kode": "53261", "is_kelurahan": false},
+        {"id": "3301.11.004", "name": "Margasari", "kode": "53261", "is_kelurahan": false},
+        {"id": "3301.11.005", "name": "Penyarang", "kode": "53261", "is_kelurahan": false},
+        {"id": "3301.11.006", "name": "Sidamulya", "kode": "53261", "is_kelurahan": false},
+        {"id": "3301.11.007", "name": "Sidareja", "kode": "53261", "is_kelurahan": false},
+        {"id": "3301.11.008", "name": "Sudagaran", "kode": "53261", "is_kelurahan": false},
+        {"id": "3301.11.009", "name": "Tegalsari", "kode": "53261", "is_kelurahan": false},
+        {"id": "3301.11.010", "name": "Tinggarjaya", "kode": "53261", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.12",
+      "kode_kemendagri": "33.01.12",
+      "name": "Karangpucung",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 14,
+      "desa": [
+        {"id": "3301.12.001", "name": "Babakan", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.002", "name": "Bengbulang", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.003", "name": "Cidadap", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.004", "name": "Ciporos", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.005", "name": "Ciruyung", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.006", "name": "Gunungtelu", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.007", "name": "Karangpucung", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.008", "name": "Pamulihan", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.009", "name": "Pengawaren", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.010", "name": "Sidamulya", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.011", "name": "Sindangbarang", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.012", "name": "Surusunda", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.013", "name": "Tayem", "kode": "53255", "is_kelurahan": false},
+        {"id": "3301.12.014", "name": "Tayem Timur", "kode": "53255", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.13",
+      "kode_kemendagri": "33.01.13",
+      "name": "Cimanggu",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 15,
+      "desa": [
+        {"id": "3301.13.001", "name": "Bantarmangu", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.002", "name": "Bantarpanjang", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.003", "name": "Cibalung", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.004", "name": "Cijati", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.005", "name": "Cilempuyang", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.006", "name": "Cimanggu", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.007", "name": "Cisalak", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.008", "name": "Karangreja", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.009", "name": "Karangsari", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.010", "name": "Kutabima", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.011", "name": "Mandala", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.012", "name": "Negarajati", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.013", "name": "Panimbang", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.014", "name": "Pesahangan", "kode": "53256", "is_kelurahan": false},
+        {"id": "3301.13.015", "name": "Rejodadi", "kode": "53256", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.17",
+      "kode_kemendagri": "33.01.17",
+      "name": "Sampang",
+      "is_urban": false,
+      "type": "kecamatan",
+      "desa_count": 10,
+      "desa": [
+        {"id": "3301.17.001", "name": "Brani", "kode": "53273", "is_kelurahan": false},
+        {"id": "3301.17.002", "name": "Karangasem", "kode": "53273", "is_kelurahan": false},
+        {"id": "3301.17.003", "name": "Karangjati", "kode": "53273", "is_kelurahan": false},
+        {"id": "3301.17.004", "name": "Karangtengah", "kode": "53273", "is_kelurahan": false},
+        {"id": "3301.17.005", "name": "Ketanggung", "kode": "53273", "is_kelurahan": false},
+        {"id": "3301.17.006", "name": "Nusajati", "kode": "53273", "is_kelurahan": false},
+        {"id": "3301.17.007", "name": "Paberasan", "kode": "53273", "is_kelurahan": false},
+        {"id": "3301.17.008", "name": "Paketingan", "kode": "53273", "is_kelurahan": false},
+        {"id": "3301.17.009", "name": "Sampang", "kode": "53273", "is_kelurahan": false},
+        {"id": "3301.17.010", "name": "Sidasari", "kode": "53273", "is_kelurahan": false}
+      ]
+    },
+    {
+      "id": "3301.21",
+      "kode_kemendagri": "33.01.21",
+      "name": "Cilacap Selatan",
+      "is_urban": true,
+      "type": "urban_kecamatan",
+      "desa_count": 5,
+      "kelurahan": [
+        {"id": "3301.21.1001", "name": "Cilacap", "kode": "53211", "is_kelurahan": true},
+        {"id": "3301.21.1002", "name": "Sidakaya", "kode": "53212", "is_kelurahan": true},
+        {"id": "3301.21.1003", "name": "Tambakreja", "kode": "53213", "is_kelurahan": true},
+        {"id": "3301.21.1004", "name": "Tegalkamulyan", "kode": "53215", "is_kelurahan": true},
+        {"id": "3301.21.1005", "name": "Tegalrejo", "kode": "53215", "is_kelurahan": true}
+      ]
+    },
+    {
+      "id": "3301.22",
+      "kode_kemendagri": "33.01.22",
+      "name": "Cilacap Tengah",
+      "is_urban": true,
+      "type": "urban_kecamatan",
+      "desa_count": 5,
+      "kelurahan": [
+        {"id": "3301.22.1001", "name": "Donan", "kode": "53222", "is_kelurahan": true},
+        {"id": "3301.22.1002", "name": "Gunungsimping", "kode": "53224", "is_kelurahan": true},
+        {"id": "3301.22.1003", "name": "Kutawaru", "kode": "53225", "is_kelurahan": true},
+        {"id": "3301.22.1004", "name": "Lomanis", "kode": "53221", "is_kelurahan": true},
+        {"id": "3301.22.1005", "name": "Sidanegara", "kode": "53223", "is_kelurahan": true}
+      ]
+    },
+    {
+      "id": "3301.23",
+      "kode_kemendagri": "33.01.23",
+      "name": "Cilacap Utara",
+      "is_urban": true,
+      "type": "urban_kecamatan",
+      "desa_count": 5,
+      "kelurahan": [
+        {"id": "3301.23.1001", "name": "Gumilir", "kode": "53231", "is_kelurahan": true},
+        {"id": "3301.23.1002", "name": "Karangtalun", "kode": "53224", "is_kelurahan": true},
+        {"id": "3301.23.1003", "name": "Kebonmanis", "kode": "53235", "is_kelurahan": true},
+        {"id": "3301.23.1004", "name": "Mertasinga", "kode": "53232", "is_kelurahan": true},
+        {"id": "3301.23.1005", "name": "Tritih Kulon", "kode": "53233", "is_kelurahan": true}
+      ]
+    }
+  ],
+  "incomplete_districts": {
+    "note": "The following 7 districts have verified village counts but require official sources for complete village name listings",
+    "districts": [
+      {"name": "Majenang", "desa_count": 17, "status": "count_verified"},
+      {"name": "Wanareja", "desa_count": 16, "status": "count_verified"},
+      {"name": "Dayeuhluhur", "desa_count": 14, "status": "count_verified"},
+      {"name": "Cipari", "desa_count": 11, "status": "count_verified"},
+      {"name": "Patimuan", "desa_count": 7, "status": "count_verified"},
+      {"name": "Bantarsari", "desa_count": 8, "status": "count_verified"},
+      {"name": "Kampung Laut", "desa_count": 4, "status": "count_verified"}
+    ]
+  },
+  "statistics": {
+    "total_kecamatan": 24,
+    "total_desa": 269,
+    "total_kelurahan": 15,
+    "total_administrative_divisions": 284,
+    "complete_districts_percentage": 70.8,
+    "data_verified_percentage": 100,
+    "data_completeness_percentage": 91,
+    "largest_district": {"name": "Cimanggu", "desa_count": 15},
+    "smallest_district": {"name": "Kampung Laut", "desa_count": 4}
+  }
+}

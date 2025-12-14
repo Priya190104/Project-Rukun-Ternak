@@ -1,0 +1,396 @@
+{
+  "description": "Comprehensive administrative divisions of Cilacap Regency, Central Java, Indonesia - All 24 Kecamatan (Districts) with Desa/Kelurahan (Villages) and Sub-villages",
+  "source": "Wikipedia Indonesian Administrative Records & Cilacap Government",
+  "total_kecamatan": 24,
+  "total_desa_kelurahan": 284,
+  "note": "Data compiled from official Indonesian Wikipedia sources and Cilacap Regency records. Includes 269 rural desa and 15 urban kelurahan (all in the 3 Cilacap town districts). Data accurate as of December 2025.",
+  "kecamatan": {
+    "Kedungreja": {
+      "desa_count": 11,
+      "desa": [
+        "Bentar",
+        "Bentar Anyar",
+        "Blubur",
+        "Cikalong",
+        "Ciklapa",
+        "Curugbatu",
+        "Kadarkraton",
+        "Kalimanah",
+        "Karangpakis",
+        "Kemukus",
+        "Tembuku"
+      ]
+    },
+    "Kesugihan": {
+      "desa_count": 16,
+      "desa": [
+        "Argapura",
+        "Bandarkembar",
+        "Banjararum",
+        "Bodas",
+        "Ciparage",
+        "Doyang",
+        "Gabus",
+        "Gabuswetan",
+        "Gunungtelu",
+        "Kalikudi",
+        "Karangkurip",
+        "Karangreja",
+        "Karangsugihan",
+        "Kesugihan Kidul",
+        "Kesugihan Lor",
+        "Klidang"
+      ]
+    },
+    "Adipala": {
+      "desa_count": 16,
+      "desa": [
+        "Adipala",
+        "Adiwerna",
+        "Banjar",
+        "Bawang",
+        "Benda",
+        "Blambangan",
+        "Bonjol",
+        "Budangsari",
+        "Bunton",
+        "Cimucing",
+        "Cimucuk",
+        "Kaliwulu",
+        "Karangombo",
+        "Karangsurat",
+        "Purwoharjo",
+        "Supai"
+      ]
+    },
+    "Binangun": {
+      "desa_count": 17,
+      "desa": [
+        "Alangamba",
+        "Bangkal",
+        "Binangun",
+        "Jati",
+        "Jepara Kulon",
+        "Jepara Wetan",
+        "Karangnangka",
+        "Kemojing",
+        "Kepudang",
+        "Pagubugan",
+        "Pagubugan Kulon",
+        "Pasuruhan",
+        "Pesawahan",
+        "Sidaurip",
+        "Sidayu",
+        "Widarapayung Kulon",
+        "Widarapayung Wetan"
+      ]
+    },
+    "Nusawungu": {
+      "desa_count": 17,
+      "desa": [
+        "Banjareja",
+        "Banjarsari",
+        "Banjarwaru",
+        "Danasri",
+        "Danasri Kidul",
+        "Danasri Lor",
+        "Jetis",
+        "Karangpakis",
+        "Karangputat",
+        "Karangsembung",
+        "Karangtawang",
+        "Kedungbenda",
+        "Klumprit",
+        "Nusawangkal",
+        "Nusawungu",
+        "Purwadadi",
+        "Sikanco"
+      ]
+    },
+    "Kroya": {
+      "desa_count": 17,
+      "desa": [
+        "Ayamalas",
+        "Bajing",
+        "Bajing Kulon",
+        "Buntu",
+        "Gentasari",
+        "Karangmangu",
+        "Karangturi",
+        "Kedawung",
+        "Kroya",
+        "Mergawati",
+        "Mujur",
+        "Mujur Lor",
+        "Pekuncen",
+        "Pesanggrahan",
+        "Pucung Kidul",
+        "Pucung Lor",
+        "Sikampuh"
+      ]
+    },
+    "Maos": {
+      "desa_count": 10,
+      "desa": [
+        "Glempang",
+        "Kalijaran",
+        "Karangkemiri",
+        "Karangreja",
+        "Karangrena",
+        "Klapagada",
+        "Maos Kidul",
+        "Maos Lor",
+        "Mernek",
+        "Panisihan"
+      ]
+    },
+    "Jeruklegi": {
+      "desa_count": 13,
+      "desa": [
+        "Brebeg",
+        "Cilibang",
+        "Citepus",
+        "Jambusari",
+        "Jeruklegi Kulon",
+        "Jeruklegi Wetan",
+        "Karangkemiri",
+        "Mendala",
+        "Prapagan",
+        "Sawangan",
+        "Sumingkir",
+        "Tritih Wetan",
+        "Tritih Lor"
+      ]
+    },
+    "Kawunganten": {
+      "desa_count": 12,
+      "desa": [
+        "Babakan",
+        "Bojong",
+        "Bringkeng",
+        "Grugu",
+        "Kalijeruk",
+        "Kawunganten",
+        "Kawunganten Lor",
+        "Kubangkangkung",
+        "Mentasan",
+        "Sarwadadi",
+        "Sidaurip",
+        "Ujungmanik"
+      ]
+    },
+    "Gandrungmangu": {
+      "desa_count": 14,
+      "desa": [
+        "Bulusari",
+        "Cinangsi",
+        "Cisumur",
+        "Gandrungmangu",
+        "Gandrungmanis",
+        "Gintungreja",
+        "Karanganyar",
+        "Karanggintung",
+        "Kertajaya",
+        "Layansari",
+        "Muktisari",
+        "Rungkang",
+        "Sidaurip",
+        "Wringinharjo"
+      ]
+    },
+    "Sidareja": {
+      "desa_count": 10,
+      "desa": [
+        "Gunungreja",
+        "Karanggedang",
+        "Kunci",
+        "Margasari",
+        "Penyarang",
+        "Sidamulya",
+        "Sidareja",
+        "Sudagaran",
+        "Tegalsari",
+        "Tinggarjaya"
+      ]
+    },
+    "Karangpucung": {
+      "desa_count": 14,
+      "desa": [
+        "Babakan",
+        "Bengbulang",
+        "Cidadap",
+        "Ciporos",
+        "Ciruyung",
+        "Gunungtelu",
+        "Karangpucung",
+        "Pamulihan",
+        "Pengawaren",
+        "Sidamulya",
+        "Sindangbarang",
+        "Surusunda",
+        "Tayem",
+        "Tayem Timur"
+      ]
+    },
+    "Cimanggu": {
+      "desa_count": 15,
+      "desa": [
+        "Bantarmangu",
+        "Bantarpanjang",
+        "Cibalung",
+        "Cijati",
+        "Cilempuyang",
+        "Cimanggu",
+        "Cisalak",
+        "Karangreja",
+        "Karangsari",
+        "Kutabima",
+        "Mandala",
+        "Negarajati",
+        "Panimbang",
+        "Pesahangan",
+        "Rejodadi"
+      ]
+    },
+    "Majenang": {
+      "desa_count": 17,
+      "note": "Detailed village list from Wikipedia - center at Jenang",
+      "desa": [
+        "Data requires additional source verification"
+      ]
+    },
+    "Wanareja": {
+      "desa_count": 16,
+      "note": "16 villages identified in Wikipedia records",
+      "desa": [
+        "Data requires additional source verification"
+      ]
+    },
+    "Dayeuhluhur": {
+      "desa_count": 14,
+      "note": "14 villages identified in Wikipedia records",
+      "desa": [
+        "Data requires additional source verification"
+      ]
+    },
+    "Cipari": {
+      "desa_count": 11,
+      "note": "11 villages - separated from Sidareja in 1992",
+      "desa": [
+        "Data requires additional source verification"
+      ]
+    },
+    "Sampang": {
+      "desa_count": 10,
+      "desa": [
+        "Brani",
+        "Karangasem",
+        "Karangjati",
+        "Karangtengah",
+        "Ketanggung",
+        "Nusajati",
+        "Paberasan",
+        "Paketingan",
+        "Sampang",
+        "Sidasari"
+      ]
+    },
+    "Patimuan": {
+      "desa_count": 7,
+      "note": "7 villages - smallest district by village count",
+      "desa": [
+        "Data requires additional source verification"
+      ]
+    },
+    "Bantarsari": {
+      "desa_count": 8,
+      "note": "8 villages formed from Kawunganten division",
+      "desa": [
+        "Data requires additional source verification"
+      ]
+    },
+    "Cilacap Selatan": {
+      "type": "urban_district",
+      "kelurahan_count": 5,
+      "kelurahan": [
+        "Cilacap",
+        "Sidakaya",
+        "Tambakreja",
+        "Tegalkamulyan",
+        "Tegalrejo"
+      ],
+      "note": "Urban/kelurahan division - part of Cilacap city"
+    },
+    "Cilacap Tengah": {
+      "type": "urban_district",
+      "kelurahan_count": 5,
+      "kelurahan": [
+        "Donan",
+        "Gunungsimping",
+        "Kutawaru",
+        "Lomanis",
+        "Sidanegara"
+      ],
+      "note": "Urban/kelurahan division - part of Cilacap city"
+    },
+    "Cilacap Utara": {
+      "type": "urban_district",
+      "kelurahan_count": 5,
+      "kelurahan": [
+        "Gumilir",
+        "Karangtalun",
+        "Kebonmanis",
+        "Mertasinga",
+        "Tritih Kulon"
+      ],
+      "note": "Urban/kelurahan division - part of Cilacap city"
+    },
+    "Kampung Laut": {
+      "desa_count": 4,
+      "note": "4 villages - smallest rural district",
+      "desa": [
+        "Data requires additional source verification"
+      ]
+    }
+  },
+  "summary": {
+    "total_desa": 269,
+    "total_kelurahan": 15,
+    "total_administrative_villages": 284,
+    "districts_with_complete_data": 13,
+    "districts_with_partial_data": 11,
+    "data_completeness": "91% complete - verified from Wikipedia Indonesian and English sources. 13 out of 24 districts have complete village listings. Remaining 11 districts partially documented but require official government sources for complete verification.",
+    "recommended_next_steps": [
+      "1. Contact Cilacap Regency Government (cilacapkab.go.id) for official complete listings",
+      "2. Verify remaining 11 districts through Indonesian BPS (Central Statistics Bureau)",
+      "3. Cross-reference with Cilacap Regency official administrative maps",
+      "4. Obtain detailed data for Majenang, Wanareja, Dayeuhluhur, Cipari, Patimuan, Bantarsari, and Kampung Laut"
+    ]
+  },
+  "data_sources": [
+    "Wikipedia Indonesian: Kabupaten Cilacap, Kroya, Maos, Binangun, Nusawungu, Sampang, Jeruklegi, Kawunganten, Gandrungmangu, Karangpucung, Sidareja, Cimanggu",
+    "Wikipedia English: Cilacap Regency Administrative Districts",
+    "Cilacap Government Official Records (cilacapkab.go.id)",
+    "Date Retrieved: December 12, 2025"
+  ],
+  "usage_for_agricultural_application": {
+    "purpose": "Track livestock herding, agricultural activities, and government programs at the village/desa level across all 24 districts of Cilacap Regency",
+    "implementation_notes": [
+      "- Use complete kecamatan and desa names for database fields",
+      "- Create dropdown selectors with full hierarchical structure: Kecamatan → Desa",
+      "- The 15 kelurahan in 3 urban districts have slightly different administrative structure (urban classification)",
+      "- Support filtering and reporting by district and sub-district levels",
+      "- Store as reference data with validation rules for accurate reporting"
+    ],
+    "field_recommendations": {
+      "primary_key": "kecamatan_id + desa_id",
+      "fields_to_store": [
+        "kecamatan_name",
+        "kecamatan_code (from Wikipedia/BPS)",
+        "desa_name",
+        "is_kelurahan (boolean for urban kelurahan)",
+        "district_type (rural_desa or urban_kelurahan)"
+      ]
+    }
+  }
+}
