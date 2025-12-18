@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, User, FileText, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, User, FileText, AlertCircle, Download } from 'lucide-react';
 import client from '../api/client';
 
 export default function DetailLaporan() {
@@ -9,6 +9,7 @@ export default function DetailLaporan() {
   const [laporan, setLaporan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     const fetchLaporanDetail = async () => {
@@ -107,6 +108,35 @@ export default function DetailLaporan() {
     }
   };
 
+  const handleDownloadSertifikat = async () => {
+    if (laporan.jenis !== 'Kelahiran') {
+      alert('Download sertifikat hanya tersedia untuk laporan Kelahiran');
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const response = await client.get(`/api/laporan/${id}/sertifikat`, {
+        responseType: 'blob'
+      });
+
+      // Create blob and download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Sertifikat_Kelahiran_${laporan.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading sertifikat:', err);
+      alert('Gagal mengunduh sertifikat: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const getJenisColor = (jenis) => {
     switch (jenis) {
       case 'Kelahiran':
@@ -177,7 +207,7 @@ export default function DetailLaporan() {
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Header */}
           <div className={`${getJenisColor(laporan.jenis)} p-6 sm:p-8 border-b-2`}>
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-4 mb-4">
               <div>
                 <h1 className="text-3xl sm:text-4xl font-bold mb-2">
                   {getJenisLabel(laporan.jenis)}
@@ -190,6 +220,20 @@ export default function DetailLaporan() {
                 {laporan.jenis}
               </div>
             </div>
+
+            {/* Action Buttons */}
+            {laporan.jenis === 'Kelahiran' && (
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDownloadSertifikat}
+                  disabled={downloading}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-semibold rounded-lg transition"
+                >
+                  <Download size={18} />
+                  {downloading ? 'Mengunduh...' : 'Download Sertifikat'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Content */}

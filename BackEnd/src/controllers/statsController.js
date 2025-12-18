@@ -75,6 +75,14 @@ async function getSummary(req, res) {
         ORDER BY month DESC
       `, [kelompokId]);
 
+      // Get latest by jenis for dashboard summary
+      const perJenisRes = await db.query(`
+        SELECT DISTINCT ON (jenis) jenis, data, tanggal
+        FROM laporan
+        WHERE kelompok_id=$1
+        ORDER BY jenis, tanggal DESC
+      `, [kelompokId]);
+
       return res.json({
         success: true,
         data: {
@@ -85,6 +93,7 @@ async function getSummary(req, res) {
           },
           latest: latestRes.rows,
           perMonth: perMonthRes.rows,
+          perJenis: perJenisRes.rows, // Latest laporan untuk setiap jenis
         },
       });
       
@@ -128,4 +137,51 @@ async function getSummary(req, res) {
   }
 }
 
-module.exports = { getSummary };
+/**
+ * getDashboardSummary - Agregasi data untuk dashboard ringkasan
+ * Mengembalikan: ringkasan populasi, pakan, kandang, kesehatan, kelahiran, penjualan terbaru
+ */
+async function getDashboardSummary(req, res) {
+  try {
+    const kelompokId = req.user.kelompok_id;
+    
+    if (!kelompokId) {
+      return res.status(403).json({ success: false, message: 'Akses hanya untuk kelompok' });
+    }
+
+    // Get latest laporan by type
+    const latestByTypeRes = await db.query(`
+      SELECT DISTINCT ON (jenis) id, jenis, data, tanggal
+      FROM laporan
+      WHERE kelompok_id = $1
+      ORDER BY jenis, tanggal DESC
+    `, [kelompokId]);
+
+    const summary = {
+      populasi: null,
+      pakan: null,
+      kandang: null,
+      kesehatan: null,
+      kelahiran: null,
+      penjualan: null,
+      pengembangan: null,
+    };
+
+    // Parse each latest laporan
+    latestByTypeRes.rows.forEach(lap => {
+      const jenis = lap.jenis ? lap.jenis.toLowerCase() : null;
+      summary[jenis] = {
+        id: lap.id,
+        data: lap.data,
+        tanggal: lap.tanggal,
+      };
+    });
+
+    return res.json({ success: true, data: summary });
+  } catch (e) {
+    console.error('getDashboardSummary error:', e);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
+
+module.exports = { getSummary, getDashboardSummary };

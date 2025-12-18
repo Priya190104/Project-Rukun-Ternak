@@ -50,7 +50,7 @@ export default function KelolaBerita() {
     try {
       setLoading(true);
       setError(null);
-      const newBerita = await createBerita(data.caption, data.imageFile);
+      const newBerita = await createBerita(data.caption, data.imageFile, data.publishedAt);
       setBerita([newBerita, ...berita]);
     } catch (err) {
       setError('Gagal menambahkan berita');
@@ -69,7 +69,7 @@ export default function KelolaBerita() {
     try {
       setLoading(true);
       setError(null);
-      const updated = await updateBerita(editingId, data.caption, data.imageFile);
+      const updated = await updateBerita(editingId, data.caption, data.imageFile, data.publishedAt);
       setBerita(berita.map((b) => (b.id === editingId ? updated : b)));
       setEditingId(null);
       setEditingBerita(null);

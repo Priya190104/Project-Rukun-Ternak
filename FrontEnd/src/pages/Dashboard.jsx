@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import StatsCard from '../components/StatsCard';
-import { FileText, Users, TrendingUp, Newspaper } from 'lucide-react';
+import { FileText, Users, TrendingUp, Newspaper, Image } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import client from '../api/client';
 
@@ -179,17 +179,28 @@ export default function Dashboard() {
               </div>
             </div>
           </button>
-          {/* Admin-only shortcut to Kelola Berita */}
+          {/* Admin-only shortcuts */}
           {user?.role === 'admin' && (
-            <a href="/kelola-berita" className="p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg border border-pink-200 hover:border-pink-400 transition text-left group">
-              <div className="flex items-center gap-3">
-                <Newspaper className="w-6 h-6 text-pink-600 group-hover:scale-110 transition" />
-                <div>
-                  <div className="font-semibold text-gray-900">Kelola Berita</div>
-                  <div className="text-sm text-gray-600">Tambah, edit, hapus berita</div>
+            <>
+              <a href="/kelola-banner" className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200 hover:border-orange-400 transition text-left group">
+                <div className="flex items-center gap-3">
+                  <Image className="w-6 h-6 text-orange-600 group-hover:scale-110 transition" />
+                  <div>
+                    <div className="font-semibold text-gray-900">Kelola Banner</div>
+                    <div className="text-sm text-gray-600">Tambah, kelola banner</div>
+                  </div>
                 </div>
-              </div>
-            </a>
+              </a>
+              <a href="/kelola-berita" className="p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg border border-pink-200 hover:border-pink-400 transition text-left group">
+                <div className="flex items-center gap-3">
+                  <Newspaper className="w-6 h-6 text-pink-600 group-hover:scale-110 transition" />
+                  <div>
+                    <div className="font-semibold text-gray-900">Kelola Berita</div>
+                    <div className="text-sm text-gray-600">Tambah, edit, hapus berita</div>
+                  </div>
+                </div>
+              </a>
+            </>
           )}
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Trash2, Edit2, AlertCircle, Calendar } from 'lucide-react';
+import { getBeritaDisplayDate } from '../../utils/dateFormatter';
 
 export default function BeritaList({ berita, onEdit, onDelete, loading }) {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -62,15 +63,7 @@ export default function BeritaList({ berita, onEdit, onDelete, loading }) {
                 <p className="text-gray-700 leading-relaxed mb-3">{item.caption}</p>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Calendar className="w-4 h-4" />
-                  <span>
-                    {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
+                  <span>{getBeritaDisplayDate(item)}</span>
                   {item.updatedAt !== item.createdAt && (
                     <span className="text-gray-400 ml-2">
                       (diubah {new Date(item.updatedAt).toLocaleDateString('id-ID')})

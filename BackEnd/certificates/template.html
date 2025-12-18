@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sertifikat Kelahiran Ternak</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="certificate-wrapper">
+        <!-- BACKGROUND FULL PAGE -->
+        <div class="certificate-background">
+            <img src="assets/background.png" alt="Background" class="bg-image">
+        </div>
+
+        <!-- CONTENT OVERLAY -->
+        <div class="certificate-content">
+            <!-- Header Section - Centered -->
+            <div class="header">
+                <div class="header-center">
+                    <img src="assets/logo-baznas.png" alt="Logo BAZNAS" class="logo">
+                    <div class="program-title">Program Cilacap Makmur</div>
+                    <div class="program-subtitle">Rukun Ternak</div>
+                </div>
+            </div>
+
+            <!-- Main Title -->
+            <div class="section-title">
+                CATATAN KELAHIRAN TERNAK
+            </div>
+
+            <!-- Header Info Section - Kelompok & Peternak -->
+            <div class="header-info">
+                <div class="header-column">
+                    <div class="data-item header-item">
+                        <span class="label">Nama Kelompok</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{namaKelompok}}</span>
+                    </div>
+                    <div class="data-item header-item">
+                        <span class="label">Peternak</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{peternak}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Section - Teknis Ternak -->
+            <div class="data-wrapper">
+                <div class="column">
+                    <div class="data-item left-items">
+                        <span class="label">Lahir</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{tanggalLahir}}</span>
+                    </div>
+                    <div class="data-item left-items">
+                        <span class="label">Register</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{noRegistrasi}}</span>
+                    </div>
+                    <div class="data-item left-items">
+                        <span class="label">ID</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{idTernak}}</span>
+                    </div>
+                    <div class="data-item left-items">
+                        <span class="label">Jenis Kelamin</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{jenisKelamin}}</span>
+                    </div>
+                    <div class="data-item left-items">
+                        <span class="label">Warna</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{warna}}</span>
+                    </div>
+                    <div class="data-item left-items">
+                        <span class="label">Ras</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{ras}}</span>
+                    </div>
+                    <div class="data-item left-items">
+                        <span class="label">Induk</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{induk}}</span>
+                    </div>
+                    <div class="data-item left-items">
+                        <span class="label">Pejantan</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{pejantan}}</span>
+                    </div>
+                    <div class="data-item left-items">
+                        <span class="label">Bobot</span>
+                        <span class="colon">:</span>
+                        <span class="value">{{bobot}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Background -->
+            <div class="footer-background">
+                <img src="assets/background-footer.png" alt="Footer" class="footer-bg-img">
+            </div>
+        </div>
+
+        <!-- TERNAK IMAGES - DECORATIVE OVERLAY (Direct child of wrapper) -->
+        <img src="assets/ternak1.png" alt="Ternak 1" class="ternak-left mirror">
+        <img src="assets/ternak2.png" alt="Ternak 2" class="ternak-right mirror">
+    </div>
+</body>
+</html>

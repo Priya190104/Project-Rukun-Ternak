@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import AppLogo from '../components/branding/AppLogo';
 import { fetchLandingStats } from '../services/landingService';
 import LandingBeritaSection from '../components/berita/LandingBeritaSection';
+import LandingMapSection from '../components/layout/LandingMapSection';
+import BannerSlider from '../components/banners/BannerSlider';
 import client from '../api/client';
 import {
   Activity,
   ArrowRight,
-  BarChart3,
-  Heart,
-  HeartPulse,
-  ShieldCheck,
-  Zap,
   Sparkles,
 } from 'lucide-react';
 
@@ -128,7 +126,7 @@ export default function Landing() {
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-emerald-100">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center text-xl shadow-md">RT</div>
+            <AppLogo size="2xl" variant="icon" />
             <div>
               <div className="text-lg font-bold">Rukun Ternak</div>
               <p className="text-xs text-emerald-700">Cilacap Makmur BAZNAS</p>
@@ -163,9 +161,6 @@ export default function Landing() {
                 Login
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <a href="#profil" className="px-6 py-3 rounded-xl bg-white/70 border border-emerald-100 text-emerald-800 font-semibold hover:bg-white transition">
-                Lihat Profil Program
-              </a>
             </div>
           </div>
           <div className="relative">
@@ -201,109 +196,13 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Bagian 1: PROFIL RUKUN TERNAK */}
-        <section id="profil" className="mt-16 bg-white/80 border border-emerald-100 rounded-3xl shadow-lg p-8 space-y-4">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold">📌</div>
-            <div>
-              <h2 className="text-3xl font-bold">PROFIL RUKUN TERNAK</h2>
-            </div>
-          </div>
-          <p className="text-gray-700 leading-relaxed text-lg">
-            RUKUN TERNAK adalah Sub Program Cilacap Makmur BAZNAS Kabupaten Cilacap yang bertujuan memberdayakan masyarakat mustahik melalui bantuan dan pendampingan dalam usaha peternakan domba. Program ini berfokus pada peningkatan kemandirian ekonomi masyarakat, pelatihan intensif, dan pembangunan berkelanjutan, termasuk potensi pengembangan produk olahan ternak.
-          </p>
-        </section>
-
-        {/* Bagian 2: TUJUAN UTAMA */}
-        <section id="tujuan" className="mt-16 bg-white/80 border border-sky-100 rounded-3xl shadow-lg p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-sky-600 text-white flex items-center justify-center text-xl font-bold">🎯</div>
-            <h2 className="text-3xl font-bold">TUJUAN UTAMA</h2>
-          </div>
-          <div className="space-y-4">
-            {[
-              {
-                title: 'Pemberdayaan ekonomi',
-                desc: 'Membantu mustahik (penerima zakat) agar mandiri secara ekonomi melalui usaha peternakan.'
-              },
-              {
-                title: 'Peningkatan keterampilan',
-                desc: 'Memberikan pelatihan dan pendampingan intensif agar penerima dapat mengelola ternak secara mandiri dan berkelanjutan.'
-              },
-              {
-                title: 'Ketahanan pangan',
-                desc: 'Mendukung ketahanan pangan masyarakat dan daerah melalui pengembangan sektor peternakan.'
-              }
-            ].map((item, idx) => (
-              <div key={idx} className="flex gap-4 items-start">
-                <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center flex-shrink-0 font-bold text-sm">✓</div>
-                <div>
-                  <p className="font-semibold text-gray-900 mb-1">{item.title}</p>
-                  <p className="text-gray-700 leading-relaxed">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Bagian 3: BENTUK KEGIATAN */}
-        <section id="kegiatan" className="mt-16">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl font-bold">📋</div>
-            <div>
-              <h2 className="text-3xl font-bold">BENTUK KEGIATAN</h2>
-              <p className="text-gray-600 mt-1">Pendampingan menyeluruh dari persiapan hingga pengembangan berkelanjutan</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            {[
-              {
-                title: 'Penyaluran bantuan',
-                icon: <Zap className="w-5 h-5" />,
-                desc: 'Bantuan ternak domba diberikan kepada kelompok masyarakat yang membutuhkan. Bantuan mencakup domba betina, jantan, obat-obatan, material kandang, serta pendampingan.'
-              },
-              {
-                title: 'Pendampingan dan pelatihan',
-                icon: <HeartPulse className="w-5 h-5" />,
-                desc: 'Penerima mendapatkan pendampingan mulai dari pengelolaan HMT (Hijauan Makan Ternak), kandang, kesehatan ternak, hingga penjualan untuk meningkatkan pengetahuan dan keterampilan.'
-              },
-              {
-                title: 'Pengembangan potensi',
-                icon: <BarChart3 className="w-5 h-5" />,
-                desc: 'Program direncanakan untuk mengembangkan potensi lain seperti ternak kambing dan sapi, serta produk olahan ternak.'
-              },
-              {
-                title: 'Sinergi lintas sektor',
-                icon: <ShieldCheck className="w-5 h-5" />,
-                desc: 'Melibatkan berbagai pihak seperti PT S2P PLTU Cilacap, Perhutani, dan Bank Syariah Indonesia untuk mendukung program.'
-              },
-              {
-                title: 'Fasilitas kesehatan hewan',
-                icon: <Heart className="w-5 h-5" />,
-                desc: 'Menyediakan pelayanan kesehatan ternak secara terjadwal guna memastikan kesehatan dan kesejahteraan hewan.'
-              },
-              {
-                title: 'Fasilitas Rukun Ternak',
-                icon: <Activity className="w-5 h-5" />,
-                desc: 'Menyediakan sarana pendukung berupa ruang untuk mengembangkan dan meningkatkan kemampuan setiap kelompok mustahik.'
-              }
-            ].map((item, idx) => (
-              <div key={idx} className="bg-white rounded-2xl border border-indigo-100 shadow-md p-6 hover:shadow-lg hover:-translate-y-0.5 transition">
-                <div className="flex items-start gap-4">
-                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex-shrink-0 mt-0.5">
-                    {item.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                    <p className="text-gray-700 leading-relaxed">{item.desc}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Banner Slider Section */}
+        <section className="mt-16 mb-16">
+          <BannerSlider />
         </section>
 
         {/* Berita di bagian paling bawah */}
+        <LandingMapSection />
         <LandingBeritaSection berita={berita} loading={loadingBerita} />
       </main>
     </div>

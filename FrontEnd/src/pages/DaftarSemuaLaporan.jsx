@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getReports } from '../services/reportService';
 import client from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { Filter, FileText } from 'lucide-react';
@@ -20,10 +19,15 @@ export default function DaftarSemuaLaporan() {
   useEffect(() => {
     let mounted = true;
     async function load() {
-      const data = await getReports();
-      if (mounted) {
-        setReports(data);
-        setFilteredReports(data);
+      try {
+        const res = await client.get('/api/laporan');
+        const data = res.data?.data || [];
+        if (mounted) {
+          setReports(data);
+          setFilteredReports(data);
+        }
+      } catch (err) {
+        console.warn('Failed to load laporan', err);
       }
     }
     load();

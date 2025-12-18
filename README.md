@@ -2,6 +2,26 @@
 
 Aplikasi web manajemen laporan budidaya ternak (domba) berbasis React + Express.js + PostgreSQL dengan autentikasi JWT dan role-based access control.
 
+## ✨ NEW: Professional Banner Management System
+
+Kami telah mengimplementasikan **Admin Dashboard untuk Banner Management** yang professional! 🎉
+
+**Features:**
+- 📊 Professional CMS-like admin interface
+- 🖼️ Responsive banner gallery dengan 16:9 aspect ratio
+- 📱 Mobile-friendly responsive design
+- 🔄 Full CRUD operations (Create, Read, Update, Delete)
+- ✅ Smart image URL handling & fallbacks
+- 🎯 Admin access control & role protection
+
+**Documentation:**
+- [BANNER_FINAL_STATUS.md](./BANNER_FINAL_STATUS.md) - Final implementation report
+- [BANNER_IMAGE_FIX_DEBUG.md](./BANNER_IMAGE_FIX_DEBUG.md) - Image display fixes
+- [BANNER_MANAGEMENT_CHECKLIST.md](./BANNER_MANAGEMENT_CHECKLIST.md) - Testing checklist
+- [BANNER_UI_IMPROVEMENTS.md](./BANNER_UI_IMPROVEMENTS.md) - UI design details
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -27,7 +47,44 @@ cd "FrontEnd"
 npm install
 npm start
 ```
-App runs on `http://localhost:3000`
+App runs on `http://localhost:3001`
+
+---
+
+## 📚 DOKUMENTASI
+
+Untuk setup, development, dan deployment lengkap, lihat dokumentasi:
+
+1. **[DOCS_INDEX.md](./DOCS_INDEX.md)** ⭐ **START HERE**
+   - Index lengkap semua dokumentasi
+   - Panduan memilih doc yang tepat
+   - Quick links
+
+2. **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** 🚀
+   - Step-by-step setup instructions
+   - Database configuration
+   - Troubleshooting
+
+3. **[BANNER_SYSTEM_DOCS.md](./BANNER_SYSTEM_DOCS.md)** 📖
+   - Technical documentation
+   - API endpoints
+   - Architecture details
+
+4. **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** ⚡
+   - Quick commands & tips
+   - Testing checklist
+   - Common errors
+
+5. **[REFACTOR_SUMMARY.md](./REFACTOR_SUMMARY.md)** 📝
+   - Detailed changelog
+   - What's new
+   - Implementation details
+
+6. **[FINAL_CHECKLIST.md](./FINAL_CHECKLIST.md)** ✅
+   - Project completion status
+   - Verification results
+
+---
 
 ## 📋 Test Accounts
 

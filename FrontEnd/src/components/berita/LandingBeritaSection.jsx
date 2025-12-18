@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar } from 'lucide-react';
+import { getBeritaDisplayDate } from '../../utils/dateFormatter';
 
 export default function LandingBeritaSection({ berita, loading }) {
   const [imageErrors, setImageErrors] = useState({});
@@ -68,15 +69,7 @@ export default function LandingBeritaSection({ berita, loading }) {
                   {/* Timestamp */}
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Calendar className="w-4 h-4" />
-                    <span>
-                      {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
+                    <span>{getBeritaDisplayDate(item)}</span>
                   </div>
                 </div>
               </div>

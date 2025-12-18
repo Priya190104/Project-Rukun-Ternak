@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { createReport } from '../services/reportService';
 import { ArrowRight, Heart, Skull, Gift, BarChart3, ArrowLeft } from 'lucide-react';
+import client from '../api/client';
 
 const JENIS_LAPORAN = [
   { 
@@ -36,6 +38,7 @@ const JENIS_LAPORAN = [
 
 export default function ClientPilihJenisLaporan() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState('pilih'); // 'pilih', 'budidaya-kategori', atau 'form'
   const [selectedJenis, setSelectedJenis] = useState(null);
   const [selectedSubJenis, setSelectedSubJenis] = useState(null); // For Penjualan sub-types
@@ -43,6 +46,23 @@ export default function ClientPilihJenisLaporan() {
   const [form, setForm] = useState({ tanggal: '', data: {} });
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [kelompokData, setKelompokData] = useState(null);
+
+  // Fetch kelompok data for header display
+  useEffect(() => {
+    if (user && user.kelompok_id) {
+      (async () => {
+        try {
+          const res = await client.get(`/api/kelompok/${user.kelompok_id}`);
+          if (res.data?.success) {
+            setKelompokData(res.data.data);
+          }
+        } catch (err) {
+          console.error('Failed to fetch kelompok data:', err);
+        }
+      })();
+    }
+  }, [user]);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -94,6 +114,34 @@ export default function ClientPilihJenisLaporan() {
     if (selectedDate > today) {
       showNotification('error', 'Tanggal tidak boleh melampaui hari ini');
       return false;
+    }
+
+    // Validate required fields for Kelahiran
+    if (selectedJenis === 'Kelahiran') {
+      const requiredFields = ['nama_anggota', 'register', 'id', 'jenis_kelamin', 'warna', 'ras', 'induk', 'pejantan', 'bobot'];
+      for (const field of requiredFields) {
+        if (!form.data[field] || form.data[field].toString().trim() === '') {
+          const fieldLabels = {
+            nama_anggota: 'Nama Anggota',
+            register: 'Register',
+            id: 'ID',
+            jenis_kelamin: 'Jenis Kelamin',
+            warna: 'Warna',
+            ras: 'Ras',
+            induk: 'Induk',
+            pejantan: 'Pejantan',
+            bobot: 'Bobot'
+          };
+          showNotification('error', `${fieldLabels[field]} wajib diisi`);
+          return false;
+        }
+      }
+      
+      // Validate bobot is a positive number
+      if (isNaN(parseFloat(form.data.bobot)) || parseFloat(form.data.bobot) <= 0) {
+        showNotification('error', 'Bobot harus berupa angka positif');
+        return false;
+      }
     }
     
     return true;
@@ -354,46 +402,74 @@ export default function ClientPilihJenisLaporan() {
             {/* Form Kelahiran */}
             {selectedJenis === 'Kelahiran' && (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Header Information */}
+                {kelompokData && (
+                  <div className="bg-emerald-50 border-2 border-emerald-200 rounded-lg p-4 sm:p-6 mb-6">
+                    <h3 className="text-lg font-semibold text-emerald-900 mb-4">Informasi Kelompok</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-emerald-700 font-medium">Nama Kelompok</p>
+                        <p className="text-gray-900 font-semibold mt-1">{kelompokData.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-emerald-700 font-medium">Alamat</p>
+                        <p className="text-gray-900 font-semibold mt-1">{kelompokData.desa || kelompokData.kecamatan || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-emerald-700 font-medium">Ketua Kelompok</p>
+                        <p className="text-gray-900 font-semibold mt-1">{kelompokData.pic1_nama || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Catatan Kelahiran Fields */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Catatan Kelahiran</h3>
+                </div>
+
+                {/* Row 1: Nama Anggota, Register, ID */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nomor Indukan *</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Anggota *</label>
                     <input
                       type="text"
-                      name="nomor_indukan"
-                      value={form.data.nomor_indukan || ''}
+                      name="nama_anggota"
+                      value={form.data.nama_anggota || ''}
                       onChange={handleChange}
-                      placeholder="Nomor indukan"
+                      placeholder="Nama anggota"
                       required
                       className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nomor Pejantan *</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Register *</label>
                     <input
                       type="text"
-                      name="nomor_pejantan"
-                      value={form.data.nomor_pejantan || ''}
+                      name="register"
+                      value={form.data.register || ''}
                       onChange={handleChange}
-                      placeholder="Nomor pejantan"
+                      placeholder="Register"
+                      required
+                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">ID *</label>
+                    <input
+                      type="text"
+                      name="id"
+                      value={form.data.id || ''}
+                      onChange={handleChange}
+                      placeholder="ID"
                       required
                       className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nomor Kelahiran (ID Anak) *</label>
-                    <input
-                      type="text"
-                      name="nomor_kelahiran"
-                      value={form.data.nomor_kelahiran || ''}
-                      onChange={handleChange}
-                      placeholder="ID anak"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
+                {/* Row 2: Jenis Kelamin, Warna, Ras */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Jenis Kelamin *</label>
                     <select
@@ -403,54 +479,76 @@ export default function ClientPilihJenisLaporan() {
                       required
                       className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
                     >
-                      <option value="">Pilih jenis kelamin</option>
+                      <option value="">Pilih</option>
                       <option value="Jantan">Jantan</option>
                       <option value="Betina">Betina</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Warna *</label>
+                    <input
+                      type="text"
+                      name="warna"
+                      value={form.data.warna || ''}
+                      onChange={handleChange}
+                      placeholder="Warna"
+                      required
+                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Ras *</label>
+                    <input
+                      type="text"
+                      name="ras"
+                      value={form.data.ras || ''}
+                      onChange={handleChange}
+                      placeholder="Ras"
+                      required
+                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Row 3: Induk, Pejantan, Bobot */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Bobot Lahir (kg) *</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Induk *</label>
+                    <input
+                      type="text"
+                      name="induk"
+                      value={form.data.induk || ''}
+                      onChange={handleChange}
+                      placeholder="Induk"
+                      required
+                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Pejantan *</label>
+                    <input
+                      type="text"
+                      name="pejantan"
+                      value={form.data.pejantan || ''}
+                      onChange={handleChange}
+                      placeholder="Pejantan"
+                      required
+                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Bobot (kg) *</label>
                     <input
                       type="number"
                       step="0.1"
-                      name="bobot_lahir"
-                      value={form.data.bobot_lahir || ''}
+                      name="bobot"
+                      value={form.data.bobot || ''}
                       onChange={handleChange}
                       placeholder="Bobot"
                       required
                       className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Kondisi Saat Lahir *</label>
-                    <select
-                      name="kondisi_lahir"
-                      value={form.data.kondisi_lahir || ''}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    >
-                      <option value="">Pilih kondisi</option>
-                      <option value="Sehat">Sehat</option>
-                      <option value="Cacat">Cacat</option>
-                      <option value="Lemah">Lemah</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Catatan Tambahan</label>
-                  <textarea
-                    name="catatan"
-                    value={form.data.catatan || ''}
-                    onChange={handleChange}
-                    placeholder="Catatan tambahan..."
-                    rows={3}
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none resize-none"
-                  />
                 </div>
               </>
             )}

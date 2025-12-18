@@ -23,11 +23,12 @@ export const fetchBeritaById = async (id) => {
 };
 
 // Create berita
-export const createBerita = async (caption, imageFile) => {
+export const createBerita = async (caption, imageFile, publishedAt) => {
   try {
     const form = new FormData();
     form.append('caption', caption);
     form.append('image', imageFile);
+    form.append('publishedAt', publishedAt);
     const response = await client.post('/api/berita', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
@@ -39,11 +40,12 @@ export const createBerita = async (caption, imageFile) => {
 };
 
 // Update berita
-export const updateBerita = async (id, caption, imageFileOptional) => {
+export const updateBerita = async (id, caption, imageFileOptional, publishedAt) => {
   try {
     const form = new FormData();
     form.append('caption', caption);
     if (imageFileOptional) form.append('image', imageFileOptional);
+    form.append('publishedAt', publishedAt);
     const response = await client.put(`/api/berita/${id}`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });

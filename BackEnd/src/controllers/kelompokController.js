@@ -23,6 +23,39 @@ async function getKelompok(req, res) {
   }
 }
 
+async function getKelompokById(req, res) {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ success: false, message: 'ID kelompok tidak valid' });
+    }
+
+    const { rows } = await db.query(`
+      SELECT k.id, k.name, k.email, k.kecamatan, k.desa, k.catatan,
+             k.latitude, k.longitude,
+             k.pic1_nik, k.pic1_nama, k.pic1_alamat, k.pic1_no_hp, k.pic1_email,
+             k.pic2_nik, k.pic2_nama, k.pic2_alamat, k.pic2_no_hp, k.pic2_email,
+             COUNT(u.id)::int as anggota_count 
+      FROM kelompok k 
+      LEFT JOIN users u ON u.kelompok_id = k.id 
+      WHERE k.id = $1
+      GROUP BY k.id, k.name, k.email, k.kecamatan, k.desa, k.catatan,
+               k.latitude, k.longitude,
+               k.pic1_nik, k.pic1_nama, k.pic1_alamat, k.pic1_no_hp, k.pic1_email,
+               k.pic2_nik, k.pic2_nama, k.pic2_alamat, k.pic2_no_hp, k.pic2_email
+    `, [id]);
+
+    if (!rows[0]) {
+      return res.status(404).json({ success: false, message: 'Kelompok tidak ditemukan' });
+    }
+
+    return res.json({ success: true, data: rows[0] });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
+
 async function createKelompok(req, res) {
   try {
     if (!req.user || req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Forbidden' });
@@ -88,4 +121,4 @@ async function deleteKelompok(req, res) {
   }
 }
 
-module.exports = { getKelompok, createKelompok, updateKelompok, deleteKelompok };
+module.exports = { getKelompok, getKelompokById, createKelompok, updateKelompok, deleteKelompok };

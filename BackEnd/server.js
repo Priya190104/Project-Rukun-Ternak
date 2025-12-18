@@ -19,6 +19,7 @@ app.use('/api/notifikasi', require('./src/routes/notifikasi'));
 app.use('/api/stats', require('./src/routes/stats'));
 app.use('/api/public', require('./src/routes/public'));
 app.use('/api/berita', require('./src/routes/berita'));
+app.use('/api/banners', require('./src/routes/banners'));
 
 app.get('/api/health', (req, res) => res.json({ success: true, data: 'ok' }));
 

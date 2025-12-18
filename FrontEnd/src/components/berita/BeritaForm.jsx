@@ -3,7 +3,7 @@ import { Upload, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function BeritaForm({ onSubmit, loading, initialData = null, isEditing = false }) {
   const [caption, setCaption] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [publishedAt, setPublishedAt] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [errors, setErrors] = useState({});
@@ -12,8 +12,13 @@ export default function BeritaForm({ onSubmit, loading, initialData = null, isEd
   useEffect(() => {
     if (initialData) {
       setCaption(initialData.caption || '');
-      setImageUrl(initialData.imageUrl || '');
-        setImagePreview(initialData.imageUrl || '');
+      setImagePreview(initialData.imageUrl || '');
+      if (initialData.publishedAt) {
+        // Convert ISO datetime to datetime-local format (YYYY-MM-DDTHH:mm)
+        const date = new Date(initialData.publishedAt);
+        const localString = date.toISOString().slice(0, 16);
+        setPublishedAt(localString);
+      }
     }
   }, [initialData]);
 
@@ -36,11 +41,13 @@ export default function BeritaForm({ onSubmit, loading, initialData = null, isEd
       newErrors.caption = 'Isi berita tidak boleh kosong';
     }
 
+    if (!publishedAt) {
+      newErrors.publishedAt = 'Tanggal & waktu publikasi wajib diisi';
+    }
+
     if (!imageFile && !isEditing) {
       newErrors.image = 'Gambar tidak boleh kosong';
     }
-
-    // Optional: we could check file.size if needed
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -58,11 +65,12 @@ export default function BeritaForm({ onSubmit, loading, initialData = null, isEd
       await onSubmit({
         caption: caption.trim(),
         imageFile,
+        publishedAt,
       });
       setSuccess(true);
       if (!isEditing) {
         setCaption('');
-        setImageUrl('');
+        setPublishedAt('');
         setImageFile(null);
         setImagePreview('');
       }
@@ -153,6 +161,26 @@ export default function BeritaForm({ onSubmit, loading, initialData = null, isEd
               {errors.caption}
             </p>
           )}
+        </div>
+
+        {/* Tanggal & Waktu Publikasi */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Tanggal & Waktu Publikasi <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="datetime-local"
+            value={publishedAt}
+            onChange={(e) => setPublishedAt(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
+          />
+          {errors.publishedAt && (
+            <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {errors.publishedAt}
+            </p>
+          )}
+          <p className="text-gray-500 text-xs mt-1">Format: DD/MM/YYYY HH:mm (Zona Waktu: WIB)</p>
         </div>
 
         {/* Submit Button */}

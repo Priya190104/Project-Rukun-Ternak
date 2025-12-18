@@ -2,40 +2,66 @@ const db = require('../db');
 
 async function getLaporan(req, res) {
   try {
+    const jenis = req.query.jenis ? String(req.query.jenis).toLowerCase() : null;
+    
     // Admin: lihat semua laporan
     if (req.user.role === 'admin') {
-      const { rows } = await db.query(`
-        SELECT l.*, u.username, u.full_name, k.name as kelompok_name 
+      let query = `
+        SELECT l.*, u.username, u.full_name, k.name as kelompok_name, k.kecamatan, k.desa 
         FROM laporan l 
         LEFT JOIN users u ON l.user_id = u.id 
         LEFT JOIN kelompok k ON l.kelompok_id = k.id 
-        ORDER BY l.tanggal DESC
-      `);
+      `;
+      let params = [];
+      
+      if (jenis) {
+        query += `WHERE LOWER(l.jenis) = $1 `;
+        params.push(jenis);
+      }
+      
+      query += `ORDER BY l.tanggal DESC`;
+      const { rows } = await db.query(query, params);
       return res.json({ success: true, data: rows });
     }
 
     // Client: hanya lihat laporan milik sendiri (by user_id)
     if (req.user.role === 'client') {
-      const { rows } = await db.query(`
+      let query = `
         SELECT l.*, u.username, u.full_name 
         FROM laporan l 
         LEFT JOIN users u ON l.user_id = u.id 
         WHERE l.user_id=$1 
-        ORDER BY l.tanggal DESC
-      `, [req.user.id]);
+      `;
+      let params = [req.user.id];
+      
+      if (jenis) {
+        query += `AND LOWER(l.jenis) = $2 `;
+        params.push(jenis);
+      }
+      
+      query += `ORDER BY l.tanggal DESC`;
+      const { rows } = await db.query(query, params);
       return res.json({ success: true, data: rows });
     }
 
     // Kelompok: lihat laporan kelompok tersebut (by kelompok_id)
     if (req.user.role === 'kelompok' && req.user.kelompok_id) {
-      const { rows } = await db.query(`
-        SELECT l.*, u.username, u.full_name, k.name as kelompok_name 
+      let query = `
+        SELECT l.*, u.username, u.full_name, k.name as kelompok_name, k.kecamatan, k.desa 
         FROM laporan l 
         LEFT JOIN users u ON l.user_id = u.id 
         LEFT JOIN kelompok k ON l.kelompok_id = k.id 
         WHERE l.kelompok_id=$1 
-        ORDER BY l.tanggal DESC
-      `, [req.user.kelompok_id]);
+      `;
+      let params = [req.user.kelompok_id];
+      
+      if (jenis) {
+        query += `AND LOWER(l.jenis) = $2 `;
+        params.push(jenis);
+      }
+      
+      query += `ORDER BY l.tanggal DESC`;
+      const { rows } = await db.query(query, params);
       return res.json({ success: true, data: rows });
     }
 

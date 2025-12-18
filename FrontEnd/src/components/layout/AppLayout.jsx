@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import AppLogo from '../branding/AppLogo';
 import NotificationBell from '../notification/NotificationBell';
 import KelompokBadge from '../kelompok/KelompokBadge';
 import { useAuth } from '../../hooks/useAuth';
-import { Menu, X, LogOut, Home, FileText, Users, BarChart3, User } from 'lucide-react';
+import { Menu, X, LogOut, Home, FileText, Users, BarChart3, User, Image as ImageIcon } from 'lucide-react';
 
 export default function AppLayout({ children }) {
   const { user, appRole, logout, isAdmin } = useAuth();
@@ -23,6 +24,7 @@ export default function AppLayout({ children }) {
     { key: 'analisis', label: 'Analisis', to: '/analisis', icon: BarChart3 },
     { key: 'pengguna', label: 'Pengguna', to: '/kelola-user', icon: User },
     { key: 'berita', label: 'Kelola Berita', to: '/kelola-berita', icon: FileText },
+    { key: 'banner', label: 'Manajemen Banner', to: '/admin/banner', icon: ImageIcon },
   ];
 
   const kelompokMenu = [
@@ -39,10 +41,9 @@ export default function AppLayout({ children }) {
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:relative w-64 h-screen bg-white border-r border-gray-200 z-40 transition-transform duration-300 flex flex-col`}>
         {/* Logo Section */}
-        <div className="bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 p-6 text-white">
-          <Link to="/" className="font-bold text-2xl flex items-center gap-3 hover:opacity-90 transition">
-            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center text-xl font-bold backdrop-blur-sm">RT</div>
-            <span>Rukun Ternak</span>
+        <div className="bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 py-1 px-6 text-white flex items-center justify-center">
+          <Link to="/" className="hover:opacity-90 transition">
+            <AppLogo size="3xl" variant="icon" />
           </Link>
         </div>
 

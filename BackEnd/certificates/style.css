@@ -1,0 +1,396 @@
+/* ==========================================
+   SERTIFIKAT KELAHIRAN TERNAK - STYLESHEET
+   A4 Landscape 297mm x 210mm
+   OPTIMIZED FOR PDF RENDERING VIA PUPPETEER
+=========================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
+    color: #1a1a1a;
+}
+
+body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* ==========================================
+   MAIN CERTIFICATE WRAPPER
+   A4 Landscape dengan struktur positioning untuk background
+=========================================== */
+
+.certificate-wrapper {
+    position: relative;
+    width: 297mm;
+    height: 210mm;
+    margin: 0;
+    padding: 0;
+    background: white;
+}
+
+/* ==========================================
+   BACKGROUND LAYER (Full page)
+   Menggunakan position absolute agar tidak menggangu flow
+=========================================== */
+
+.certificate-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ==========================================
+   CONTENT LAYER (All content on top of background)
+=========================================== */
+
+.certificate-content {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+    height: 100%;
+    padding: 25px 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================
+   HEADER SECTION - CENTERED
+=========================================== */
+
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 15px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.header-center {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.header-left {
+    flex: 1;
+    text-align: left;
+}
+
+.program-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #1a1a1a;
+    line-height: 1.2;
+    margin-bottom: 0;
+    letter-spacing: 0.3px;
+}
+
+.program-subtitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.2;
+}
+
+.header-right {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.logo {
+    width: 80px;
+    height: auto;
+    display: block;
+}
+
+/* ==========================================
+   SECTION TITLE (CATATAN KELAHIRAN TERNAK)
+=========================================== */
+
+.section-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #1a1a1a;
+    margin: 10px 0 15px 0;
+    letter-spacing: 0.5px;
+    text-transform: capitalize;
+    flex-shrink: 0;
+}
+
+/* ==========================================
+   HEADER INFO SECTION (Kelompok & Peternak)
+=========================================== */
+
+.header-info {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 20px;
+    padding-top: 5px;
+    padding-bottom: 12px;
+}
+
+.header-column {
+    display: grid;
+    grid-template-columns: 140px auto 1fr;
+    gap: 0;
+    row-gap: 5px;
+    width: fit-content;
+}
+
+.data-item.header-item {
+    display: contents;
+}
+
+/* ==========================================
+   DATA SECTION - 2 COLUMNS LAYOUT
+=========================================== */
+
+.data-wrapper {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    margin-top: 5px;
+    padding-left: 40px;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    max-width: none;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.column {
+    display: grid;
+    grid-template-columns: 140px auto 1fr;
+    gap: 0;
+    width: 100%;
+    row-gap: 5px;
+}
+
+.data-item {
+    display: contents;
+}
+
+.data-item.top-items {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: 140px auto 1fr;
+    gap: 0;
+    margin-bottom: 8px;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+    justify-self: center;
+}
+
+.data-item.left-items {
+    margin-bottom: 0;
+}
+
+.label {
+    width: 140px;
+    font-weight: 600;
+    color: #333;
+    text-align: left;
+    flex-shrink: 0;
+    font-size: 12px;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.label::after {
+    content: "";
+}
+
+.colon {
+    font-weight: 600;
+    color: #333;
+    font-size: 19px;
+    line-height: 1.6;
+    text-align: center;
+    width: auto;
+    min-width: 15px;
+}
+
+.value {
+    color: #1a1a1a;
+    word-break: break-word;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 1.6em;
+    padding-left: 8px;
+}
+
+/* ==========================================
+   FOOTER SECTION
+=========================================== */
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+    min-height: 65px;
+    flex-shrink: 0;
+    margin-top: auto;
+}
+
+.footer-left {
+    text-align: left;
+}
+
+.tanggal-text {
+    font-size: 15px;
+    color: #333;
+    font-weight: 1000;
+}
+
+.footer-right {
+    display: flex;
+    gap: 45px;
+    align-items: flex-end;
+}
+
+.stamp-box,
+.signature-box {
+    text-align: center;
+    min-width: 60px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ==========================================
+   FOOTER BACKGROUND (Full width at bottom)
+=========================================== */
+
+.footer-background {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.footer-bg-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.stempel {
+    width: 55px;
+    height: auto;
+    display: block;
+}
+
+.signature {
+    width: 65px;
+    height: auto;
+    display: block;
+}
+
+/* ==========================================
+   TERNAK IMAGES (Decorative - Left and Right Bottom)
+=========================================== */
+
+.ternak-left {
+    position: absolute;
+    left: 35px;
+    bottom: 20px;
+    width: 200px;
+    height: auto;
+    z-index: 3;
+    pointer-events: none;
+}
+.ternak-left.mirror {
+    transform: scaleX(-1);
+    transform-origin: center;
+}
+.ternak-right {
+    position: absolute;
+    right: 35px;
+    bottom: 0px;
+    width: 200px;
+    height: auto;
+    z-index: 3;
+    pointer-events: none;
+}
+.ternak-right.mirror {
+    transform: scaleX(-1);
+    transform-origin: center;
+}
+.lamb {
+    position: absolute;
+    right: 35px;
+    bottom: 35px;
+    width: 100px;
+    height: auto;
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* ==========================================
+   PRINT OPTIMIZATION
+=========================================== */
+
+@media print {
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        -webkit-filter: none !important;
+        filter: none !important;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .certificate-wrapper {
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        page-break-after: always;
+    }
+
+    .certificate-background,
+    .certificate-content {
+        break-inside: avoid;
+    }
+}

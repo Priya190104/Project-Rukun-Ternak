@@ -1,7 +1,7 @@
 import React from 'react';
-import { User, LogOut } from 'lucide-react';
+import { User } from 'lucide-react';
 
-export default function UserCard({ user, appRole, onLogout }) {
+export default function UserCard({ user, appRole }) {
   return (
     <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-3 shadow-sm">
       <div className="flex items-start gap-3">

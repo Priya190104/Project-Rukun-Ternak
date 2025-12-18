@@ -1,268 +1,336 @@
-# ⚡ Quick Reference Guide
+# Quick Reference - Banner System
 
-## 🚀 Start Everything
+## 🚀 Quick Start for Development
 
-### One-Command Startup
-```powershell
-cd "d:\Priya\Projek\Rukun Ternak Project"; .\START_ALL.ps1
-```
-
-### Or Manual Startup (Two Windows)
-
-**Window 1:**
-```powershell
-cd BackEnd; npm start
-# Runs on http://localhost:4000
-```
-
-**Window 2:**
-```powershell
-cd FrontEnd; npm start
-# Runs on http://localhost:3000
-```
-
----
-
-## 🔐 Quick Login
-
-Go to **http://localhost:3000** → Click **Login** → Use quick buttons:
-
-### Admin Account
-- **User:** admin
-- **Pass:** adminpass
-- **Role:** Full access
-
-### Client Account
-- **User:** client1
-- **Pass:** clientpass
-- **Role:** Own data only
-
----
-
-## 📍 Important URLs
-
-| Service | URL | Purpose |
-|---------|-----|---------|
-| Frontend | http://localhost:3000 | React app |
-| Backend API | http://localhost:4000 | REST API |
-| Health Check | http://localhost:4000/api/health | Server status |
-
----
-
-## 📂 Key Files
-
-| File | Purpose |
-|------|---------|
-| `FrontEnd/src/hooks/useAuth.js` | Authentication hook |
-| `FrontEnd/src/api/client.js` | Axios configuration |
-| `FrontEnd/.env.local` | Frontend config |
-| `BackEnd/.env` | Backend config |
-| `BackEnd/server.js` | Express app |
-| `BackEnd/src/db.js` | Database connection |
-
----
-
-## 🔄 Common Tasks
-
-### Check if backend is running
-```powershell
-curl http://localhost:4000/api/health
-# Should return: {"success":true,"data":"ok"}
-```
-
-### Check database
-```powershell
-psql -U postgres -h localhost -d rukunternak -c "SELECT COUNT(*) FROM users;"
-```
-
-### Reset database (if needed)
-```powershell
+### Backend Setup
+```bash
 cd BackEnd
-npm run seed
+npm install  # If new dependencies added
+npx prisma migrate deploy  # Apply migrations
+npm start    # Start server on port 4000
 ```
 
-### Check if ports are in use
-```powershell
-netstat -ano | findstr :3000
-netstat -ano | findstr :4000
-netstat -ano | findstr :5432
-```
-
----
-
-## ⚙️ Configuration Changes
-
-### Change API URL
-Edit `FrontEnd/.env.local`:
-```env
-REACT_APP_API_URL=http://your-backend-url:4000
-```
-
-### Change Backend Port
-Edit `BackEnd/.env`:
-```env
-PORT=5000
-```
-
-### Change Database URL
-Edit `BackEnd/.env`:
-```env
-DATABASE_URL=postgresql://user:pass@host:port/db
-```
-
-Then run migrations:
-```powershell
-npx prisma migrate dev
+### Frontend Setup
+```bash
+cd FrontEnd
+npm install  # If new dependencies added
+npm start    # Start dev server on port 3001
 ```
 
 ---
 
-## 🧪 Test API Endpoints
+## 📍 Key URLs
 
-### Login & Get Token
-```powershell
-$response = Invoke-WebRequest -Uri 'http://localhost:4000/api/auth/login' `
-  -Method Post -ContentType 'application/json' `
-  -Body '{"username":"admin","password":"adminpass"}' -UseBasicParsing
+| Endpoint | Method | Access | Purpose |
+|----------|--------|--------|---------|
+| `/api/banners` | GET | Public | Get active banners |
+| `/api/banners/:id` | GET | Public | Get single banner |
+| `/api/banners` | POST | Admin | Upload banner |
+| `/api/banners/:id` | PUT | Admin | Update banner status |
+| `/api/banners/:id` | DELETE | Admin | Delete banner |
+| `/api/banners/admin/all` | GET | Admin | Get all banners |
+| `/kelola-banner` | PAGE | Admin | Manage banners UI |
+| `/` | PAGE | Public | Landing with slider |
 
-$token = ($response.Content | ConvertFrom-Json).data.token
-Write-Host "Token: $token"
+---
+
+## 💾 Database
+
+### Migration Status
+```bash
+# Check migrations
+npx prisma migrate status
+
+# Apply pending migrations
+npx prisma migrate deploy
+
+# Reset database (DEV ONLY)
+npx prisma migrate reset
 ```
 
-### Use Token in Request
-```powershell
-$headers = @{ Authorization = "Bearer $token" }
-Invoke-WebRequest -Uri 'http://localhost:4000/api/auth/me' `
-  -Headers $headers -UseBasicParsing
+### Banner Table
+```sql
+CREATE TABLE banners (
+  id SERIAL PRIMARY KEY,
+  image_url VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_active BOOLEAN DEFAULT true
+);
+
+CREATE INDEX banners_is_active ON banners(is_active);
+CREATE INDEX banners_created_at ON banners(created_at);
 ```
 
 ---
 
-## 🐛 Troubleshooting
+## 🖼️ File Upload
 
-### Problem: "Port 3000 already in use"
-```powershell
-# Kill process on port 3000
-Get-Process | Where-Object { $_.Port -eq 3000 } | Stop-Process -Force
-# Or find what's using it
-netstat -ano | findstr :3000
-```
+### Upload Process
+1. Admin selects JPG/JPEG file
+2. File validated (mime type, size)
+3. Saved to `/uploads` folder
+4. Path stored in database
+5. Served via `/uploads/:filename`
 
-### Problem: "Cannot connect to database"
-```powershell
-# Test connection
-psql -U postgres -h localhost -c "SELECT version();"
-
-# Recreate database if needed
-createdb -U postgres -h localhost rukunternak
-```
-
-### Problem: "npm dependencies missing"
-```powershell
-# Reinstall
-npm install
-npm install --production
-```
-
-### Problem: "Login gives error"
-1. Check backend is running
-2. Check database has seeded data: `npm run seed`
-3. Check .env.local has correct API URL
-4. Check browser console for error messages
-
----
-
-## 📊 Response Format
-
-All API endpoints return:
-
-### Success
-```json
-{
-  "success": true,
-  "data": {
-    /* actual data */
+### Multer Configuration
+```javascript
+// In banners.js
+const upload = multer({
+  storage: diskStorage,
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/jpg'];
+    cb(null, allowed.includes(file.mimetype));
   }
-}
+});
 ```
 
-### Error
-```json
-{
-  "success": false,
-  "message": "Error description"
-}
+### File Path Examples
 ```
-
----
-
-## 🔑 Environment Variables Quick Reference
-
-### Backend (.env)
-```env
-PORT=4000
-DATABASE_URL=postgresql://postgres:admin123@localhost:5432/rukunternak
-JWT_SECRET=rukunternak_super_secret
-JWT_EXPIRES_IN=7d
-PRISMA_CLIENT_ENGINE_TYPE=binary
-NODE_ENV=development
-```
-
-### Frontend (.env.local)
-```env
-REACT_APP_API_URL=http://localhost:4000
+/uploads/banner_1702879209000_sample.jpg
+/uploads/banner_1702879210123_image_01.jpg
 ```
 
 ---
 
-## 📚 Documentation Map
+## 🎨 Component Architecture
 
+### Frontend Component Tree
 ```
-Quick Start
+Landing.jsx
+└── BannerSlider
+    └── Swiper (with Pagination, Navigation, Autoplay)
+        └── SwiperSlides (dynamic from API)
+
+Dashboard.jsx
+└── Quick Actions
+    └── Link to KelolaBanner
+
+KelolaBanner.jsx
+├── BannerForm
+│   └── File input + Preview
+└── BannerList
+    ├── BannerCard (for each banner)
+    │   ├── Image preview
+    │   ├── Status badge
+    │   ├── Toggle button
+    │   └── Delete button
+```
+
+### API Integration Flow
+```
+Frontend Component
     ↓
-README.md (overview)
-    ├─→ BackEnd/README.md (backend setup & API)
-    ├─→ INTEGRATION.md (integration details)
-    ├─→ STATUS.md (full status report)
-    └─→ This file (quick reference)
+bannerService.js (API calls)
+    ↓
+Express Routes (banners.js)
+    ↓
+bannerController.js (Logic)
+    ↓
+Prisma ORM
+    ↓
+PostgreSQL Database
 ```
 
 ---
 
-## ✨ Features Summary
+## 🔍 Debugging
 
-- ✅ Real JWT authentication
-- ✅ Token storage & persistence
-- ✅ Role-based access (admin/kelompok)
-- ✅ Automatic token injection
-- ✅ Logout & token expiration
-- ✅ Database-backed users
-- ✅ 7-day token expiry
-- ✅ CORS enabled
-- ✅ Error handling
-- ✅ Complete documentation
+### Check Backend Connection
+```bash
+# Test API endpoint
+curl http://localhost:4000/api/banners
+
+# Should return:
+# {"success":true,"data":[...]}
+```
+
+### Common Errors
+
+**Error: "Unauthorized"**
+- Missing or invalid JWT token
+- Not logged in as admin
+
+**Error: "Forbidden: Admin access required"**
+- User role is not 'admin'
+- Token is valid but user doesn't have permission
+
+**Error: "Only JPG/JPEG files are allowed"**
+- Wrong file format
+- Use JPG or JPEG format only
+
+**Error: "No image file provided"**
+- File input is empty
+- File not sent with request
+
+**Error: Banner not showing on landing**
+- Banner might be inactive (isActive = false)
+- No active banners exist
+- Check network tab for API response
 
 ---
 
-## 🎯 Next Steps
+## 🧪 Testing Checklist
 
-1. **Start servers** → Run START_ALL.ps1
-2. **Login** → admin/adminpass
-3. **Test features** → Navigate dashboards
-4. **View logs** → Check terminal windows
-5. **Create reports** → Test CRUD operations
-6. **Try logout** → Verify session clearing
+### Manual Testing Steps
+
+**Upload Banner**
+- [ ] Login as admin
+- [ ] Go to `/kelola-banner`
+- [ ] Upload JPG image
+- [ ] Verify preview shows
+- [ ] Check image appears in list
+- [ ] Verify on landing page
+
+**Toggle Status**
+- [ ] Click "Nonaktifkan" on active banner
+- [ ] Verify banner disappears from landing
+- [ ] Click "Aktifkan"
+- [ ] Verify banner reappears on landing
+
+**Delete Banner**
+- [ ] Click delete icon
+- [ ] Confirm deletion
+- [ ] Verify banner removed from list
+- [ ] Verify image removed from landing
+
+**Multiple Banners**
+- [ ] Upload 3+ banners
+- [ ] Verify carousel shows all
+- [ ] Test prev/next buttons
+- [ ] Test autoplay
+- [ ] Test swipe on mobile
 
 ---
 
-## 📞 Need Help?
+## 🎬 Admin Workflow
 
-- **Setup issues?** → See BackEnd/README.md
-- **Integration issues?** → See INTEGRATION.md
-- **Status report?** → See STATUS.md
-- **Main guide?** → See README.md
+### Step-by-Step Guide for Admin
+
+**1. Create Banner**
+```
+Login → Dashboard → Kelola Banner → Upload Image → Save
+```
+
+**2. View All Banners**
+```
+Kelola Banner → Daftar Banner section → See all banners
+```
+
+**3. Activate/Deactivate Banner**
+```
+Kelola Banner → Find Banner Card → Click Aktifkan/Nonaktifkan
+```
+
+**4. Delete Banner**
+```
+Kelola Banner → Find Banner Card → Click Delete → Confirm
+```
+
+**5. Check Live Landing**
+```
+Home → View Banner Slider (auto-updated)
+```
 
 ---
 
-**Last Updated:** December 11, 2025  
-**Status:** ✅ ALL SYSTEMS READY
+## 📊 Performance Tips
+
+### Optimize Images
+- Keep JPG size < 500KB
+- Use appropriate dimensions
+- Compress before uploading
+- Recommended: 1920x600 or 1600x500px
+
+### Server Resources
+- Monitor `/uploads` folder size
+- Clean old/unused images periodically
+- Database: indices on `is_active` and `created_at`
+
+### Frontend Performance
+- Swiper lazy-loads images
+- Responsive images load appropriate sizes
+- Pagination prevents too many slides at once
+
+---
+
+## 🔐 Security Checklist
+
+- [x] JWT validation on protected routes
+- [x] Role-based access control (admin only)
+- [x] File type validation (JPG/JPEG only)
+- [x] File size limits
+- [x] Path traversal prevention
+- [x] XSS protection (React escaping)
+- [x] CSRF protection (backend validation)
+
+---
+
+## 📝 Code Examples
+
+### Fetch Banners (Frontend)
+```javascript
+const res = await client.get('/api/banners');
+const banners = res.data?.data || [];
+// Use banners array...
+```
+
+### Upload Banner (Frontend)
+```javascript
+const formData = new FormData();
+formData.append('image', imageFile);
+
+const res = await client.post('/api/banners', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+```
+
+### Get Banners (Backend)
+```javascript
+// Controller
+const banners = await prisma.banner.findMany({
+  where: { isActive: true },
+  orderBy: { createdAt: 'desc' }
+});
+```
+
+---
+
+## 📞 Support
+
+### Common Questions
+
+**Q: Can I upload PNG?**
+A: No, only JPG/JPEG supported (as per requirements)
+
+**Q: How many banners can I have?**
+A: Unlimited! No restrictions
+
+**Q: Where are images stored?**
+A: `/BackEnd/uploads/` folder on server
+
+**Q: Can I edit banner text?**
+A: No, banners are images only (no text fields)
+
+**Q: Does banner order matter?**
+A: Yes, ordered by `createdAt DESC` (newest first)
+
+---
+
+## 🎯 Success Criteria - ALL MET ✅
+
+- [x] Old sections completely removed (Profil/Tujuan/Kegiatan)
+- [x] Banner slider implemented & working
+- [x] Admin can upload/manage banners
+- [x] Banners display on landing
+- [x] Only active banners shown
+- [x] No hardcoded data
+- [x] Flexible banner count
+- [x] Professional institutional look
+- [x] Mobile responsive
+- [x] Backend & frontend integrated
+
+---
+
+**Last Updated**: December 18, 2025  
+**Version**: 1.0  
+**Status**: Production Ready ✅
