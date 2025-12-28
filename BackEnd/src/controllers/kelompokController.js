@@ -2,21 +2,42 @@ const db = require('../db');
 
 async function getKelompok(req, res) {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    // Get data with pagination
     const { rows } = await db.query(`
       SELECT k.id, k.name, k.email, k.kecamatan, k.desa, k.catatan,
              k.latitude, k.longitude,
-             k.pic1_nik, k.pic1_nama, k.pic1_alamat, k.pic1_no_hp, k.pic1_email,
-             k.pic2_nik, k.pic2_nama, k.pic2_alamat, k.pic2_no_hp, k.pic2_email,
+             k.pic1_nik, k.pic1_nama,
              COUNT(u.id)::int as anggota_count 
       FROM kelompok k 
       LEFT JOIN users u ON u.kelompok_id = k.id 
       GROUP BY k.id, k.name, k.email, k.kecamatan, k.desa, k.catatan,
                k.latitude, k.longitude,
-               k.pic1_nik, k.pic1_nama, k.pic1_alamat, k.pic1_no_hp, k.pic1_email,
-               k.pic2_nik, k.pic2_nama, k.pic2_alamat, k.pic2_no_hp, k.pic2_email
+               k.pic1_nik, k.pic1_nama
       ORDER BY k.id
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+
+    // Get total count
+    const { rows: countResult } = await db.query(`
+      SELECT COUNT(DISTINCT k.id)::int as total FROM kelompok k
     `);
-    return res.json({ success: true, data: rows });
+
+    const total = countResult[0].total;
+
+    return res.json({ 
+      success: true, 
+      data: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ success: false, message: 'Server error' });

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AppLogo from '../components/branding/AppLogo';
+import SupportedByLogo from '../components/branding/SupportedByLogo';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Login() {
@@ -48,8 +49,11 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
       <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md border border-gray-100">
         <div className="text-center mb-8">
-          <AppLogo size="3xl" variant="icon" className="mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900">Rukun Ternak</h1>
+          <AppLogo size="3xl" variant="icon" className="mx-auto mb-2" />
+          <div className="flex justify-center">
+            <SupportedByLogo mainLogoSize={100} />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mt-4">Rukun Ternak</h1>
           <p className="text-gray-600 mt-2 text-sm">Kelola data ternak dengan mudah</p>
         </div>
 

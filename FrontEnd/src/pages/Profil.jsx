@@ -105,7 +105,7 @@ JARINGAN DUKUNGAN:
   ];
 
   return (
-    <div className="space-y-8 sm:space-y-12">
+    <div className="space-y-8 sm:space-y-12 pt-8 sm:pt-12">
       {/* Hero Section */}
       <div className="relative overflow-hidden rounded-lg sm:rounded-2xl bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-lg">
         <div className="absolute inset-0 opacity-10">

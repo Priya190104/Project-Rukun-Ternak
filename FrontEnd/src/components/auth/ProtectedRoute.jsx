@@ -6,6 +6,8 @@ export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
+  console.log('[ProtectedRoute] Checking auth:', { user: !!user, loading, path: location.pathname });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -15,8 +17,10 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (!user) {
+    console.log('[ProtectedRoute] No user found, redirecting to login from', location.pathname);
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  console.log('[ProtectedRoute] User authenticated, allowing access');
   return children;
 }

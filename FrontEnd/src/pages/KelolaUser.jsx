@@ -85,7 +85,7 @@ export default function KelolaUser() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-6 sm:pt-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Kelola Pengguna</h1>

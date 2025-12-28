@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, AlertCircle, CheckCircle } from 'lucide-react';
+import { Editor } from '@tinymce/tinymce-react';
+import './berita-editor.css';
 
 export default function BeritaForm({ onSubmit, loading, initialData = null, isEditing = false }) {
   const [caption, setCaption] = useState('');
+  const [content, setContent] = useState('');
   const [publishedAt, setPublishedAt] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -12,6 +15,7 @@ export default function BeritaForm({ onSubmit, loading, initialData = null, isEd
   useEffect(() => {
     if (initialData) {
       setCaption(initialData.caption || '');
+      setContent(initialData.content || '');
       setImagePreview(initialData.imageUrl || '');
       if (initialData.publishedAt) {
         // Convert ISO datetime to datetime-local format (YYYY-MM-DDTHH:mm)
@@ -38,7 +42,13 @@ export default function BeritaForm({ onSubmit, loading, initialData = null, isEd
     const newErrors = {};
 
     if (!caption.trim()) {
-      newErrors.caption = 'Isi berita tidak boleh kosong';
+      newErrors.caption = 'Judul berita tidak boleh kosong';
+    }
+
+    // Check if content is empty
+    const stripHtml = (html) => html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    if (!content || stripHtml(content) === '') {
+      newErrors.content = 'Isi berita tidak boleh kosong';
     }
 
     if (!publishedAt) {
@@ -64,12 +74,14 @@ export default function BeritaForm({ onSubmit, loading, initialData = null, isEd
     try {
       await onSubmit({
         caption: caption.trim(),
+        content: content.trim(),
         imageFile,
         publishedAt,
       });
       setSuccess(true);
       if (!isEditing) {
         setCaption('');
+        setContent('');
         setPublishedAt('');
         setImageFile(null);
         setImagePreview('');
@@ -86,7 +98,7 @@ export default function BeritaForm({ onSubmit, loading, initialData = null, isEd
         {isEditing ? 'Edit Berita' : 'Tambah Berita Baru'}
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Success Message */}
         {success && (
           <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
@@ -143,22 +155,57 @@ export default function BeritaForm({ onSubmit, loading, initialData = null, isEd
           </div>
         </div>
 
-        {/* Deskripsi Berita */}
+        {/* Judul Berita */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Isi Berita <span className="text-red-500">*</span>
+            Judul Berita <span className="text-red-500">*</span>
           </label>
-          <textarea
+          <input
+            type="text"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            placeholder="Tulis isi berita di sini..."
-            rows={4}
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition resize-none"
+            placeholder="Masukkan judul berita..."
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
           />
           {errors.caption && (
             <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
               <AlertCircle className="w-4 h-4" />
               {errors.caption}
+            </p>
+          )}
+        </div>
+
+        {/* Isi Berita dengan TinyMCE */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Isi Berita <span className="text-red-500">*</span>
+          </label>
+          <div className="tinymce-editor-wrapper">
+            <Editor
+              apiKey="z59cmj4ywa2wo0d0tu2muqi7f7677vj84i853lhfgvavct91"
+              init={{
+                height: 400,
+                menubar: false,
+                plugins: ['lists', 'link', 'preview'],
+                toolbar: 'bold italic underline | bullist numlist | link preview | undo redo',
+                placeholder: 'Tulis isi berita di sini...',
+                content_style: `
+                  body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    font-size: 0.95rem;
+                    line-height: 1.6;
+                    color: #111827;
+                  }
+                `,
+              }}
+              value={content}
+              onEditorChange={(newContent) => setContent(newContent)}
+            />
+          </div>
+          {errors.content && (
+            <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {errors.content}
             </p>
           )}
         </div>

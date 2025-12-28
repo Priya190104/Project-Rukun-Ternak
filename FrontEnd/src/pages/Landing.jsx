@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AppLogo from '../components/branding/AppLogo';
+import SupportedByLogo from '../components/branding/SupportedByLogo';
 import { fetchLandingStats } from '../services/landingService';
 import LandingBeritaSection from '../components/berita/LandingBeritaSection';
 import LandingMapSection from '../components/layout/LandingMapSection';
+import Footer from '../components/layout/Footer';
 import BannerSlider from '../components/banners/BannerSlider';
 import client from '../api/client';
 import {
@@ -123,13 +125,18 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-sky-50 to-emerald-100 text-gray-900">
+      {/* Navigation Header */}
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-emerald-100">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             <AppLogo size="2xl" variant="icon" />
             <div>
               <div className="text-lg font-bold">Rukun Ternak</div>
-              <p className="text-xs text-emerald-700">Cilacap Makmur BAZNAS</p>
+              <p className="text-xs text-emerald-700">Program Cilacap Makmur</p>
+            </div>
+            {/* Divider and Supported By Logo */}
+            <div className="flex items-center gap-3 ml-3 pl-3 border-l-2 border-gray-300 h-14">
+              <SupportedByLogo mainLogoSize={120} />
             </div>
           </Link>
           <Link
@@ -141,17 +148,23 @@ export default function Landing() {
         </div>
       </header>
 
+      {/* Banner at the top */}
+      <section className="w-full">
+        <BannerSlider />
+      </section>
+
       <main className="max-w-6xl mx-auto px-4 pb-20">
-        <section className="grid lg:grid-cols-2 gap-10 pt-12 items-center">
+        {/* Hero Section */}
+        <section className="grid lg:grid-cols-2 gap-10 py-12 items-center">
           <div className="space-y-5">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white shadow text-emerald-700 text-sm font-semibold">
-              <Sparkles className="w-4 h-4" /> Sub Program Cilacap Makmur BAZNAS
+              <Sparkles className="w-4 h-4" /> Sub Program Cilacap Makmur BAZNAS Kabupaten Cilacap
             </span>
             <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-              Platform pelaporan ternak yang informatif, real-time, dan siap aksi.
+              Platform monitoring & evaluasi ternak yang informatif, real-time, dan siap aksi.
             </h1>
             <p className="text-lg text-gray-700 leading-relaxed">
-              Rukun Ternak memberdayakan masyarakat mustahik melalui bantuan ternak domba, pendampingan intensif, dan pengembangan berkelanjutan untuk kemandirian ekonomi.
+              Rukun Ternak memberdayakan masyarakat penerima manfaat melalui bantuan ternak domba, pendampingan intensif, dan pengembangan berkelanjutan untuk kemandirian ekonomi.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
@@ -196,15 +209,15 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Banner Slider Section */}
-        <section className="mt-16 mb-16">
-          <BannerSlider />
-        </section>
-
-        {/* Berita di bagian paling bawah */}
+        {/* Map Section */}
         <LandingMapSection />
+
+        {/* Berita Terkini Section */}
         <LandingBeritaSection berita={berita} loading={loadingBerita} />
       </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

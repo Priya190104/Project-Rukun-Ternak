@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function BannerForm({ onSubmit, loading, onCancel }) {
   const [imageFile, setImageFile] = useState(null);

@@ -17,12 +17,20 @@ async function updateUserRole(req, res) {
     const id = parseInt(req.params.id, 10);
     const { role } = req.body || {};
     if (!role) return res.status(400).json({ success: false, message: 'Missing role' });
-    const { rows } = await db.query('UPDATE users SET role=$1 WHERE id=$2 RETURNING id, username, full_name, role, kelompok_id', [role, id]);
-    // attach kelompok name
-    if (rows[0] && rows[0].kelompok_id) {
-      const k = await db.query('SELECT name FROM kelompok WHERE id=$1', [rows[0].kelompok_id]);
-      rows[0].kelompok = k.rows[0] ? k.rows[0].name : null;
-    }
+    
+    // Fixed N+1: Use CTE to join kelompok in single query
+    const { rows } = await db.query(`
+      WITH updated AS (
+        UPDATE users 
+        SET role=$1 
+        WHERE id=$2 
+        RETURNING id, username, full_name, role, kelompok_id
+      )
+      SELECT u.*, k.name as kelompok
+      FROM updated u
+      LEFT JOIN kelompok k ON u.kelompok_id = k.id
+    `, [role, id]);
+    
     if (!rows[0]) return res.status(404).json({ success: false, message: 'User not found' });
     return res.json({ success: true, data: rows[0] });
   } catch (e) {
@@ -38,11 +46,20 @@ async function updateUserKelompok(req, res) {
     const { kelompok } = req.body || {};
     // Expect 'kelompok' to be kelompok id (number) or null
     const kelompokId = kelompok ? parseInt(kelompok, 10) : null;
-    const { rows } = await db.query('UPDATE users SET kelompok_id=$1 WHERE id=$2 RETURNING id, username, full_name, role, kelompok_id', [kelompokId, id]);
-    if (rows[0] && rows[0].kelompok_id) {
-      const k = await db.query('SELECT name FROM kelompok WHERE id=$1', [rows[0].kelompok_id]);
-      rows[0].kelompok = k.rows[0] ? k.rows[0].name : null;
-    }
+    
+    // Fixed N+1: Use CTE to join kelompok in single query
+    const { rows } = await db.query(`
+      WITH updated AS (
+        UPDATE users 
+        SET kelompok_id=$1 
+        WHERE id=$2 
+        RETURNING id, username, full_name, role, kelompok_id
+      )
+      SELECT u.*, k.name as kelompok
+      FROM updated u
+      LEFT JOIN kelompok k ON u.kelompok_id = k.id
+    `, [kelompokId, id]);
+    
     if (!rows[0]) return res.status(404).json({ success: false, message: 'User not found' });
     return res.json({ success: true, data: rows[0] });
   } catch (e) {

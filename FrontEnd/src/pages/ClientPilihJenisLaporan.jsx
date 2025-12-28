@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { createReport } from '../services/reportService';
-import { ArrowRight, Heart, Skull, Gift, BarChart3, ArrowLeft } from 'lucide-react';
+import { ArrowRight, Heart, Skull, Gift, BarChart3, ArrowLeft, Weight } from 'lucide-react';
 import client from '../api/client';
 
 const JENIS_LAPORAN = [
@@ -33,6 +33,14 @@ const JENIS_LAPORAN = [
     icon: BarChart3, 
     color: 'bg-blue-100 text-blue-700 border-blue-300',
     description: 'Catat pakan, kandang, dan kesehatan ternak'
+  },
+  { 
+    id: 'UpdateTernak', 
+    label: 'Update Ternak', 
+    icon: Weight, 
+    color: 'bg-purple-100 text-purple-700 border-purple-300',
+    description: 'Perbarui bobot badan hewan ternak secara berkala',
+    external: true
   },
 ];
 
@@ -70,6 +78,11 @@ export default function ClientPilihJenisLaporan() {
   };
 
   const handleSelectJenis = (jenisId) => {
+    if (jenisId === 'UpdateTernak') {
+      navigate('/form-update-ternak');
+      return;
+    }
+    
     setSelectedJenis(jenisId);
     if (jenisId === 'Budidaya') {
       setStep('budidaya-kategori');

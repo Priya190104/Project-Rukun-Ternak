@@ -6,6 +6,7 @@ const { attachUser } = require('../middleware/auth');
 const {
   getAllBerita,
   getBeritaById,
+  getBeritaBySlug,
   updateBerita,
   deleteBerita,
 } = require('../controllers/beritaController');
@@ -44,7 +45,8 @@ const upload = multer({
 
 // Public routes
 router.get('/', getAllBerita);
-router.get('/:id', getBeritaById);
+router.get('/slug/:slug', getBeritaBySlug); // Get by slug
+router.get('/:id', getBeritaById); // Get by ID
 
 // Admin only routes
 router.post('/', attachUser, upload.single('image'), (req, res, next) => {

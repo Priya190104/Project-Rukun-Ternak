@@ -13,11 +13,16 @@ import KelolaBerita from '../pages/KelolaBerita';
 import KelolaBanner from '../pages/KelolaBanner';
 import DaftarSemuaLaporan from '../pages/DaftarSemuaLaporan';
 import DetailLaporan from '../pages/DetailLaporan';
+import DetailBerita from '../pages/DetailBerita';
 import MenungguHakAkses from '../pages/MenungguHakAkses';
 import Analisis from '../pages/Analisis';
 import AdminAnalisis from '../pages/AdminAnalisis';
 import ListKelompok from '../pages/ListKelompok';
 import PetaSebaranKelompok from '../pages/PetaSebaranKelompok';
+import HewanTernakPage from '../pages/HewanTernakPage';
+import DetailHewanPage from '../pages/DetailHewanPage';
+import FormUpdateTernakPage from '../pages/FormUpdateTernakPage';
+import AdminHewanTernakPage from '../pages/AdminHewanTernakPage';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import RoleGuard from '../components/auth/RoleGuard';
 import AppLayout from '../components/layout/AppLayout';
@@ -30,6 +35,7 @@ export default function AppRouter() {
           <Route path="/login" element={<Login />} />
           <Route path="/profil" element={<Profil />} />
           <Route path="/menunggu" element={<MenungguHakAkses />} />
+          <Route path="/berita/:slug" element={<DetailBerita />} />
 
           {/* ADMIN ROUTES */}
           <Route
@@ -78,6 +84,32 @@ export default function AppRouter() {
                 <RoleGuard allowedRoles={[ 'admin' ]}>
                   <AppLayout>
                     <KelolaBanner />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/hewan-ternak"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'admin' ]}>
+                  <AppLayout>
+                    <AdminHewanTernakPage />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/hewan-ternak/:id"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'admin' ]}>
+                  <AppLayout>
+                    <DetailHewanPage />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>
@@ -183,6 +215,45 @@ export default function AppRouter() {
                 <RoleGuard allowedRoles={[ 'kelompok' ]}>
                   <AppLayout>
                     <Analisis />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/hewan-ternak"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'kelompok' ]}>
+                  <AppLayout>
+                    <HewanTernakPage />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/hewan-ternak/:id"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'kelompok' ]}>
+                  <AppLayout>
+                    <DetailHewanPage />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/form-update-ternak"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'kelompok' ]}>
+                  <AppLayout>
+                    <FormUpdateTernakPage />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>

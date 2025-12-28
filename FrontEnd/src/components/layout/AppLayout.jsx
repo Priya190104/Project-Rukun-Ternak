@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AppLogo from '../branding/AppLogo';
+import SupportedByLogo from '../branding/SupportedByLogo';
 import NotificationBell from '../notification/NotificationBell';
 import KelompokBadge from '../kelompok/KelompokBadge';
 import { useAuth } from '../../hooks/useAuth';
-import { Menu, X, LogOut, Home, FileText, Users, BarChart3, User, Image as ImageIcon } from 'lucide-react';
+import { Menu, X, LogOut, Home, FileText, Users, BarChart3, User, Image as ImageIcon, Heart } from 'lucide-react';
 
 export default function AppLayout({ children }) {
   const { user, appRole, logout, isAdmin } = useAuth();
@@ -19,6 +20,7 @@ export default function AppLayout({ children }) {
 
   const adminMenu = [
     { key: 'dashboard', label: 'Dashboard', to: '/dashboard', icon: Home },
+    { key: 'hewan', label: 'Hewan Ternak', to: '/admin/hewan-ternak', icon: Heart },
     { key: 'laporan', label: 'Semua Laporan', to: '/laporan', icon: FileText },
     { key: 'kelompok', label: 'Kelompok', to: '/kelompok', icon: Users },
     { key: 'analisis', label: 'Analisis', to: '/analisis', icon: BarChart3 },
@@ -29,6 +31,7 @@ export default function AppLayout({ children }) {
 
   const kelompokMenu = [
     { key: 'client', label: 'Dashboard', to: '/client', icon: Home },
+    { key: 'hewan', label: 'Hewan Ternak', to: '/hewan-ternak', icon: Heart },
     { key: 'buat', label: 'Buat Laporan', to: '/pilih-jenis', icon: FileText },
     { key: 'mylaporan', label: 'Laporan Saya', to: '/laporan', icon: FileText },
   ];
@@ -37,17 +40,18 @@ export default function AppLayout({ children }) {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <div className="min-h-screen flex bg-gray-50 text-gray-900">
-      {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:relative w-64 h-screen bg-white border-r border-gray-200 z-40 transition-transform duration-300 flex flex-col`}>
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* Sidebar - Fixed positioning */}
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed left-0 top-0 w-64 h-screen bg-white border-r border-gray-200 z-40 transition-transform duration-300 flex flex-col`}>
         {/* Logo Section */}
-        <div className="bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 py-1 px-6 text-white flex items-center justify-center">
+        <div className="bg-gradient-to-b from-emerald-700 to-emerald-100 py-4 px-6 text-white flex flex-col items-center justify-center gap-2 flex-shrink-0">
           <Link to="/" className="hover:opacity-90 transition">
             <AppLogo size="3xl" variant="icon" />
           </Link>
+          <SupportedByLogo mainLogoSize={100} />
         </div>
 
-        {/* Navigation */}
+        {/* Navigation - Independent scroll */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {menu.map((m) => {
             const Icon = m.icon;
@@ -70,8 +74,8 @@ export default function AppLayout({ children }) {
           })}
         </nav>
 
-        {/* User Info Section - REMOVED, moved to dashboard */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
+        {/* Logout Button */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition font-medium text-sm"
@@ -82,11 +86,11 @@ export default function AppLayout({ children }) {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
+      {/* Main Content Wrapper - Offset by sidebar width */}
+      <div className="md:ml-64 flex flex-col min-h-screen">
+        {/* Header - Sticky positioning */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-          <div className="px-6 py-4 flex items-center justify-between">
+          <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -97,7 +101,7 @@ export default function AppLayout({ children }) {
 
               <div className="hidden md:block">
                 <h1 className="text-xl font-bold text-gray-900">
-                  {appRole === 'admin' ? '📊 Dashboard Admin' : '🐑 Dashboard Kelompok'}
+                  {appRole === 'admin' ? '📊 Dashboard Admin' : 'Dashboard Kelompok'}
                 </h1>
                 {appRole === 'kelompok' && user?.kelompok && (
                   <div className="mt-1">
@@ -113,7 +117,7 @@ export default function AppLayout({ children }) {
                   <div className="text-right">
                     <div className="text-sm font-semibold text-gray-900">{user.full_name || user.username}</div>
                     <div className="text-xs text-gray-500">
-                      {user.username} • {appRole === 'admin' ? '👤 Admin' : '🐑 Kelompok'}
+                      {user.username} • {appRole === 'admin' ? '👤 Admin' : 'Kelompok'}
                     </div>
                   </div>
                 </div>
@@ -123,8 +127,12 @@ export default function AppLayout({ children }) {
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-auto p-6 bg-gradient-to-br from-gray-50 to-gray-50">{children}</main>
+        {/* Page Content - Independent scroll */}
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 bg-gradient-to-br from-gray-50 to-gray-50">
+          <div className="max-w-6xl mx-auto">
+            {children}
+          </div>
+        </main>
       </div>
 
       {/* Mobile Sidebar Backdrop */}

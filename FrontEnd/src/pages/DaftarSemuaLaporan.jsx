@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../hooks/useAuth';
-import { Filter, FileText } from 'lucide-react';
+import { Filter } from 'lucide-react';
 
 const jenisLaporan = ['Budidaya', 'Kelahiran', 'Kematian', 'Penjualan'];
 
@@ -84,28 +84,8 @@ export default function DaftarSemuaLaporan() {
     setFilteredReports(filtered);
   }, [filterKelompok, filterJenis, filterBulan, filterSubJenis, reports]);
 
-  const getJenisIcon = (jenis) => {
-    const icons = {
-      'Budidaya': '🐑',
-      'Kelahiran': '👶',
-      'Kematian': '⚰️',
-      'Penjualan': '💰',
-    };
-    return icons[jenis] || '📄';
-  };
-
-  const getJenisColor = (jenis) => {
-    const colors = {
-      'Budidaya': 'bg-blue-50 border-blue-200 text-blue-700',
-      'Kelahiran': 'bg-green-50 border-green-200 text-green-700',
-      'Kematian': 'bg-red-50 border-red-200 text-red-700',
-      'Penjualan': 'bg-yellow-50 border-yellow-200 text-yellow-700',
-    };
-    return colors[jenis] || 'bg-gray-50 border-gray-200 text-gray-700';
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-6 sm:pt-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Daftar Semua Laporan</h1>
@@ -193,53 +173,56 @@ export default function DaftarSemuaLaporan() {
         </div>
       </div>
 
-      {/* Reports List */}
-      <div className="space-y-4">
+      {/* Table Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {filteredReports.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-            <FileText size={48} className="mx-auto text-gray-300 mb-4" />
+          <div className="p-12 text-center">
             <p className="text-gray-500 font-medium">Belum ada laporan</p>
           </div>
         ) : (
-          filteredReports.map((report) => (
-            <div key={report.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{getJenisIcon(report.jenis)}</span>
-                    <h3 className="text-lg font-semibold text-gray-900">{report.jenis}</h3>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${getJenisColor(report.jenis)}`}>
-                      {report.jenis}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 text-sm">
-                    <div>
-                      <div className="text-gray-500">Tanggal</div>
-                      <div className="font-medium text-gray-900">{report.tanggal || '-'}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500">Kelompok</div>
-                      <div className="font-medium text-gray-900">{report.kelompok || '-'}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500">Pemilik (user_id)</div>
-                      <div className="font-medium text-gray-900">{report.user_id || '-'}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500">Status</div>
-                      <div className="font-medium text-emerald-600">Selesai</div>
-                    </div>
-                  </div>
-                </div>
-                <Link
-                  to={`/laporan/${report.id}`}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium whitespace-nowrap"
-                >
-                  Lihat Detail
-                </Link>
-              </div>
-            </div>
-          ))
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">No</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tanggal</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Jenis Laporan</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kelompok</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Keterangan</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredReports.map((report, index) => (
+                  <tr key={report.id} className="hover:bg-gray-50 transition">
+                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">{index + 1}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {report.tanggal ? new Date(report.tanggal).toLocaleDateString('id-ID') : '-'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">{report.jenis}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{report.kelompok || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {report.data && typeof report.data === 'object' 
+                        ? Object.entries(report.data)
+                            .slice(0, 2)
+                            .map(([key, value]) => `${key}: ${value}`)
+                            .join(', ') || '-'
+                        : '-'
+                      }
+                    </td>
+                    <td className="px-6 py-4 text-sm text-center">
+                      <Link
+                        to={`/laporan/${report.id}`}
+                        className="text-emerald-600 hover:text-emerald-700 font-semibold transition"
+                      >
+                        Lihat Detail
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

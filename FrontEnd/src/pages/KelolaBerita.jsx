@@ -50,7 +50,7 @@ export default function KelolaBerita() {
     try {
       setLoading(true);
       setError(null);
-      const newBerita = await createBerita(data.caption, data.imageFile, data.publishedAt);
+      const newBerita = await createBerita(data.caption, data.imageFile, data.publishedAt, data.content);
       setBerita([newBerita, ...berita]);
     } catch (err) {
       setError('Gagal menambahkan berita');
@@ -69,7 +69,7 @@ export default function KelolaBerita() {
     try {
       setLoading(true);
       setError(null);
-      const updated = await updateBerita(editingId, data.caption, data.imageFile, data.publishedAt);
+      const updated = await updateBerita(editingId, data.caption, data.imageFile, data.publishedAt, data.content);
       setBerita(berita.map((b) => (b.id === editingId ? updated : b)));
       setEditingId(null);
       setEditingBerita(null);
@@ -114,7 +114,7 @@ export default function KelolaBerita() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-sky-50 to-emerald-100">
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-6xl mx-auto px-4 py-12 pt-6 sm:pt-9">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button
@@ -137,9 +137,9 @@ export default function KelolaBerita() {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="space-y-8">
           {/* Form */}
-          <div className="lg:col-span-1">
+          <div>
             {editingId ? (
               <div className="space-y-4">
                 <BeritaForm
@@ -161,7 +161,7 @@ export default function KelolaBerita() {
           </div>
 
           {/* List */}
-          <div className="lg:col-span-2">
+          <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Daftar Berita ({berita.length})</h2>
               {editingId && (

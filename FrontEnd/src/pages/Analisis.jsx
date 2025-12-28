@@ -36,7 +36,7 @@ export default function Analisis() {
   const pertumbuhan = stats.perMonth && stats.perMonth.length > 1 ? `${Math.round(((stats.perMonth[stats.perMonth.length-1].count - stats.perMonth[0].count) / Math.max(1, stats.perMonth[0].count)) * 100)}%` : '0%';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-6 sm:pt-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Analisis Perkembangan</h1>

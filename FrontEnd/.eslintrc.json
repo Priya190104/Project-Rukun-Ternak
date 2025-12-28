@@ -6,8 +6,7 @@
     "jest": true
   },
   "extends": [
-    "react-app",
-    "plugin:react/recommended"
+    "react-app"
   ],
   "rules": {
     "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],

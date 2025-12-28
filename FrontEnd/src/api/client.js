@@ -27,7 +27,7 @@ client.interceptors.request.use(
   }
 );
 
-// Add response interceptor to handle 401 errors (expired/invalid token)
+// Add response interceptor to handle errors
 client.interceptors.response.use(
   (response) => {
     console.log(`[API] Response ${response.status} from ${response.config.url}`);
@@ -35,11 +35,21 @@ client.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      console.error('[API] 401 Unauthorized - clearing auth');
-      // Token expired or invalid, clear auth
+      console.error('[API] 401 Unauthorized - token expired or invalid');
+      // Token expired or invalid
       localStorage.removeItem('rukun_token');
       localStorage.removeItem('rukun_user');
-      window.location.href = '/';
+      delete client.defaults.headers.common['Authorization'];
+      // Redirect to login ONLY if not already on login page
+      if (!window.location.pathname.includes('/login')) {
+        console.log('[API] Redirecting to login from', window.location.pathname);
+        window.location.href = '/login?expired=true';
+      }
+    } else if (error.response?.status === 403) {
+      console.error('[API] 403 Forbidden - access denied');
+      // Don't auto-redirect on 403, let the page handle it
+    } else {
+      console.error(`[API] Error ${error.response?.status}:`, error.message);
     }
     return Promise.reject(error);
   }

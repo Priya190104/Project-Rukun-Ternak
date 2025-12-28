@@ -22,6 +22,8 @@ model User {
   kelompokId Int?      @map("kelompok_id")
   kelompok   Kelompok? @relation(fields: [kelompokId], references: [id])
 
+  @@index([kelompokId])
+  @@index([role])
   @@map("users")
 }
 
@@ -46,7 +48,10 @@ model Kelompok {
   pic2Email  String?  @map("pic2_email")
   users      User[]
   laporan    Laporan[]
+  hewanTernak HewanTernak[]
+  updateTernak UpdateTernak[]
 
+  @@index([name])
   @@map("kelompok")
 }
 
@@ -60,6 +65,10 @@ model Laporan {
   tanggal    DateTime  @default(now())
   kelompokRel Kelompok? @relation(fields: [kelompokId], references: [id])
 
+  @@index([userId])
+  @@index([kelompokId])
+  @@index([jenis])
+  @@index([tanggal])
   @@map("laporan")
 }
 
@@ -74,6 +83,8 @@ model Notifikasi {
 model Berita {
   id          Int       @id @default(autoincrement())
   caption     String
+  slug        String?   @unique
+  content     String?   // HTML content from editor
   imageUrl    String    @map("image_url")
   publishedAt DateTime? @map("published_at")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -89,5 +100,63 @@ model Banner {
   isActive  Boolean   @default(true) @map("is_active")
 
   @@map("banners")
+}
+
+model HewanTernak {
+  id              Int             @id @default(autoincrement())
+  kelompokId      Int             @map("kelompok_id")
+  kelompok        Kelompok        @relation(fields: [kelompokId], references: [id], onDelete: Cascade)
+  jenisKelamin    String          @map("jenis_kelamin") // JANTAN, BETINA
+  ras             String
+  tanggalLahir    DateTime        @map("tanggal_lahir")
+  bobot           Float?          // Bobot terakhir dalam kg
+  status          String          @default("AKTIF") // AKTIF, MATI, TERJUAL
+  idInduk         Int?            @map("id_induk")
+  induk           HewanTernak?    @relation("AnakDariInduk", fields: [idInduk], references: [id])
+  anak            HewanTernak[]   @relation("AnakDariInduk")
+  idPejantan      Int?            @map("id_pejantan")
+  pejantan        HewanTernak?    @relation("AnakDariPejantan", fields: [idPejantan], references: [id])
+  anaknya         HewanTernak[]   @relation("AnakDariPejantan")
+  riwayatBobot    RiwayatBobot[]
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@index([kelompokId])
+  @@index([status])
+  @@index([idInduk])
+  @@index([idPejantan])
+  @@index([tanggalLahir])
+  @@map("hewan_ternak")
+}
+
+model RiwayatBobot {
+  id              Int             @id @default(autoincrement())
+  hewanId         Int             @map("hewan_id")
+  hewan           HewanTernak     @relation(fields: [hewanId], references: [id], onDelete: Cascade)
+  bobot           Float           // kg
+  tanggalUpdate   DateTime        @default(now()) @map("tanggal_update")
+  keterangan      String?
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  @@index([hewanId])
+  @@map("riwayat_bobot")
+}
+
+model UpdateTernak {
+  id              Int             @id @default(autoincrement())
+  hewanId         Int             @map("hewan_id")
+  kelompokId      Int             @map("kelompok_id")
+  kelompok        Kelompok        @relation(fields: [kelompokId], references: [id], onDelete: Cascade)
+  bobot           Float           // kg
+  keterangan      String?
+  tanggalUpdate   DateTime        @default(now()) @map("tanggal_update")
+  status          String          @default("SELESAI") // SELESAI, DITOLAK
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@index([hewanId])
+  @@index([kelompokId])
+  @@index([tanggalUpdate])
+  @@map("update_ternak")
 }
 

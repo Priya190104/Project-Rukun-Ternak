@@ -104,7 +104,7 @@ export default function ListKelompok() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6 sm:space-y-8 pt-8 sm:pt-12">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg sm:rounded-2xl p-6 sm:p-8 text-white shadow-lg">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Daftar Kelompok Ternak</h1>

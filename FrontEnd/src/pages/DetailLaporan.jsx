@@ -155,7 +155,7 @@ export default function DetailLaporan() {
   const getJenisLabel = (jenis) => {
     switch (jenis) {
       case 'Kelahiran':
-        return '🐑 Laporan Kelahiran';
+        return 'Laporan Kelahiran';
       case 'Kematian':
         return '💔 Laporan Kematian';
       case 'Penjualan':

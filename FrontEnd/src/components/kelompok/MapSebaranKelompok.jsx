@@ -23,12 +23,19 @@ export default function MapSebaranKelompok({ kelompokList = [], onMarkerClick = 
   useEffect(() => {
     if (map.current) return; // Only initialize once
 
+    if (!mapContainer.current) {
+      console.error('Map container not available');
+      return;
+    }
+
     map.current = L.map(mapContainer.current).setView([-7.4, 109.2], 10);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 19,
     }).addTo(map.current);
+    
+    console.log('Map initialized');
   }, []);
 
   // Add/update markers
@@ -45,8 +52,11 @@ export default function MapSebaranKelompok({ kelompokList = [], onMarkerClick = 
     const bounds = L.latLngBounds([]);
     let hasValidMarkers = false;
 
+    console.log('Processing kelompokList:', kelompokList);
+
     kelompokList.forEach(kelompok => {
       if (kelompok.latitude && kelompok.longitude) {
+        console.log(`Adding marker for ${kelompok.name}: ${kelompok.latitude}, ${kelompok.longitude}`);
         hasValidMarkers = true;
         const marker = L.marker([kelompok.latitude, kelompok.longitude], {
           title: kelompok.name || 'Unknown',
@@ -81,6 +91,9 @@ export default function MapSebaranKelompok({ kelompokList = [], onMarkerClick = 
     // Auto fit bounds if markers exist
     if (hasValidMarkers && bounds.isValid()) {
       map.current.fitBounds(bounds, { padding: [50, 50] });
+      console.log('Map fitted to bounds');
+    } else {
+      console.warn('No valid markers found. KelompokList:', kelompokList);
     }
   }, [kelompokList, onMarkerClick]);
 

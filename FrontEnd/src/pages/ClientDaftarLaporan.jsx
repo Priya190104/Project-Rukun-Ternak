@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import client from '../api/client';
-import { Calendar, Filter, ChevronRight, Plus, Heart, Droplet, Home, TrendingUp, Baby, ShoppingCart, Sprout } from 'lucide-react';
+import { Calendar, Filter, ChevronRight, Plus, Heart, Droplet, Home, TrendingUp, Baby, ShoppingCart, Sprout, Weight } from 'lucide-react';
 
 const JENIS_LAPORAN = [
   { id: 'pakan', label: 'Pakan', icon: Droplet, color: 'bg-orange-50 border-orange-200' },
@@ -12,6 +12,7 @@ const JENIS_LAPORAN = [
   { id: 'kelahiran', label: 'Kelahiran', icon: Baby, color: 'bg-pink-50 border-pink-200' },
   { id: 'penjualan', label: 'Penjualan', icon: ShoppingCart, color: 'bg-blue-50 border-blue-200' },
   { id: 'pengembangan', label: 'Pengembangan', icon: Sprout, color: 'bg-emerald-50 border-emerald-200' },
+  { id: 'update', label: 'Update Ternak', icon: Weight, color: 'bg-purple-50 border-purple-200' },
 ];
 
 export default function ClientDaftarLaporan() {
@@ -66,7 +67,7 @@ export default function ClientDaftarLaporan() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8 sm:pt-12">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg sm:rounded-2xl p-6 sm:p-8 text-white shadow-lg">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Daftar Laporan</h1>

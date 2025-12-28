@@ -78,11 +78,12 @@ export default function AddKelompokModalWithMap({
     pic1_alamat: '',
     pic1_noHp: '',
     pic1_email: '',
-    pic2_nik: '',
-    pic2_nama: '',
-    pic2_alamat: '',
-    pic2_noHp: '',
-    pic2_email: '',
+    // Penyaluran
+    jumlahKandang: '',
+    jumlahTernak: '',
+    ternakDetails: [],
+    pakanList: [{ jenisPakan: '', jumlahPakan: '' }],
+    kesehatanList: [{ jenisKesehatan: '', jumlah: '' }],
   });
 
   const [loading, setLoading] = useState(false);
@@ -105,11 +106,11 @@ export default function AddKelompokModalWithMap({
           pic1_alamat: initialData.pic1_alamat || '',
           pic1_noHp: initialData.pic1_noHp || '',
           pic1_email: initialData.pic1_email || '',
-          pic2_nik: initialData.pic2_nik || '',
-          pic2_nama: initialData.pic2_nama || '',
-          pic2_alamat: initialData.pic2_alamat || '',
-          pic2_noHp: initialData.pic2_noHp || '',
-          pic2_email: initialData.pic2_email || '',
+          jumlahKandang: '',
+          jumlahTernak: '',
+          ternakDetails: [],
+          pakanList: [{ jenisPakan: '', jumlahPakan: '' }],
+          kesehatanList: [{ jenisKesehatan: '', jumlah: '' }],
         });
         if (initialData.kecamatan) {
           setDesaOptions(DESA_BY_KECAMATAN[initialData.kecamatan] || []);
@@ -127,11 +128,11 @@ export default function AddKelompokModalWithMap({
           pic1_alamat: '',
           pic1_noHp: '',
           pic1_email: '',
-          pic2_nik: '',
-          pic2_nama: '',
-          pic2_alamat: '',
-          pic2_noHp: '',
-          pic2_email: '',
+          jumlahKandang: '',
+          jumlahTernak: '',
+          ternakDetails: [],
+          pakanList: [{ jenisPakan: '', jumlahPakan: '' }],
+          kesehatanList: [{ jenisKesehatan: '', jumlah: '' }],
         });
         setDesaOptions([]);
       }
@@ -167,9 +168,6 @@ export default function AddKelompokModalWithMap({
     // PIC 1 validasi email jika diisi
     if (form.pic1_email && !validateEmail(form.pic1_email)) newErrors.pic1_email = 'Format email salah';
 
-    // PIC 2 validasi email jika diisi
-    if (form.pic2_email && !validateEmail(form.pic2_email)) newErrors.pic2_email = 'Format email salah';
-
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
@@ -184,7 +182,39 @@ export default function AddKelompokModalWithMap({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    
+    // Special handling for jumlahTernak
+    if (name === 'jumlahTernak') {
+      const newJumlah = parseInt(value) || 0;
+      const currentJumlah = form.ternakDetails.length;
+      
+      let newTernakDetails = [...form.ternakDetails];
+      
+      // If increasing, add new ternak objects
+      if (newJumlah > currentJumlah) {
+        for (let i = currentJumlah; i < newJumlah; i++) {
+          newTernakDetails.push({
+            idTernak: '',
+            jenisKelamin: '',
+            ras: '',
+            bobot: '',
+            umur: ''
+          });
+        }
+      } 
+      // If decreasing, remove from the end
+      else if (newJumlah < currentJumlah) {
+        newTernakDetails = newTernakDetails.slice(0, newJumlah);
+      }
+      
+      setForm(prev => ({
+        ...prev,
+        [name]: value,
+        ternakDetails: newTernakDetails
+      }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
 
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -196,11 +226,63 @@ export default function AddKelompokModalWithMap({
     }
   };
 
+  const handleTernakChange = (index, field, value) => {
+    const newTernakDetails = [...form.ternakDetails];
+    newTernakDetails[index] = {
+      ...newTernakDetails[index],
+      [field]: value
+    };
+    setForm(prev => ({
+      ...prev,
+      ternakDetails: newTernakDetails
+    }));
+  };
+
   const handleLocationChange = ({ latitude, longitude }) => {
     setForm(prev => ({ ...prev, latitude, longitude }));
     if (errors.location) {
       setErrors(prev => ({ ...prev, location: '' }));
     }
+  };
+
+  const handlePakanChange = (index, field, value) => {
+    const newList = [...form.pakanList];
+    newList[index] = { ...newList[index], [field]: value };
+    setForm(prev => ({ ...prev, pakanList: newList }));
+  };
+
+  const handleKesehatanChange = (index, field, value) => {
+    const newList = [...form.kesehatanList];
+    newList[index] = { ...newList[index], [field]: value };
+    setForm(prev => ({ ...prev, kesehatanList: newList }));
+  };
+
+  const addPakanRow = () => {
+    setForm(prev => ({
+      ...prev,
+      pakanList: [...prev.pakanList, { jenisPakan: '', jumlahPakan: '' }]
+    }));
+  };
+
+  const removePakanRow = (index) => {
+    setForm(prev => ({
+      ...prev,
+      pakanList: prev.pakanList.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addKesehatanRow = () => {
+    setForm(prev => ({
+      ...prev,
+      kesehatanList: [...prev.kesehatanList, { jenisKesehatan: '', jumlah: '' }]
+    }));
+  };
+
+  const removeKesehatanRow = (index) => {
+    setForm(prev => ({
+      ...prev,
+      kesehatanList: prev.kesehatanList.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -225,11 +307,12 @@ export default function AddKelompokModalWithMap({
         pic1_alamat: form.pic1_alamat.trim() || null,
         pic1_noHp: form.pic1_noHp.trim() || null,
         pic1_email: form.pic1_email.trim() || null,
-        pic2_nik: form.pic2_nik.trim() || null,
-        pic2_nama: form.pic2_nama.trim() || null,
-        pic2_alamat: form.pic2_alamat.trim() || null,
-        pic2_noHp: form.pic2_noHp.trim() || null,
-        pic2_email: form.pic2_email.trim() || null,
+        // Penyaluran & Bantuan
+        jumlahKandang: form.jumlahKandang ? parseInt(form.jumlahKandang) : null,
+        jumlahTernak: form.jumlahTernak ? parseInt(form.jumlahTernak) : null,
+        ternakDetails: form.ternakDetails.filter(t => t.idTernak || t.jenisKelamin || t.ras || t.bobot || t.umur),
+        pakanList: form.pakanList.filter(p => p.jenisPakan && p.jumlahPakan),
+        kesehatanList: form.kesehatanList.filter(k => k.jenisKesehatan && k.jumlah),
       };
 
       const response =
@@ -392,7 +475,7 @@ export default function AddKelompokModalWithMap({
 
           {/* PIC 1 */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Data Penanggung Jawab (PIC 1)</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Data Penanggung Jawab</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">NIK</label>
@@ -459,73 +542,227 @@ export default function AddKelompokModalWithMap({
             </div>
           </div>
 
-          {/* PIC 2 (Optional) */}
+          {/* Penyaluran & Bantuan */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">
-              Data Penanggung Jawab (PIC 2) - Opsional
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Penyaluran & Bantuan</h3>
+
+            {/* Kandang dan Ternak */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">NIK</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah Kandang</label>
                 <input
-                  type="text"
-                  name="pic2_nik"
-                  value={form.pic2_nik}
+                  type="number"
+                  name="jumlahKandang"
+                  value={form.jumlahKandang}
                   onChange={handleChange}
                   disabled={loading}
+                  min="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah Hewan Ternak</label>
                 <input
-                  type="text"
-                  name="pic2_nama"
-                  value={form.pic2_nama}
+                  type="number"
+                  name="jumlahTernak"
+                  value={form.jumlahTernak}
                   onChange={handleChange}
                   disabled={loading}
+                  min="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+            </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
-                <textarea
-                  name="pic2_alamat"
-                  value={form.pic2_alamat}
-                  onChange={handleChange}
-                  disabled={loading}
-                  rows="2"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                />
+            {/* Hewan Ternak - Dynamic */}
+            {parseInt(form.jumlahTernak) > 0 && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="text-sm font-semibold text-gray-800 mb-4">Detail Hewan Ternak</h4>
+                <div className="space-y-5">
+                  {form.ternakDetails.map((ternak, index) => (
+                    <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                      <h5 className="text-xs font-bold text-blue-600 uppercase mb-3">Hewan Ternak {index + 1}</h5>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* ID Ternak */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">ID Ternak</label>
+                          <input
+                            type="text"
+                            placeholder="Contoh: T001"
+                            value={ternak.idTernak}
+                            onChange={(e) => handleTernakChange(index, 'idTernak', e.target.value)}
+                            disabled={loading}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        {/* Jenis Kelamin */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Jenis Kelamin</label>
+                          <select
+                            value={ternak.jenisKelamin}
+                            onChange={(e) => handleTernakChange(index, 'jenisKelamin', e.target.value)}
+                            disabled={loading}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">- Pilih -</option>
+                            <option value="Jantan">Jantan</option>
+                            <option value="Betina">Betina</option>
+                          </select>
+                        </div>
+
+                        {/* Ras */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Ras</label>
+                          <input
+                            type="text"
+                            placeholder="Contoh: Limousin"
+                            value={ternak.ras}
+                            onChange={(e) => handleTernakChange(index, 'ras', e.target.value)}
+                            disabled={loading}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        {/* Bobot */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Bobot (kg)</label>
+                          <input
+                            type="number"
+                            placeholder="0"
+                            value={ternak.bobot}
+                            onChange={(e) => handleTernakChange(index, 'bobot', e.target.value)}
+                            disabled={loading}
+                            min="0"
+                            step="0.1"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        {/* Umur */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Umur (bulan)</label>
+                          <input
+                            type="number"
+                            placeholder="0"
+                            value={ternak.umur}
+                            onChange={(e) => handleTernakChange(index, 'umur', e.target.value)}
+                            disabled={loading}
+                            min="0"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">No HP</label>
-                <input
-                  type="tel"
-                  name="pic2_noHp"
-                  value={form.pic2_noHp}
-                  onChange={handleChange}
+            {/* Pakan */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-semibold text-gray-700">Jenis Pakan</label>
+                <button
+                  type="button"
+                  onClick={addPakanRow}
                   disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+                >
+                  + Tambah Pakan
+                </button>
               </div>
+              <div className="space-y-3">
+                {form.pakanList.map((pakan, index) => (
+                  <div key={index} className="flex gap-3">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        placeholder="Jenis pakan (contoh: Rumput, Konsentrat, dll)"
+                        value={pakan.jenisPakan}
+                        onChange={(e) => handlePakanChange(index, 'jenisPakan', e.target.value)}
+                        disabled={loading}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        placeholder="Jumlah (kg/unit)"
+                        value={pakan.jumlahPakan}
+                        onChange={(e) => handlePakanChange(index, 'jumlahPakan', e.target.value)}
+                        disabled={loading}
+                        min="0"
+                        step="0.1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    {form.pakanList.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removePakanRow(index)}
+                        disabled={loading}
+                        className="px-3 py-2 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+                      >
+                        Hapus
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  name="pic2_email"
-                  value={form.pic2_email}
-                  onChange={handleChange}
+            {/* Kesehatan */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-semibold text-gray-700">Program Kesehatan</label>
+                <button
+                  type="button"
+                  onClick={addKesehatanRow}
                   disabled={loading}
-                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.pic2_email ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.pic2_email && <p className="text-red-600 text-xs mt-1">{errors.pic2_email}</p>}
+                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+                >
+                  + Tambah Program
+                </button>
+              </div>
+              <div className="space-y-3">
+                {form.kesehatanList.map((kesehatan, index) => (
+                  <div key={index} className="flex gap-3">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        placeholder="Jenis program (contoh: Vaksinasi, Perawatan, dll)"
+                        value={kesehatan.jenisKesehatan}
+                        onChange={(e) => handleKesehatanChange(index, 'jenisKesehatan', e.target.value)}
+                        disabled={loading}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        placeholder="Jumlah hewan"
+                        value={kesehatan.jumlah}
+                        onChange={(e) => handleKesehatanChange(index, 'jumlah', e.target.value)}
+                        disabled={loading}
+                        min="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    {form.kesehatanList.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeKesehatanRow(index)}
+                        disabled={loading}
+                        className="px-3 py-2 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+                      >
+                        Hapus
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>

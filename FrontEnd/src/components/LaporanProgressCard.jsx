@@ -53,37 +53,24 @@ export default function LaporanProgressCard({ loading: parentLoading }) {
   // Extract data from laporan
   const penyaluranItems = [
     { label: 'Tanggal Penyaluran', value: data.tanggal_penyaluran || '-', icon: '📅' },
-    { label: 'Indukan', value: data.indukan || 'Belum', icon: '🐑' },
-    { label: 'Pejantan', value: data.pejantan || 'Belum', icon: '🐑' },
+    { label: 'Indukan', value: data.indukan || 'Belum', icon: '�' },
+    { label: 'Pejantan', value: data.pejantan || 'Belum', icon: '👨' },
     { label: 'Kandang', value: data.kandang || 'Belum', icon: '🏠' },
   ];
 
-  const progressItems = [
-    { label: 'Pakan', value: data.pakan || 0, unit: 'kg' },
-    { label: 'Kandang', value: data.kandang_status || '-' },
-    { label: 'Kesehatan', value: data.kesehatan || '-' },
-    { label: 'Populasi', value: data.populasi || 0 },
-    { label: 'Pejantan', value: data.pejantan_count || 0 },
-    { label: 'Induk', value: data.induk_count || 0 },
-    { label: 'Anakan Betina', value: data.anakan_betina || 0 },
-    { label: 'Anakan Jantan', value: data.anakan_jantan || 0 },
-  ];
+
 
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 px-6 py-5 border-b border-gray-200">
-        <h2 className="text-xl font-bold text-gray-900">Laporan Terbaru</h2>
-        <p className="text-sm text-gray-600 mt-1">
-          {laporanData.jenis || 'Laporan'} • {new Date(laporanData.tanggal).toLocaleDateString('id-ID')}
-        </p>
+        <h2 className="text-xl font-bold text-gray-900">Laporan Penyaluran</h2>
       </div>
 
       <div className="p-6 space-y-6">
         
         {/* Section B: Penyaluran / Bantuan */}
         <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-amber-200">Penyaluran & Bantuan</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {penyaluranItems.map((item, i) => (
               <div key={i} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-50 rounded-lg border border-gray-200 hover:border-amber-300 transition">
@@ -92,20 +79,6 @@ export default function LaporanProgressCard({ loading: parentLoading }) {
                   <p className="text-lg font-bold text-gray-900 mt-1">{item.value}</p>
                 </div>
                 <span className="text-3xl">{item.icon}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Section C: Progres Ternak */}
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-emerald-200">Progres Ternak</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {progressItems.map((item, i) => (
-              <div key={i} className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-200 text-center hover:shadow-md transition">
-                <p className="text-xs font-bold text-gray-600 uppercase mb-2">{item.label}</p>
-                <p className="text-2xl md:text-3xl font-bold text-emerald-700">{item.value}</p>
-                {item.unit && <p className="text-xs text-gray-500 mt-1">{item.unit}</p>}
               </div>
             ))}
           </div>

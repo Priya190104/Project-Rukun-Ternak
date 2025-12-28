@@ -1,6 +1,17 @@
 const db = require('../db');
 const fs = require('fs');
 const path = require('path');
+const { sanitizeHtml, stripHtml, isContentEmpty } = require('../utils/sanitizer');
+
+// Helper function to generate slug from text
+const generateSlug = (text) => {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
+};
 
 // Helper function to convert image URLs to full absolute URLs
 const getFullImageUrl = (imageUrl) => {
@@ -35,7 +46,7 @@ const processBeritaData = (berita) => {
 const getAllBerita = async (req, res) => {
   try {
     console.log('[Berita] GET ALL');
-    const { rows } = await db.query('SELECT id, caption, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt" FROM berita ORDER BY COALESCE(published_at, created_at) DESC');
+    const { rows } = await db.query('SELECT id, caption, slug, content, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt" FROM berita ORDER BY COALESCE(published_at, created_at) DESC');
     const berita = processBeritaData(rows);
     console.log('[Berita] GET ALL returned', berita.length, 'records');
     res.json({ success: true, data: berita });
@@ -45,11 +56,11 @@ const getAllBerita = async (req, res) => {
   }
 };
 
-// Get single berita
+// Get single berita by ID
 const getBeritaById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { rows } = await db.query('SELECT id, caption, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt" FROM berita WHERE id=$1', [parseInt(id,10)]);
+    const { rows } = await db.query('SELECT id, caption, slug, content, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt" FROM berita WHERE id=$1', [parseInt(id,10)]);
     const berita = rows[0];
     if (!berita) {
       return res.status(404).json({ success: false, message: 'Berita not found' });
@@ -62,12 +73,29 @@ const getBeritaById = async (req, res) => {
   }
 };
 
+// Get single berita by slug
+const getBeritaBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { rows } = await db.query('SELECT id, caption, slug, content, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt" FROM berita WHERE slug=$1', [slug]);
+    const berita = rows[0];
+    if (!berita) {
+      return res.status(404).json({ success: false, message: 'Berita not found' });
+    }
+    const processedBerita = processBeritaData(berita);
+    res.json({ success: true, data: processedBerita });
+  } catch (err) {
+    console.error('Error fetching berita by slug:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch berita', error: err.message });
+  }
+};
+
 // Create berita
 const createBerita = async (req, res) => {
   try {
-    const { caption, imageUrl, publishedAt } = req.body;
+    const { caption, content, imageUrl, publishedAt } = req.body;
     
-    console.log('[Berita] CREATE request:', { caption: !!caption, imageUrl: !!imageUrl, publishedAt, bodyKeys: Object.keys(req.body) });
+    console.log('[Berita] CREATE request:', { caption: !!caption, content: !!content, imageUrl: !!imageUrl, publishedAt, bodyKeys: Object.keys(req.body) });
 
     // Validation
     if (!caption || !imageUrl) {
@@ -80,8 +108,20 @@ const createBerita = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Tanggal & waktu publikasi wajib diisi' });
     }
 
-    console.log('[Berita] Inserting to database:', { caption, imageUrl, publishedAt });
-    const { rows } = await db.query('INSERT INTO berita (caption, image_url, published_at, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id, caption, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt"', [caption, imageUrl, publishedAt]);
+    // Check if content is not empty
+    if (isContentEmpty(content)) {
+      console.log('[Berita] CREATE validation failed: content is empty');
+      return res.status(400).json({ success: false, message: 'Isi berita tidak boleh kosong' });
+    }
+
+    // Sanitize content to prevent XSS
+    const sanitizedContent = sanitizeHtml(content);
+
+    // Generate slug from caption
+    const slug = generateSlug(caption);
+
+    console.log('[Berita] Inserting to database:', { caption, slug, imageUrl, publishedAt, contentLength: sanitizedContent.length });
+    const { rows } = await db.query('INSERT INTO berita (caption, slug, content, image_url, published_at, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING id, caption, slug, content, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt"', [caption, slug, sanitizedContent || null, imageUrl, publishedAt]);
     const berita = rows[0];
     const processedBerita = processBeritaData(berita);
 
@@ -97,9 +137,9 @@ const createBerita = async (req, res) => {
 const updateBerita = async (req, res) => {
   try {
     const { id } = req.params;
-    const { caption, imageUrl, publishedAt } = req.body;
+    const { caption, content, imageUrl, publishedAt } = req.body;
 
-    console.log('[Berita] UPDATE request:', { id, caption: !!caption, imageUrl: !!imageUrl, publishedAt });
+    console.log('[Berita] UPDATE request:', { id, caption: !!caption, content: !!content, imageUrl: !!imageUrl, publishedAt });
 
     // Validation
     if (!caption) {
@@ -110,17 +150,28 @@ const updateBerita = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Tanggal & waktu publikasi wajib diisi' });
     }
 
+    // Check if content is not empty
+    if (isContentEmpty(content)) {
+      return res.status(400).json({ success: false, message: 'Isi berita tidak boleh kosong' });
+    }
+
+    // Sanitize content to prevent XSS
+    const sanitizedContent = sanitizeHtml(content);
+
+    // Generate slug from caption
+    const slug = generateSlug(caption);
+
     let query;
     let params;
 
     if (imageUrl) {
       // Update with new image
-      query = 'UPDATE berita SET caption=$1, image_url=$2, published_at=$3, updated_at=NOW() WHERE id=$4 RETURNING id, caption, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt"';
-      params = [caption, imageUrl, publishedAt, parseInt(id, 10)];
+      query = 'UPDATE berita SET caption=$1, slug=$2, content=$3, image_url=$4, published_at=$5, updated_at=NOW() WHERE id=$6 RETURNING id, caption, slug, content, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt"';
+      params = [caption, slug, sanitizedContent || null, imageUrl, publishedAt, parseInt(id, 10)];
     } else {
-      // Update only caption and publishedAt
-      query = 'UPDATE berita SET caption=$1, published_at=$2, updated_at=NOW() WHERE id=$3 RETURNING id, caption, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt"';
-      params = [caption, publishedAt, parseInt(id, 10)];
+      // Update without image change
+      query = 'UPDATE berita SET caption=$1, slug=$2, content=$3, published_at=$4, updated_at=NOW() WHERE id=$5 RETURNING id, caption, slug, content, image_url AS "imageUrl", published_at AS "publishedAt", created_at AS "createdAt", updated_at AS "updatedAt"';
+      params = [caption, slug, sanitizedContent || null, publishedAt, parseInt(id, 10)];
     }
 
     const { rows } = await db.query(query, params);
@@ -176,6 +227,7 @@ const deleteBerita = async (req, res) => {
 module.exports = {
   getAllBerita,
   getBeritaById,
+  getBeritaBySlug,
   createBerita,
   updateBerita,
   deleteBerita,

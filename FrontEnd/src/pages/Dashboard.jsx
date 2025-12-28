@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import StatsCard from '../components/StatsCard';
+import AppLogo from '../components/branding/AppLogo';
+import SupportedByLogo from '../components/branding/SupportedByLogo';
 import { FileText, Users, TrendingUp, Newspaper, Image } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import client from '../api/client';
@@ -41,7 +43,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6 sm:space-y-8 pt-8 sm:pt-12">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-medium">
           ⚠️ {error}
@@ -49,13 +51,16 @@ export default function Dashboard() {
       )}
 
       {/* Welcome Banner - ADMIN GLOBAL */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-lg sm:rounded-2xl p-6 sm:p-8 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-emerald-600 to-emerald-50 rounded-lg sm:rounded-2xl p-6 sm:p-8 text-gray-900 shadow-lg">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Dashboard Admin 👋</h1>
-            <p className="text-emerald-100 text-sm sm:text-base lg:text-lg">Halo <span className="font-semibold">{user?.full_name || user?.username || 'Admin'}</span>, ini adalah ringkasan global semua kelompok.</p>
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Dashboard Admin</h1>
+            <p className="text-emerald-800 text-sm sm:text-base lg:text-lg">Halo <span className="font-semibold">{user?.full_name || user?.username || 'Admin'}</span>, ini adalah ringkasan global semua kelompok.</p>
           </div>
-          <div className="text-4xl sm:text-5xl md:text-6xl opacity-20">🐑</div>
+          <div className="flex flex-col items-center gap-3">
+            <AppLogo size="2xl" variant="icon" />
+            <SupportedByLogo mainLogoSize={100} />
+          </div>
         </div>
       </div>
 

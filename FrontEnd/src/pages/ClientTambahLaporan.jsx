@@ -206,7 +206,7 @@ export default function ClientPilihJenisLaporan() {
   const Icon = selectedConfig?.icon || Plus;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8 sm:pt-12">
       {/* Header */}
       <div className={`rounded-lg sm:rounded-2xl p-6 sm:p-8 text-white shadow-lg bg-gradient-to-r ${
         selectedConfig?.color || 'from-emerald-600 to-emerald-500'

@@ -21,6 +21,8 @@ export default function PetaSebaranKelompok() {
       setError(null);
       const res = await client.get('/api/kelompok');
       const list = res.data?.data || [];
+      console.log('Kelompok data loaded:', list);
+      console.log('Kelompok with location:', list.filter(k => k.latitude && k.longitude));
       setKelompok(list);
     } catch (err) {
       console.error('Failed to load kelompok', err);
@@ -91,7 +93,11 @@ export default function PetaSebaranKelompok() {
                 Belum Ada Data Lokasi Kelompok
               </h2>
               <p className="text-gray-600 mb-4">
-                Tambahkan kelompok dan tentukan lokasinya untuk melihat peta sebaran.
+                Total kelompok terdaftar: <strong>{kelompok.length}</strong><br/>
+                Dengan lokasi: <strong>{kelompokWithLocation.length}</strong>
+              </p>
+              <p className="text-gray-600 mb-4 text-sm">
+                Tambahkan kelompok dan tentukan lokasinya (latitude & longitude) untuk melihat peta sebaran.
               </p>
               <a
                 href="/list-kelompok"

@@ -11,7 +11,7 @@ export const fetchAllBerita = async () => {
   }
 };
 
-// Get single berita
+// Get single berita by ID
 export const fetchBeritaById = async (id) => {
   try {
     const response = await client.get(`/api/berita/${id}`);
@@ -22,11 +22,23 @@ export const fetchBeritaById = async (id) => {
   }
 };
 
+// Get single berita by slug
+export const fetchBeritaBySlug = async (slug) => {
+  try {
+    const response = await client.get(`/api/berita/slug/${slug}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching berita by slug:', error);
+    throw error;
+  }
+};
+
 // Create berita
-export const createBerita = async (caption, imageFile, publishedAt) => {
+export const createBerita = async (caption, imageFile, publishedAt, content) => {
   try {
     const form = new FormData();
     form.append('caption', caption);
+    form.append('content', content);
     form.append('image', imageFile);
     form.append('publishedAt', publishedAt);
     const response = await client.post('/api/berita', form, {
@@ -40,10 +52,11 @@ export const createBerita = async (caption, imageFile, publishedAt) => {
 };
 
 // Update berita
-export const updateBerita = async (id, caption, imageFileOptional, publishedAt) => {
+export const updateBerita = async (id, caption, imageFileOptional, publishedAt, content) => {
   try {
     const form = new FormData();
     form.append('caption', caption);
+    form.append('content', content);
     if (imageFileOptional) form.append('image', imageFileOptional);
     form.append('publishedAt', publishedAt);
     const response = await client.put(`/api/berita/${id}`, form, {

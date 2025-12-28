@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { getBeritaDisplayDate } from '../../utils/dateFormatter';
 
 export default function LandingBeritaSection({ berita, loading }) {
+  const navigate = useNavigate();
   const [imageErrors, setImageErrors] = useState({});
 
   const handleImageError = (id) => {
     setImageErrors((prev) => ({ ...prev, [id]: true }));
   };
+
+  const handleBeritaClick = (item) => {
+    if (item.slug) {
+      navigate(`/berita/${item.slug}`);
+    }
+  };
+
   if (loading) {
     return (
       <section className="mt-20">
@@ -37,41 +46,40 @@ export default function LandingBeritaSection({ berita, loading }) {
         </div>
       </div>
 
-      <div className="space-y-6">
+      {/* Grid layout for news cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {berita.map((item, idx) => (
           <div
             key={item.id || idx}
-            className="bg-white rounded-2xl shadow-md border border-purple-100 overflow-hidden hover:shadow-lg transition"
+            onClick={() => handleBeritaClick(item)}
+            className="bg-white rounded-2xl shadow-md border border-purple-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition cursor-pointer flex flex-col"
           >
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4">
-              {/* Image - Left side on desktop, top on mobile */}
-              <div className="md:col-span-4">
-                {imageErrors[item.id] ? (
-                  <div className="w-full h-40 md:h-48 bg-gray-200 rounded-xl flex items-center justify-center">
-                    <span className="text-gray-500 text-sm">Gambar tidak tersedia</span>
-                  </div>
-                ) : (
-                  <img
-                    src={item.imageUrl}
-                    alt={item.caption}
-                    onError={() => handleImageError(item.id)}
-                    className="w-full h-40 md:h-48 object-cover rounded-xl"
-                  />
-                )}
-              </div>
-
-              {/* Content - Right side on desktop, bottom on mobile */}
-              <div className="md:col-span-8 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Berita Terkini</h3>
-                  <p className="text-gray-700 leading-relaxed mb-3">{item.caption}</p>
-
-                  {/* Timestamp */}
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Calendar className="w-4 h-4" />
-                    <span>{getBeritaDisplayDate(item)}</span>
-                  </div>
+            {/* Image */}
+            <div className="overflow-hidden bg-gray-200 h-48">
+              {imageErrors[item.id] ? (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                  <span className="text-gray-500 text-sm">Gambar tidak tersedia</span>
                 </div>
+              ) : (
+                <img
+                  src={item.imageUrl}
+                  alt={item.caption}
+                  onError={() => handleImageError(item.id)}
+                  className="w-full h-full object-cover hover:scale-105 transition"
+                />
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="p-4 flex flex-col flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-purple-600 transition">
+                {item.caption}
+              </h3>
+
+              {/* Timestamp */}
+              <div className="flex items-center gap-2 text-sm text-gray-500 mt-auto pt-4 border-t border-gray-100">
+                <Calendar className="w-4 h-4" />
+                <span>{getBeritaDisplayDate(item)}</span>
               </div>
             </div>
           </div>

@@ -95,7 +95,7 @@ export default function KelolaBanner() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto pt-8 sm:pt-12">
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
