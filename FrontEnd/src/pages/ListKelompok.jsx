@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Search, Phone, MapPin, User, Mail, MapPinIcon, Plus, Map } from 'lucide-react';
+import { Users, Search, Phone, MapPin, User, Mail, MapPinIcon, Plus, Map, Eye, Edit2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import AddKelompokModalWithMap from '../components/kelompok/AddKelompokModalWithMap';
@@ -18,6 +18,8 @@ export default function ListKelompok() {
   const [loading, setLoading] = useState(true);
   const [filterDesa, setFilterDesa] = useState('');
   const [filterKecamatan, setFilterKecamatan] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchKelompok();
@@ -85,15 +87,30 @@ export default function ListKelompok() {
   const desaList = [...new Set(kelompok.map(k => k.desa).filter(Boolean))].sort();
 
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm('Hapus kelompok ini?');
-    if (!confirmDelete) return;
+    if (!deleteConfirmation) {
+      // Show confirmation dialog first
+      const kelompokToDelete = kelompok.find(k => k.id === id);
+      setDeleteConfirmation({
+        id,
+        name: kelompokToDelete?.name || 'Kelompok'
+      });
+      return;
+    }
+
+    // Perform actual deletion
+    if (deleteConfirmation.id !== id) return;
+
     try {
+      setIsDeleting(true);
       await client.delete(`/api/kelompok/${id}`);
-      showNotif('success', 'Kelompok berhasil dihapus');
+      showNotif('success', `Kelompok "${deleteConfirmation.name}" dan semua data terkait berhasil dihapus`);
+      setDeleteConfirmation(null);
       fetchKelompok();
     } catch (err) {
       console.error('Delete kelompok failed', err);
       showNotif('error', err.response?.data?.message || 'Gagal menghapus kelompok');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -162,7 +179,7 @@ export default function ListKelompok() {
           <h3 className="font-semibold text-gray-900">Filter & Cari</h3>
         </div>
 
-        {/* Search Input */}
+        {/* Search Input - Baris 1 */}
         <div className="relative">
           <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
@@ -174,34 +191,35 @@ export default function ListKelompok() {
           />
         </div>
 
-        {/* Kecamatan Filter */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Kecamatan</label>
-          <select
-            value={filterKecamatan}
-            onChange={(e) => handleFilterKecamatan(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          >
-            <option value="">Semua Kecamatan</option>
-            {kecamatanList.map(k => (
-              <option key={k} value={k}>{k}</option>
-            ))}
-          </select>
-        </div>
+        {/* Kecamatan & Desa Filter - Baris 2 (side by side) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Kecamatan</label>
+            <select
+              value={filterKecamatan}
+              onChange={(e) => handleFilterKecamatan(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              <option value="">Semua Kecamatan</option>
+              {kecamatanList.map(k => (
+                <option key={k} value={k}>{k}</option>
+              ))}
+            </select>
+          </div>
 
-        {/* Desa Filter */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Desa</label>
-          <select
-            value={filterDesa}
-            onChange={(e) => handleFilterDesa(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          >
-            <option value="">Semua Desa</option>
-            {desaList.map(d => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Desa</label>
+            <select
+              value={filterDesa}
+              onChange={(e) => handleFilterDesa(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              <option value="">Semua Desa</option>
+              {desaList.map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Clear Filters */}
@@ -302,44 +320,36 @@ export default function ListKelompok() {
                     )}
                   </div>
                 )}
-
-                {/* PIC 2 */}
-                {(kelompokItem.pic2Nama || kelompokItem.pic2NoHp) && (
-                  <div className="bg-teal-50 rounded-lg p-3 border border-teal-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <User size={14} className="text-teal-600" />
-                      <span className="text-xs font-semibold text-teal-600">PENANGGUNG JAWAB 2</span>
-                    </div>
-                    {kelompokItem.pic2Nama && (
-                      <div className="text-sm font-semibold text-gray-900">{kelompokItem.pic2Nama}</div>
-                    )}
-                    {kelompokItem.pic2NoHp && (
-                      <div className="flex items-center gap-1 text-xs text-gray-600 mt-1">
-                        <Phone size={12} />
-                        {kelompokItem.pic2NoHp}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* Footer */}
-              {appRole === 'admin' && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-2">
-                  <button
-                    onClick={() => openEditModal(kelompokItem)}
-                    className="flex-1 px-3 py-2 text-sm border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 font-medium transition"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(kelompokItem.id)}
-                    className="flex-1 px-3 py-2 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50 font-medium transition"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              )}
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-2">
+                <button
+                  onClick={() => navigate(`/kelompok/${kelompokItem.id}`)}
+                  title="Lihat detail"
+                  className="p-2 text-blue-600 hover:bg-blue-100 rounded transition"
+                >
+                  <Eye size={18} />
+                </button>
+                {appRole === 'admin' && (
+                  <>
+                    <button
+                      onClick={() => openEditModal(kelompokItem)}
+                      title="Edit kelompok"
+                      className="p-2 text-amber-600 hover:bg-amber-100 rounded transition"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(kelompokItem.id)}
+                      title="Hapus kelompok"
+                      className="p-2 text-red-600 hover:bg-red-100 rounded transition"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -351,6 +361,67 @@ export default function ListKelompok() {
           notif.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
         }`}>
           {notif.message}
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="bg-red-50 border-b border-red-200 px-6 py-4">
+              <h3 className="text-lg font-bold text-red-900">
+                Hapus Kelompok "{deleteConfirmation.name}"?
+              </h3>
+            </div>
+            
+            <div className="px-6 py-4 space-y-3">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-sm text-yellow-800 font-medium">
+                  ⚠️ Peringatan: Tindakan ini TIDAK DAPAT DIBATALKAN!
+                </p>
+              </div>
+              
+              <p className="text-sm text-gray-700">
+                Jika kelompok ini dihapus, data berikut akan ikut terhapus:
+              </p>
+              
+              <ul className="text-sm text-gray-600 space-y-1 ml-4 list-disc">
+                <li>Semua data hewan ternak kelompok ini</li>
+                <li>Semua laporan kelahiran dan kematian</li>
+                <li>Semua data penyaluran & bantuan</li>
+                <li>Semua pengguna yang terikat kelompok ini</li>
+                <li>Semua riwayat dan data terkait lainnya</li>
+              </ul>
+
+              <p className="text-sm text-red-700 font-semibold">
+                Pastikan Anda benar-benar ingin menghapus kelompok ini beserta semua datanya.
+              </p>
+            </div>
+
+            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3">
+              <button
+                onClick={() => setDeleteConfirmation(null)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirmation.id)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Menghapus...
+                  </>
+                ) : (
+                  'Hapus Kelompok'
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

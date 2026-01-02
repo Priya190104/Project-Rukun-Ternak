@@ -256,6 +256,7 @@ export default function AdminHewanTernakPage() {
               <thead>
                 <tr className="bg-emerald-50 border-b border-gray-200">
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">ID</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Sumber</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Ras</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Kelompok</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Jenis Kelamin</th>
@@ -268,11 +269,22 @@ export default function AdminHewanTernakPage() {
               <tbody>
                 {filteredHewan.map((h) => (
                   <tr key={h.id} className="border-b border-gray-100 hover:bg-emerald-50 transition">
-                    <td className="px-6 py-4 text-sm text-gray-900 font-semibold">{h.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 font-semibold">{h.id_hewan || `#${h.id}`}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        h.source === 'Kelahiran' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : h.source === 'Pembelian'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {h.source || 'Tidak Diketahui'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-900 font-semibold">{h.ras}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{h.nama_kelompok}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{getJenisKelaminDisplay(h.jenis_kelamin)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{h.umur.display}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{h.umur?.display || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{h.bobot || '-'}</td>
                     <td className="px-6 py-4">
                       <span className={`text-xs font-bold px-3 py-1 rounded-full ${getStatusBadge(h.status)}`}>

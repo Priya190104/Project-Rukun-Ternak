@@ -29,8 +29,7 @@ async function testEndpointIntegration() {
 
     // Create test laporan
     const testData = {
-      nama_anggota: 'Budi Santoso',
-      register: 'REG-2025-001',
+      nama_hewan: 'Anak Domba Baru',
       id: 'TRK-001-KLH',
       jenis_kelamin: 'Jantan',
       warna: 'Putih',
@@ -55,9 +54,9 @@ async function testEndpointIntegration() {
     
     const certificateData = {
       namaKelompok: kelompok.name,
-      peternak: testData.nama_anggota,
+      peternak: testData.nama_hewan,
       tanggalLahir: testData.tanggal || new Date().toLocaleDateString('id-ID'),
-      noRegistrasi: testData.register,
+      noRegistrasi: '-',  // Register field no longer used
       idTernak: testData.id,
       jenisKelamin: testData.jenis_kelamin,
       warna: testData.warna,

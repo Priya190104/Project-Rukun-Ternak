@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const { attachUser } = require('../middleware/auth');
+const { attachUser, ViewerReadOnlyGuard } = require('../middleware/auth');
 const {
   getAllBerita,
   getBeritaById,
@@ -49,7 +49,7 @@ router.get('/slug/:slug', getBeritaBySlug); // Get by slug
 router.get('/:id', getBeritaById); // Get by ID
 
 // Admin only routes
-router.post('/', attachUser, upload.single('image'), (req, res, next) => {
+router.post('/', attachUser, ViewerReadOnlyGuard, upload.single('image'), (req, res, next) => {
   if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({ success: false, message: 'Forbidden: Admin access required' });
   }
@@ -64,7 +64,7 @@ router.post('/', attachUser, upload.single('image'), (req, res, next) => {
   next();
 }, require('../controllers/beritaController').createBerita);
 
-router.put('/:id', attachUser, upload.single('image'), (req, res, next) => {
+router.put('/:id', attachUser, ViewerReadOnlyGuard, upload.single('image'), (req, res, next) => {
   if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({ success: false, message: 'Forbidden: Admin access required' });
   }
@@ -75,7 +75,7 @@ router.put('/:id', attachUser, upload.single('image'), (req, res, next) => {
   next();
 }, updateBerita);
 
-router.delete('/:id', attachUser, (req, res, next) => {
+router.delete('/:id', attachUser, ViewerReadOnlyGuard, (req, res, next) => {
   if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({ success: false, message: 'Forbidden: Admin access required' });
   }

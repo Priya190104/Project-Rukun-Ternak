@@ -108,7 +108,7 @@ export default function LandingMapSection() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Map section */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 h-96 md:h-[500px]">
             <MapSebaranKelompok
               kelompokList={kelompok}
               onMarkerClick={handleMarkerClick}

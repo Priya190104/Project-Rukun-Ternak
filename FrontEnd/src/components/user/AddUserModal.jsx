@@ -41,6 +41,10 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
     if (!form.role) {
       newErrors.role = 'Role wajib dipilih';
     }
+    // Validasi Kelompok wajib jika role = kelompok
+    if (form.role === 'kelompok' && !form.kelompok_id) {
+      newErrors.kelompok_id = 'Kelompok wajib dipilih untuk role Kelompok';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -174,25 +178,31 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
             >
               <option value="kelompok">Kelompok</option>
               <option value="admin">Admin</option>
+              <option value="viewer">Viewer</option>
             </select>
             {errors.role && <p className="text-red-600 text-xs mt-1">{errors.role}</p>}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-900 mb-1">Kelompok (Opsional)</label>
-            <select
-              name="kelompok_id"
-              value={form.kelompok_id}
-              onChange={handleChange}
-              disabled={loading}
-              className="w-full h-9 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-            >
-              <option value="">- Pilih Kelompok -</option>
-              {kelompokList.map(k => (
-                <option key={k.id} value={k.id}>{k.name}</option>
-              ))}
-            </select>
-          </div>
+          {form.role === 'kelompok' && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-900 mb-1">Kelompok *</label>
+              <select
+                name="kelompok_id"
+                value={form.kelompok_id}
+                onChange={handleChange}
+                disabled={loading}
+                className={`w-full h-9 px-3 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition ${
+                  errors.kelompok_id ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">- Pilih Kelompok -</option>
+                {kelompokList.map(k => (
+                  <option key={k.id} value={k.id}>{k.name}</option>
+                ))}
+              </select>
+              {errors.kelompok_id && <p className="text-red-600 text-xs mt-1">{errors.kelompok_id}</p>}
+            </div>
+          )}
 
           <div className="flex gap-2 pt-2">
             <button

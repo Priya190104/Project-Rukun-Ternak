@@ -29,14 +29,30 @@ export default function AppLayout({ children }) {
     { key: 'banner', label: 'Manajemen Banner', to: '/admin/banner', icon: ImageIcon },
   ];
 
+  // Viewer menu is same as admin but with viewer-specific dashboard link
+  const viewerMenu = [
+    { key: 'dashboard', label: 'Dashboard', to: '/viewer-dashboard', icon: Home },
+    { key: 'hewan', label: 'Hewan Ternak', to: '/admin/hewan-ternak', icon: Heart },
+    { key: 'laporan', label: 'Semua Laporan', to: '/laporan', icon: FileText },
+    { key: 'kelompok', label: 'Kelompok', to: '/kelompok', icon: Users },
+    { key: 'analisis', label: 'Analisis', to: '/analisis', icon: BarChart3 },
+    { key: 'pengguna', label: 'Pengguna', to: '/kelola-user', icon: User },
+    { key: 'berita', label: 'Kelola Berita', to: '/kelola-berita', icon: FileText },
+    { key: 'banner', label: 'Manajemen Banner', to: '/admin/banner', icon: ImageIcon },
+  ];
+
   const kelompokMenu = [
     { key: 'client', label: 'Dashboard', to: '/client', icon: Home },
     { key: 'hewan', label: 'Hewan Ternak', to: '/hewan-ternak', icon: Heart },
     { key: 'buat', label: 'Buat Laporan', to: '/pilih-jenis', icon: FileText },
-    { key: 'mylaporan', label: 'Laporan Saya', to: '/laporan', icon: FileText },
+    { key: 'mylaporan', label: 'Laporan Saya', to: '/klg-laporan', icon: FileText },
   ];
 
-  const menu = appRole === 'admin' ? adminMenu : kelompokMenu;
+  // Viewer uses viewer-specific menu, others use their respective menus
+  const menu = 
+    appRole === 'admin' ? adminMenu : 
+    appRole === 'viewer' ? viewerMenu : 
+    kelompokMenu;
   const isActive = (path) => location.pathname === path;
 
   return (
@@ -101,7 +117,7 @@ export default function AppLayout({ children }) {
 
               <div className="hidden md:block">
                 <h1 className="text-xl font-bold text-gray-900">
-                  {appRole === 'admin' ? '📊 Dashboard Admin' : 'Dashboard Kelompok'}
+                  {appRole === 'admin' ? 'Dashboard Admin' : appRole === 'viewer' ? 'Dashboard Viewer (Read-Only)' : 'Dashboard Kelompok'}
                 </h1>
                 {appRole === 'kelompok' && user?.kelompok && (
                   <div className="mt-1">
@@ -117,7 +133,7 @@ export default function AppLayout({ children }) {
                   <div className="text-right">
                     <div className="text-sm font-semibold text-gray-900">{user.full_name || user.username}</div>
                     <div className="text-xs text-gray-500">
-                      {user.username} • {appRole === 'admin' ? '👤 Admin' : 'Kelompok'}
+                      {user.username} • {appRole === 'admin' ? 'Admin' : appRole === 'viewer' ? '🔒 Viewer' : 'Kelompok'}
                     </div>
                   </div>
                 </div>

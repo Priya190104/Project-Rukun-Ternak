@@ -364,7 +364,7 @@ async function getCacheStatus(req, res) {
 
 /**
  * GET /api/stats/dashboard/kelompok - Dashboard data for kelompok role
- * Returns: Pakan, Kandang, Kelahiran, Populasi, Penjualan, Pengolahan stats
+ * Returns: Pakan, Kandang, Kelahiran, Penjualan stats
  */
 async function getDashboardKelompok(req, res) {
   try {
@@ -395,13 +395,6 @@ async function getDashboardKelompok(req, res) {
         anakBetina: 0,
         anakJantan: 0
       },
-      populasi: {
-        totalPopulasi: 0,
-        indukan: 0,
-        pejantan: 0,
-        anakanJantan: 0,
-        anakanBetina: 0
-      },
       penjualan: {
         totalTerjual: 0,
         pejantanTerjual: 0,
@@ -411,17 +404,25 @@ async function getDashboardKelompok(req, res) {
       pengolahan: {
         pupukCair: 0,
         pupukPadat: 0
+      },
+      penyaluran: {
+        jumlahKandang: 0,
+        tanggalInput: null
+      },
+      bantuan: {
+        jumlahTernak: 0,
+        tanggalInput: null
       }
     };
 
     // Get latest pakan data
     const pakanQuery = `
-      SELECT data->>'jenisPakan' as jenis_pakan,
-             data->>'sumberPakan' as sumber_pakan,
+      SELECT data->>'jenis_pakan' as jenis_pakan,
+             data->>'sumber' as sumber_pakan,
              tanggal
       FROM laporan
       WHERE kelompok_id = $1 AND jenis = 'pakan'
-      ORDER BY tanggal DESC
+      ORDER BY tanggal DESC, created_at DESC
       LIMIT 1
     `;
     const pakanRes = await db.query(pakanQuery, [userKelompokId]);
@@ -434,37 +435,33 @@ async function getDashboardKelompok(req, res) {
       };
     }
 
-    // Get latest kandang data
+    // Get kandang data - accumulate pengembangan_kandang for kandang anggota
     const kandangQuery = `
-      SELECT (data->>'kandangKelompok')::int as kandang_kelompok,
-             (data->>'kandangPenjualan')::int as kandang_penjualan,
-             (data->>'kandangAnggota')::int as kandang_anggota,
-             (data->>'kandangPerkembangan')::int as kandang_perkembangan
+      SELECT COALESCE(SUM((data->>'pengembangan_kandang')::int), 0)::int as pengembangan_total
       FROM laporan
       WHERE kelompok_id = $1 AND jenis = 'kandang'
-      ORDER BY tanggal DESC
-      LIMIT 1
     `;
     const kandangRes = await db.query(kandangQuery, [userKelompokId]);
     if (kandangRes.rows.length > 0) {
       const row = kandangRes.rows[0];
       dashboardData.kandang = {
-        kelompok: row.kandang_kelompok || 0,
-        penjualan: row.kandang_penjualan || 0,
-        anggota: row.kandang_anggota || 0,
-        perkembangan: row.kandang_perkembangan || 0
+        pengembanganTotal: row.pengembangan_total || 0
+      };
+    } else {
+      dashboardData.kandang = {
+        pengembanganTotal: 0
       };
     }
 
-    // Get kelahiran data (last 30 days)
+    // Get kelahiran data from hewan_ternak (not from laporan)
+    // Count hewan with source = 'Kelahiran'
     const kelahiranQuery = `
       SELECT 
-        COALESCE(SUM((data->>'anakBetina')::int + (data->>'anakJantan')::int), 0)::int as total_ekor,
-        COALESCE(SUM((data->>'anakBetina')::int), 0)::int as anak_betina,
-        COALESCE(SUM((data->>'anakJantan')::int), 0)::int as anak_jantan
-      FROM laporan
-      WHERE kelompok_id = $1 AND jenis = 'kelahiran'
-        AND tanggal >= NOW() - INTERVAL '30 days'
+        COUNT(*)::int as total_ekor,
+        COUNT(CASE WHEN jenis_kelamin = 'BETINA' THEN 1 END)::int as anak_betina,
+        COUNT(CASE WHEN jenis_kelamin = 'JANTAN' THEN 1 END)::int as anak_jantan
+      FROM hewan_ternak
+      WHERE kelompok_id = $1 AND source = 'Kelahiran'
     `;
     const kelahiranRes = await db.query(kelahiranQuery, [userKelompokId]);
     if (kelahiranRes.rows.length > 0) {
@@ -476,52 +473,78 @@ async function getDashboardKelompok(req, res) {
       };
     }
 
-    // Get populasi data (latest)
-    const populasiQuery = `
+    // Get penjualan data FROM HEWAN_TERNAK (status = TERJUAL)
+    // This is the primary source for sold animals with age-based categorization
+    const penjualanHewanQuery = `
       SELECT 
-        (data->>'totalPopulasi')::int as total_populasi,
-        (data->>'indukan')::int as indukan,
-        (data->>'pejantan')::int as pejantan,
-        (data->>'anak_jantan_0_8bln')::int as anak_jantan_0_8bln,
-        (data->>'anak_betina_0_8bln')::int as anak_betina_0_8bln
-      FROM laporan
-      WHERE kelompok_id = $1 AND jenis = 'populasi'
-      ORDER BY tanggal DESC
-      LIMIT 1
+        COUNT(*)::int as total_terjual,
+        COUNT(CASE WHEN jenis_kelamin = 'JANTAN' AND (umur_saat_terjual IS NULL OR umur_saat_terjual > 11) THEN 1 END)::int as pejantan_terjual,
+        COUNT(CASE WHEN jenis_kelamin = 'BETINA' AND (umur_saat_terjual IS NULL OR umur_saat_terjual > 11) THEN 1 END)::int as indukan_terjual,
+        COUNT(CASE WHEN jenis_kelamin = 'JANTAN' AND umur_saat_terjual IS NOT NULL AND umur_saat_terjual >= 8 AND umur_saat_terjual <= 11 THEN 1 END)::int as calon_pejantan_terjual,
+        COUNT(CASE WHEN jenis_kelamin = 'BETINA' AND umur_saat_terjual IS NOT NULL AND umur_saat_terjual >= 8 AND umur_saat_terjual <= 11 THEN 1 END)::int as calon_indukan_terjual
+      FROM hewan_ternak
+      WHERE kelompok_id = $1 AND status = 'TERJUAL'
     `;
-    const populasiRes = await db.query(populasiQuery, [userKelompokId]);
-    if (populasiRes.rows.length > 0) {
-      const row = populasiRes.rows[0];
-      dashboardData.populasi = {
-        totalPopulasi: row.total_populasi || 0,
-        indukan: row.indukan || 0,
-        pejantan: row.pejantan || 0,
-        anakanJantan: row.anak_jantan_0_8bln || 0,
-        anakanBetina: row.anak_betina_0_8bln || 0
-      };
+    const penjualanHewanRes = await db.query(penjualanHewanQuery, [userKelompokId]);
+    
+    let totalTerjual = 0;
+    let pejantanTerjual = 0;
+    let indukanTerjual = 0;
+    let calonPejantanTerjual = 0;
+    let calonIndukanTerjual = 0;
+    let jantanPotongTerjual = 0;
+    let betinaPotongTerjual = 0;
+    
+    if (penjualanHewanRes.rows.length > 0) {
+      const row = penjualanHewanRes.rows[0];
+      totalTerjual = row.total_terjual || 0;
+      pejantanTerjual = row.pejantan_terjual || 0;
+      indukanTerjual = row.indukan_terjual || 0;
+      calonPejantanTerjual = row.calon_pejantan_terjual || 0;
+      calonIndukanTerjual = row.calon_indukan_terjual || 0;
+      
+      console.log('[statsController] Penjualan counts from hewan_ternak:', {
+        totalTerjual,
+        pejantanTerjual,
+        indukanTerjual,
+        calonPejantanTerjual,
+        calonIndukanTerjual,
+        kelompokId: userKelompokId
+      });
     }
-
-    // Get penjualan data (last 30 days)
-    const penjualanQuery = `
+    
+    // Get Jantan Potong and Betina Potong counts FROM LAPORAN (penjualan)
+    // These are counted based on the jenis_hewan field in penjualan_list
+    const potongQuery = `
       SELECT 
-        COALESCE(SUM((data->>'jumlahTerjual')::int), 0)::int as total_terjual,
-        COALESCE(SUM((data->>'jumlahPejantan')::int), 0)::int as pejantan_terjual,
-        COALESCE(SUM((data->>'jumlahBetina')::int), 0)::int as betina_terjual,
-        COALESCE(SUM((data->>'jumlahAnakan')::int), 0)::int as anakan_terjual
-      FROM laporan
-      WHERE kelompok_id = $1 AND jenis = 'penjualan'
-        AND tanggal >= NOW() - INTERVAL '30 days'
+        COUNT(CASE WHEN item->>'jenis_hewan' = 'Jantan Potong' THEN 1 END)::int as jantan_potong_count,
+        COUNT(CASE WHEN item->>'jenis_hewan' = 'Betina Potong' THEN 1 END)::int as betina_potong_count
+      FROM laporan,
+           jsonb_array_elements((data->'penjualan_list')::jsonb) as item
+      WHERE kelompok_id = $1 AND jenis = 'Penjualan' AND data->'penjualan_list' IS NOT NULL
     `;
-    const penjualanRes = await db.query(penjualanQuery, [userKelompokId]);
-    if (penjualanRes.rows.length > 0) {
-      const row = penjualanRes.rows[0];
-      dashboardData.penjualan = {
-        totalTerjual: row.total_terjual || 0,
-        pejantanTerjual: row.pejantan_terjual || 0,
-        betinaTerjual: row.betina_terjual || 0,
-        anakanTerjual: row.anakan_terjual || 0
-      };
+    const potongRes = await db.query(potongQuery, [userKelompokId]);
+    
+    if (potongRes.rows.length > 0) {
+      const row = potongRes.rows[0];
+      jantanPotongTerjual = row.jantan_potong_count || 0;
+      betinaPotongTerjual = row.betina_potong_count || 0;
+      
+      console.log('[statsController] Potong counts from laporan:', {
+        jantanPotong: jantanPotongTerjual,
+        betinaPotong: betinaPotongTerjual
+      });
     }
+    
+    dashboardData.penjualan = {
+      totalTerjual: totalTerjual,
+      pejantanTerjual: pejantanTerjual,
+      indukanTerjual: indukanTerjual,
+      calonPejantanTerjual: calonPejantanTerjual,
+      calonIndukanTerjual: calonIndukanTerjual,
+      jantanPotongTerjual: jantanPotongTerjual,
+      betinaPotongTerjual: betinaPotongTerjual
+    };
 
     // Get pengolahan data (latest)
     const pengolahanQuery = `
@@ -539,6 +562,72 @@ async function getDashboardKelompok(req, res) {
       dashboardData.pengolahan = {
         pupukCair: parseFloat(row.pupuk_cair) || 0,
         pupukPadat: parseFloat(row.pupuk_padat) || 0
+      };
+    }
+
+    // Get penyaluran & bantuan data from kelompok table + calculate ternak counts from hewan_ternak
+    // POPULASI = COUNT(hewan_ternak WHERE status='AKTIF')
+    const penyaluranBantuanQuery = `
+      SELECT 
+        k.jumlah_kandang,
+        k.jumlah_ternak,
+        k.pakan_list,
+        k.kesehatan_list,
+        COUNT(CASE WHEN h.jenis_kelamin = 'JANTAN' AND h.source = 'Penyaluran' AND h.status = 'AKTIF' THEN 1 END)::int as ternak_jantan,
+        COUNT(CASE WHEN h.jenis_kelamin = 'BETINA' AND h.source = 'Penyaluran' AND h.status = 'AKTIF' THEN 1 END)::int as ternak_betina,
+        COUNT(CASE WHEN h.status = 'AKTIF' THEN 1 END)::int as total_hewan,
+        COUNT(CASE WHEN h.jenis_kelamin = 'JANTAN' AND h.status = 'AKTIF' THEN 1 END)::int as total_jantan,
+        COUNT(CASE WHEN h.jenis_kelamin = 'BETINA' AND h.status = 'AKTIF' THEN 1 END)::int as total_betina
+      FROM kelompok k
+      LEFT JOIN hewan_ternak h ON h.kelompok_id = k.id
+      WHERE k.id = $1
+      GROUP BY k.id, k.jumlah_kandang, k.jumlah_ternak, k.pakan_list, k.kesehatan_list
+    `;
+    const penyaluranBantuanRes = await db.query(penyaluranBantuanQuery, [userKelompokId]);
+    if (penyaluranBantuanRes.rows.length > 0) {
+      const row = penyaluranBantuanRes.rows[0];
+      
+      // Parse pakan_list - handle both string and array formats
+      let pakanList = [];
+      if (row.pakan_list) {
+        try {
+          pakanList = typeof row.pakan_list === 'string' 
+            ? JSON.parse(row.pakan_list)
+            : row.pakan_list;
+        } catch (e) {
+          console.warn('Could not parse pakan_list:', e);
+        }
+      }
+      
+      // Parse kesehatan_list - handle both string and array formats
+      let kesehatanList = [];
+      if (row.kesehatan_list) {
+        try {
+          kesehatanList = typeof row.kesehatan_list === 'string'
+            ? JSON.parse(row.kesehatan_list)
+            : row.kesehatan_list;
+        } catch (e) {
+          console.warn('Could not parse kesehatan_list:', e);
+        }
+      }
+      
+      dashboardData.penyaluran = {
+        jumlahKandang: row.jumlah_kandang || 0,
+        tanggalInput: new Date().toISOString(),
+        pakanList: pakanList,
+        tarnakJantan: row.ternak_jantan || 0,
+        tarnakBetina: row.ternak_betina || 0
+      };
+      dashboardData.bantuan = {
+        jumlahTernak: row.jumlah_ternak || 0,
+        tanggalInput: new Date().toISOString(),
+        kesehatanList: kesehatanList
+      };
+      // Add populasi hewan dari tabel hewan_ternak (untuk card Populasi di Progress Kelompok)
+      dashboardData.populasiHewan = {
+        total: row.total_hewan || 0,
+        jantan: row.total_jantan || 0,
+        betina: row.total_betina || 0
       };
     }
 
@@ -586,11 +675,65 @@ async function invalidateCache(req, res) {
   }
 }
 
+/**
+ * GET /api/stats/kelahiran - Kelahiran statistics from hewan_ternak
+ * Returns: Total kelahiran, kelahiran betina, kelahiran jantan
+ * Source: Dari hewan_ternak dengan source = 'Kelahiran'
+ */
+async function getKelahiranStats(req, res) {
+  try {
+    const userRole = req.user?.role;
+    const userKelompokId = req.user?.kelompok_id;
+
+    let whereCondition = "source = 'Kelahiran'";
+    const params = [];
+    let paramIndex = 1;
+
+    // If user is from kelompok, only get stats for their kelompok
+    if (userRole === 'kelompok') {
+      whereCondition = `source = 'Kelahiran' AND kelompok_id = $${paramIndex++}`;
+      params.push(userKelompokId);
+    }
+
+    // Query to get kelahiran statistics
+    const query = `
+      SELECT 
+        COUNT(*)::int as total_kelahiran,
+        COUNT(CASE WHEN jenis_kelamin = 'BETINA' THEN 1 END)::int as kelahiran_betina,
+        COUNT(CASE WHEN jenis_kelamin = 'JANTAN' THEN 1 END)::int as kelahiran_jantan
+      FROM hewan_ternak
+      WHERE ${whereCondition}
+    `;
+
+    console.log('[statsController] getKelahiranStats - Role:', userRole, 'Where:', whereCondition);
+
+    const result = await db.query(query, params);
+    const stats = result.rows[0];
+
+    return res.json({
+      success: true,
+      data: {
+        total_kelahiran: stats.total_kelahiran || 0,
+        kelahiran_betina: stats.kelahiran_betina || 0,
+        kelahiran_jantan: stats.kelahiran_jantan || 0,
+        generatedAt: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('[statsController] Error in getKelahiranStats:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
 module.exports = {
   getSummary,
   getDashboardSummary,
   getDashboardKelompok,
   getLaporanByMonth,
-  getCacheStatus,
+  getKelahiranStats,  getCacheStatus,
   invalidateCache
 };

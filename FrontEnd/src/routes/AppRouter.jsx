@@ -4,9 +4,9 @@ import Landing from '../pages/Landing';
 import Login from '../pages/Login';
 import Profil from '../pages/Profil';
 import Dashboard from '../pages/Dashboard';
+import ViewerDashboard from '../pages/ViewerDashboard';
 import ClientDashboard from '../pages/ClientDashboard';
 import ClientDaftarLaporan from '../pages/ClientDaftarLaporan';
-import ClientTambahLaporan from '../pages/ClientTambahLaporan';
 import ClientPilihJenisLaporan from '../pages/ClientPilihJenisLaporan';
 import KelolaUser from '../pages/KelolaUser';
 import KelolaBerita from '../pages/KelolaBerita';
@@ -45,6 +45,20 @@ export default function AppRouter() {
                 <RoleGuard allowedRoles={[ 'admin' ]}>
                   <AppLayout>
                     <Dashboard />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* VIEWER ROUTES */}
+          <Route
+            path="/viewer-dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'viewer' ]}>
+                  <AppLayout>
+                    <ViewerDashboard />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>
@@ -90,11 +104,12 @@ export default function AppRouter() {
             }
           />
 
+          {/* HEWAN TERNAK ROUTES - Accessible by admin, viewer (read-only for viewer) */}
           <Route
             path="/admin/hewan-ternak"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin' ]}>
+                <RoleGuard allowedRoles={[ 'admin', 'viewer' ]}>
                   <AppLayout>
                     <AdminHewanTernakPage />
                   </AppLayout>
@@ -107,7 +122,7 @@ export default function AppRouter() {
             path="/admin/hewan-ternak/:id"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin' ]}>
+                <RoleGuard allowedRoles={[ 'admin', 'viewer' ]}>
                   <AppLayout>
                     <DetailHewanPage />
                   </AppLayout>
@@ -116,11 +131,12 @@ export default function AppRouter() {
             }
           />
 
+          {/* LAPORAN ROUTES - Accessible by admin, kelompok, viewer (read-only for viewer) */}
           <Route
             path="/laporan"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin', 'kelompok' ]}>
+                <RoleGuard allowedRoles={[ 'admin', 'kelompok', 'viewer' ]}>
                   <AppLayout>
                     <DaftarSemuaLaporan />
                   </AppLayout>
@@ -129,11 +145,12 @@ export default function AppRouter() {
             }
           />
 
+          {/* KELOMPOK ROUTES - Accessible by admin, viewer (read-only for viewer) */}
           <Route
             path="/kelompok"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin' ]}>
+                <RoleGuard allowedRoles={[ 'admin', 'viewer' ]}>
                   <AppLayout>
                     <ListKelompok />
                   </AppLayout>
@@ -155,11 +172,12 @@ export default function AppRouter() {
             }
           />
 
+          {/* ANALISIS ROUTES - Accessible by admin, kelompok, viewer (read-only for viewer) */}
           <Route
             path="/analisis"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin', 'kelompok' ]}>
+                <RoleGuard allowedRoles={[ 'admin', 'kelompok', 'viewer' ]}>
                   <AppLayout>
                     <AdminAnalisis />
                   </AppLayout>
@@ -189,19 +207,6 @@ export default function AppRouter() {
                 <RoleGuard allowedRoles={[ 'kelompok' ]}>
                   <AppLayout>
                     <ClientDaftarLaporan />
-                  </AppLayout>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/klg-tambah-laporan"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'kelompok' ]}>
-                  <AppLayout>
-                    <ClientTambahLaporan />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>
@@ -287,11 +292,12 @@ export default function AppRouter() {
             }
           />
 
+          {/* LAPORAN DETAIL - Accessible by admin, kelompok, viewer (read-only for viewer) */}
           <Route
             path="/laporan/:id"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin', 'kelompok', 'client' ]}>
+                <RoleGuard allowedRoles={[ 'admin', 'kelompok', 'viewer' ]}>
                   <AppLayout>
                     <DetailLaporan />
                   </AppLayout>

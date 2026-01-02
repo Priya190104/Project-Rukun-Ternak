@@ -91,13 +91,23 @@ async function createUser(req, res) {
       return res.status(400).json({ success: false, message: 'Username, password, full_name, dan role wajib diisi' });
     }
     
+    // Validasi: role=kelompok HARUS memiliki kelompok_id
+    if (role === 'kelompok' && !kelompok_id) {
+      return res.status(400).json({ success: false, message: 'Kelompok wajib dipilih untuk role Kelompok' });
+    }
+    
+    // Validasi: role admin/viewer TIDAK BOLEH memiliki kelompok_id
+    if ((role === 'admin' || role === 'viewer') && kelompok_id) {
+      return res.status(400).json({ success: false, message: `Role ${role} tidak boleh terikat dengan kelompok` });
+    }
+    
     // Hash password
     const bcrypt = require('bcrypt');
     const hashedPassword = await bcrypt.hash(password, 10);
     
     const { rows } = await db.query(
       'INSERT INTO users (username, password, full_name, role, kelompok_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, full_name, role, kelompok_id',
-      [username, hashedPassword, full_name, role, kelompok_id || null]
+      [username, hashedPassword, full_name, role, role === 'kelompok' ? kelompok_id : null]
     );
     
     if (rows[0] && rows[0].kelompok_id) {

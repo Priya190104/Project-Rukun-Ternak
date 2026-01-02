@@ -33,9 +33,9 @@ async function generateSertifikatKelahiran(req, res) {
     const data = laporan.data || {};
     const certificateData = {
       namaKelompok: laporan.kelompok_name || '-',
-      peternak: data.nama_anggota || '-',
+      peternak: data.nama_hewan || '-',
       tanggalLahir: data.tanggal || '-',
-      noRegistrasi: data.register || '-',
+      noRegistrasi: '-',  // Register field no longer used
       idTernak: data.id || '-',
       jenisKelamin: data.jenis_kelamin || '-',
       warna: data.warna || '-',

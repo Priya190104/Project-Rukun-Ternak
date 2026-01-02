@@ -1,987 +1,1265 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { createReport } from '../services/reportService';
-import { ArrowRight, Heart, Skull, Gift, BarChart3, ArrowLeft, Weight } from 'lucide-react';
 import client from '../api/client';
+import { 
+  ArrowRight, ArrowLeft
+} from 'lucide-react';
 
-const JENIS_LAPORAN = [
+const JENIS_LAPORAN_LIST = [
   { 
-    id: 'Kelahiran', 
-    label: 'Laporan Kelahiran', 
-    icon: Heart, 
-    color: 'bg-green-100 text-green-700 border-green-300',
-    description: 'Catat kelahiran anak domba baru dengan data indukan dan kondisi'
+    id: 'pakan', 
+    label: 'Pakan', 
+    color: 'from-orange-500 to-orange-600',
+    bgColor: 'bg-orange-50 border-orange-200',
+    description: 'Catat jenis pakan dan sumbernya'
   },
   { 
-    id: 'Kematian', 
-    label: 'Laporan Kematian', 
-    icon: Skull, 
-    color: 'bg-red-100 text-red-700 border-red-300',
-    description: 'Catat kematian ternak beserta penyebab dan tindakan'
+    id: 'kandang', 
+    label: 'Kandang', 
+    color: 'from-amber-500 to-amber-600',
+    bgColor: 'bg-amber-50 border-amber-200',
+    description: 'Catat perkembangan kandang'
   },
   { 
-    id: 'Penjualan', 
+    id: 'kesehatan', 
+    label: 'Kesehatan', 
+    color: 'from-red-500 to-red-600',
+    bgColor: 'bg-red-50 border-red-200',
+    description: 'Catat vaksinasi, obat, dan status kesehatan'
+  },
+  { 
+    id: 'kelahiran', 
+    label: 'Kelahiran', 
+    color: 'from-pink-500 to-pink-600',
+    bgColor: 'bg-pink-50 border-pink-200',
+    description: 'Catat kelahiran anak dengan jenis kelamin'
+  },
+  { 
+    id: 'penjualan', 
     label: 'Penjualan', 
-    icon: Gift, 
-    color: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-    description: 'Catat penjualan ternak (Aqiqah, Kurban, Retail)'
+    color: 'from-blue-500 to-blue-600',
+    bgColor: 'bg-blue-50 border-blue-200',
+    description: 'Catat penjualan ternak dan pembeli'
   },
   { 
-    id: 'Budidaya', 
-    label: 'Laporan Budidaya', 
-    icon: BarChart3, 
-    color: 'bg-blue-100 text-blue-700 border-blue-300',
-    description: 'Catat pakan, kandang, dan kesehatan ternak'
-  },
-  { 
-    id: 'UpdateTernak', 
-    label: 'Update Ternak', 
-    icon: Weight, 
-    color: 'bg-purple-100 text-purple-700 border-purple-300',
-    description: 'Perbarui bobot badan hewan ternak secara berkala',
-    external: true
+    id: 'pengolahan_pupuk', 
+    label: 'Pengolahan Pupuk', 
+    color: 'from-green-500 to-green-600',
+    bgColor: 'bg-green-50 border-green-200',
+    description: 'Catat pengolahan dan penjualan pupuk',
+    isPlaceholder: true
   },
 ];
 
 export default function ClientPilihJenisLaporan() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [step, setStep] = useState('pilih'); // 'pilih', 'budidaya-kategori', atau 'form'
+  useAuth();
+  const [step, setStep] = useState('select'); // 'select' or 'form'
   const [selectedJenis, setSelectedJenis] = useState(null);
-  const [selectedSubJenis, setSelectedSubJenis] = useState(null); // For Penjualan sub-types
-  const [selectedKategori, setSelectedKategori] = useState(null); // Untuk Budidaya
-  const [form, setForm] = useState({ tanggal: '', data: {} });
+  const [formData, setFormData] = useState({
+    tanggal: new Date().toISOString().split('T')[0],
+    data: {}
+  });
   const [saving, setSaving] = useState(false);
-  const [notification, setNotification] = useState(null);
-  const [kelompokData, setKelompokData] = useState(null);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
-  // Fetch kelompok data for header display
-  useEffect(() => {
-    if (user && user.kelompok_id) {
-      (async () => {
-        try {
-          const res = await client.get(`/api/kelompok/${user.kelompok_id}`);
-          if (res.data?.success) {
-            setKelompokData(res.data.data);
-          }
-        } catch (err) {
-          console.error('Failed to fetch kelompok data:', err);
-        }
-      })();
+  // State untuk dropdown candidates
+  const [pejantanCandidates, setPejantanCandidates] = useState([]);
+  const [indukCandidates, setIndukCandidates] = useState([]);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
+  const [hewanTernakList, setHewanTernakList] = useState([]);
+  const [loadingHewanTernak, setLoadingHewanTernak] = useState(false);
+  const [showPupukModal, setShowPupukModal] = useState(false);
+  const [duplicateIDModal, setDuplicateIDModal] = useState(null);
+  // State untuk penjualan candidates berdasarkan jenis hewan
+  const [penjualanCandidates, setPenjualanCandidates] = useState({
+    'Pejantan': [],
+    'Indukan': [],
+    'Calon Indukan': [],
+    'Calon Pejantan': [],
+    'Jantan Potong': [],
+    'Betina Potong': []
+  });
+  const [loadingPenjualanCandidates, setLoadingPenjualanCandidates] = useState(false);
+
+  // Get today's date as max
+  const today = new Date().toISOString().split('T')[0];
+
+  const fetchCandidates = useCallback(async () => {
+    try {
+      setLoadingCandidates(true);
+      const [pejantanRes, indukRes] = await Promise.all([
+        client.get('/api/candidates/pejantan'),
+        client.get('/api/candidates/induk')
+      ]);
+
+      if (pejantanRes.data?.success) {
+        setPejantanCandidates(pejantanRes.data.data);
+      }
+      if (indukRes.data?.success) {
+        setIndukCandidates(indukRes.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching candidates:', err);
+      setError('Gagal mengambil data pejantan/induk');
+    } finally {
+      setLoadingCandidates(false);
     }
-  }, [user]);
+  }, []);
 
-  const showNotification = (type, message) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 5000);
-  };
+  const fetchHewanTernak = useCallback(async () => {
+    try {
+      setLoadingHewanTernak(true);
+      // For kesehatan form, use /api/hewan-aktif to get only active animals
+      // For penjualan form, use /api/hewan to get all animals for sale
+      const endpoint = selectedJenis === 'kesehatan' ? '/api/hewan-aktif' : '/api/hewan';
+      const res = await client.get(endpoint);
+      if (res.data?.success) {
+        setHewanTernakList(res.data.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching hewan ternak:', err);
+      setError('Gagal mengambil data hewan ternak');
+    } finally {
+      setLoadingHewanTernak(false);
+    }
+  }, [selectedJenis]);
+
+  const fetchPenjualanCandidates = useCallback(async () => {
+    try {
+      setLoadingPenjualanCandidates(true);
+      const res = await client.get('/api/hewan');
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        const allHewan = res.data.data;
+        
+        // Filter berdasarkan jenis hewan penjualan
+        // Updated: Umur boundary changed from 12 to 11 months
+        const filtered = {
+          'Pejantan': allHewan.filter(h => h.jenis_kelamin === 'JANTAN' && (h.umur_bulan || 0) > 11 && h.status === 'AKTIF'),
+          'Indukan': allHewan.filter(h => h.jenis_kelamin === 'BETINA' && (h.umur_bulan || 0) > 11 && h.status === 'AKTIF'),
+          'Calon Indukan': allHewan.filter(h => h.jenis_kelamin === 'BETINA' && (h.umur_bulan || 0) >= 8 && (h.umur_bulan || 0) <= 11 && h.status === 'AKTIF'),
+          'Calon Pejantan': allHewan.filter(h => h.jenis_kelamin === 'JANTAN' && (h.umur_bulan || 0) >= 8 && (h.umur_bulan || 0) <= 11 && h.status === 'AKTIF'),
+          'Jantan Potong': allHewan.filter(h => h.jenis_kelamin === 'JANTAN' && h.status === 'AKTIF'),
+          'Betina Potong': allHewan.filter(h => h.jenis_kelamin === 'BETINA' && h.status === 'AKTIF')
+        };
+        
+        setPenjualanCandidates(filtered);
+      }
+    } catch (err) {
+      console.error('Error fetching penjualan candidates:', err);
+      setError('Gagal mengambil data hewan untuk penjualan');
+    } finally {
+      setLoadingPenjualanCandidates(false);
+    }
+  }, []);
+
+  // Fetch candidates saat form kelahiran dibuka, dan fetch penjualan saat form penjualan dibuka
+  useEffect(() => {
+    if (selectedJenis === 'kelahiran') {
+      fetchCandidates();
+    }
+    // Fetch hewan ternak saat form kesehatan dan penjualan dibuka
+    if (selectedJenis === 'kesehatan' || selectedJenis === 'penjualan') {
+      fetchHewanTernak();
+      if (selectedJenis === 'penjualan') {
+        fetchPenjualanCandidates();
+      }
+    }
+  }, [selectedJenis, fetchCandidates, fetchHewanTernak, fetchPenjualanCandidates]);
 
   const handleSelectJenis = (jenisId) => {
-    if (jenisId === 'UpdateTernak') {
-      navigate('/form-update-ternak');
+    // Check if it's a placeholder feature
+    if (jenisId === 'pengolahan_pupuk') {
+      setShowPupukModal(true);
       return;
     }
     
     setSelectedJenis(jenisId);
-    if (jenisId === 'Budidaya') {
-      setStep('budidaya-kategori');
-    } else if (jenisId === 'Penjualan') {
-      setStep('penjualan-subjenis');
-    } else {
-      setStep('form');
-    }
-    setForm({ tanggal: '', data: {} });
-  };
-
-  const handleSelectKategori = (kategoriId) => {
-    setSelectedKategori(kategoriId);
+    setFormData({
+      tanggal: new Date().toISOString().split('T')[0],
+      data: {}
+    });
+    setError(null);
     setStep('form');
   };
 
-  const handleSelectSubJenis = (subJenisId) => {
-    setSelectedSubJenis(subJenisId);
-    setStep('form');
+  const handleFormChange = (field, value) => {
+    const newData = { ...formData.data, [field]: value };
+    
+    // Auto-clear jenis_tindakan and detail fields when status = 'mati'
+    if (field === 'status_kesehatan_ternak' && value === 'mati') {
+      newData.jenis_tindakan = null;
+      newData.jenis_pencegahan = null;
+      newData.jenis_pengobatan = null;
+      newData.jenis_perawatan = null;
+    }
+    
+    // Clear detail fields when jenis_tindakan changes to different value
+    if (field === 'jenis_tindakan') {
+      newData.jenis_pencegahan = null;
+      newData.jenis_pengobatan = null;
+      newData.jenis_perawatan = null;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      data: newData
+    }));
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'tanggal') {
-      setForm({ ...form, tanggal: value });
-    } else {
-      setForm({ ...form, data: { ...form.data, [name]: value } });
-    }
+  const handleDateChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      tanggal: e.target.value
+    }));
   };
 
   const validateForm = () => {
-    if (!form.tanggal) {
-      showNotification('error', 'Tanggal wajib diisi');
-      return false;
-    }
-    
-    // Validate that date is not in the future
-    const selectedDate = new Date(form.tanggal);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (selectedDate > today) {
-      showNotification('error', 'Tanggal tidak boleh melampaui hari ini');
+    if (!formData.tanggal) {
+      setError('Tanggal laporan wajib diisi');
       return false;
     }
 
-    // Validate required fields for Kelahiran
-    if (selectedJenis === 'Kelahiran') {
-      const requiredFields = ['nama_anggota', 'register', 'id', 'jenis_kelamin', 'warna', 'ras', 'induk', 'pejantan', 'bobot'];
-      for (const field of requiredFields) {
-        if (!form.data[field] || form.data[field].toString().trim() === '') {
-          const fieldLabels = {
-            nama_anggota: 'Nama Anggota',
-            register: 'Register',
-            id: 'ID',
-            jenis_kelamin: 'Jenis Kelamin',
-            warna: 'Warna',
-            ras: 'Ras',
-            induk: 'Induk',
-            pejantan: 'Pejantan',
-            bobot: 'Bobot'
-          };
-          showNotification('error', `${fieldLabels[field]} wajib diisi`);
+    // Validate based on jenis
+    switch (selectedJenis) {
+      case 'pakan':
+        if (!formData.data.jenis_pakan) {
+          setError('Jenis pakan wajib diisi');
           return false;
         }
-      }
-      
-      // Validate bobot is a positive number
-      if (isNaN(parseFloat(form.data.bobot)) || parseFloat(form.data.bobot) <= 0) {
-        showNotification('error', 'Bobot harus berupa angka positif');
-        return false;
-      }
+        if (!formData.data.sumber) {
+          setError('Sumber pakan wajib diisi');
+          return false;
+        }
+        break;
+      case 'kandang':
+        if (!formData.data.pengembangan_kandang) {
+          setError('Pengembangan kandang wajib diisi');
+          return false;
+        }
+        if (formData.data.pengembangan_kandang > 0) {
+          // Check if all luas kandang are filled
+          if (!formData.data.luas_kandang_list || formData.data.luas_kandang_list.length !== formData.data.pengembangan_kandang) {
+            setError('Semua luas kandang harus diisi');
+            return false;
+          }
+          // Check if any value is empty
+          for (let i = 0; i < formData.data.luas_kandang_list.length; i++) {
+            if (!formData.data.luas_kandang_list[i] || formData.data.luas_kandang_list[i] === '') {
+              setError(`Luas kandang ${i + 1} harus diisi`);
+              return false;
+            }
+          }
+        }
+        break;
+      case 'kesehatan':
+        if (!formData.data.id_ternak) {
+          setError('ID Ternak wajib diisi');
+          return false;
+        }
+        if (!formData.data.status_kesehatan_ternak) {
+          setError('Status kesehatan ternak wajib diisi');
+          return false;
+        }
+        // Jika status bukan "mati", jenis_tindakan wajib diisi
+        if (formData.data.status_kesehatan_ternak !== 'mati' && !formData.data.jenis_tindakan) {
+          setError('Jenis tindakan wajib diisi');
+          return false;
+        }
+        break;
+      case 'populasi':
+        if (!formData.data.total_induk && !formData.data.total_pejantan) {
+          setError('Minimal isi satu data populasi');
+          return false;
+        }
+        break;
+      case 'kelahiran':
+        if (!formData.data.tanggal_kelahiran) {
+          setError('Tanggal kelahiran wajib diisi');
+          return false;
+        }
+        if (!formData.data.jenis_kelamin_anak) {
+          setError('Jenis kelamin anak wajib diisi');
+          return false;
+        }
+        if (!formData.data.pejantan_id) {
+          setError('Pejantan wajib dipilih');
+          return false;
+        }
+        if (!formData.data.induk_id) {
+          setError('Induk wajib dipilih');
+          return false;
+        }
+        break;
+      case 'penjualan':
+        if (!formData.data.jumlah_hewan) {
+          setError('Jumlah hewan wajib diisi');
+          return false;
+        }
+        // Validate setiap item penjualan
+        const penjualanList = formData.data.penjualan_list || [];
+        for (let i = 0; i < formData.data.jumlah_hewan; i++) {
+          const item = penjualanList[i];
+          if (!item || !item.jenis_penjualan) {
+            setError(`Jenis penjualan untuk hewan #${i + 1} wajib diisi`);
+            return false;
+          }
+          if (!item.jenis_hewan) {
+            setError(`Jenis hewan untuk hewan #${i + 1} wajib diisi`);
+            return false;
+          }
+          if (!item.id_hewan) {
+            setError(`ID hewan untuk hewan #${i + 1} wajib diisi`);
+            return false;
+          }
+        }
+        break;
+      case 'pengembangan':
+        if (!formData.data.jenis_kegiatan) {
+          setError('Jenis kegiatan wajib diisi');
+          return false;
+        }
+        break;
+      default:
+        break;
     }
-    
+
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-    
-    setSaving(true);
+
+    if (!validateForm()) {
+      return;
+    }
+
     try {
-      let dataToSend = { ...form.data };
-      
-      // Add kategori for Budidaya
-      if (selectedKategori) {
-        dataToSend.kategori = selectedKategori;
-      }
-      
-      // Add sub jenis for Penjualan
-      if (selectedSubJenis) {
-        dataToSend.jenis_penjualan = selectedSubJenis;
-      }
-      
-      const payload = { 
-        tanggal: form.tanggal, 
-        jenis: selectedJenis, 
-        data: dataToSend
+      setSaving(true);
+      setError(null);
+
+      const payload = {
+        jenis: selectedJenis,
+        data: formData.data,
+        tanggal: formData.tanggal
       };
-      
-      const created = await createReport(payload);
-      
-      if (created && created.id) {
-        showNotification('success', 'Laporan berhasil disimpan!');
+
+      const res = await client.post('/api/laporan', payload);
+
+      if (res.data?.success) {
+        // Trigger refetch for HewanTernakPage and other pages
+        console.log('[ClientTambahLaporan] Laporan submitted successfully, triggering refetch event');
+        localStorage.setItem('hewanDataRefetchTrigger', JSON.stringify({
+          timestamp: Date.now(),
+          jenis: selectedJenis,
+          message: 'Laporan baru telah dibuat'
+        }));
+        
+        setSuccess(true);
         setTimeout(() => {
-          navigate(`/laporan/${created.id}`);
+          navigate('/klg-laporan');
         }, 1500);
       } else {
-        showNotification('error', 'Gagal menyimpan laporan. Silakan coba lagi.');
+        // Handle specific error codes
+        if (res.data?.error_code === 'DUPLICATE_ID_BISNIS') {
+          const idBisnis = formData.data?.id || 'unknown';
+          setDuplicateIDModal(idBisnis);
+        } else {
+          setError(res.data?.message || 'Gagal menyimpan laporan');
+        }
       }
     } catch (err) {
-      console.error('Form submission error:', err);
-      showNotification('error', 'Terjadi kesalahan: ' + (err.message || 'Gagal menyimpan laporan'));
+      console.error('Submit error:', err);
+      const errorMessage = err.response?.data?.message || 'Terjadi kesalahan saat menyimpan';
+      const errorCode = err.response?.data?.error_code;
+      
+      // Handle specific error codes
+      if (errorCode === 'DUPLICATE_ID_BISNIS') {
+        const idBisnis = formData.data?.id || 'unknown';
+        setDuplicateIDModal(idBisnis);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  // STEP 1: Pilih Jenis
-  if (step === 'pilih') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 py-12 px-4 sm:px-6 lg:px-8">
-        {/* Notification */}
-        {notification && (
-          <div className={`fixed top-4 right-4 left-4 sm:left-auto sm:w-96 p-4 rounded-lg shadow-lg text-white z-50 ${
-            notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-          }`}>
-            {notification.message}
-          </div>
-        )}
-
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Buat Laporan Baru</h1>
-            <p className="text-gray-600">Pilih jenis laporan</p>
-          </div>
-
-          {/* Jenis Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {JENIS_LAPORAN.map((jenis) => {
-              const Icon = jenis.icon;
-              return (
-                <button
-                  key={jenis.id}
-                  onClick={() => handleSelectJenis(jenis.id)}
-                  className={`p-6 sm:p-8 rounded-xl border-2 transition-all duration-200 hover:shadow-xl hover:scale-105 text-left ${jenis.color}`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-white bg-opacity-40 flex items-center justify-center">
-                      <Icon className="w-8 h-8 sm:w-10 sm:h-10" />
-                    </div>
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold mb-2">{jenis.label}</h3>
-                  <p className="text-xs sm:text-sm opacity-80 mb-4">{jenis.description}</p>
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    Buat Laporan <ArrowRight className="w-4 h-4" />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // STEP 1.4: Pilih Sub Jenis Penjualan
-  if (step === 'penjualan-subjenis') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          <button
-            onClick={() => setStep('pilih')}
-            className="mb-8 flex items-center gap-2 px-4 py-2 text-emerald-700 hover:bg-emerald-100 rounded-lg transition font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Kembali
-          </button>
-
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Pilih Jenis Penjualan</h2>
-            <p className="text-gray-600 mt-2">Pilih kategori penjualan ternak</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <button
-              onClick={() => handleSelectSubJenis('Aqiqah')}
-              className="p-8 rounded-xl border-2 border-yellow-300 bg-yellow-100 text-yellow-700 transition-all duration-200 hover:shadow-lg hover:scale-105 text-center"
-            >
-              <div className="text-4xl mb-3">🎁</div>
-              <h3 className="text-xl font-bold">Aqiqah</h3>
-            </button>
-            <button
-              onClick={() => handleSelectSubJenis('Kurban')}
-              className="p-8 rounded-xl border-2 border-yellow-300 bg-yellow-100 text-yellow-700 transition-all duration-200 hover:shadow-lg hover:scale-105 text-center"
-            >
-              <div className="text-4xl mb-3">🕌</div>
-              <h3 className="text-xl font-bold">Kurban</h3>
-            </button>
-            <button
-              onClick={() => handleSelectSubJenis('Retail')}
-              className="p-8 rounded-xl border-2 border-yellow-300 bg-yellow-100 text-yellow-700 transition-all duration-200 hover:shadow-lg hover:scale-105 text-center"
-            >
-              <div className="text-4xl mb-3">🛒</div>
-              <h3 className="text-xl font-bold">Retail</h3>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // STEP 1.5: Pilih Kategori Budidaya
-  if (step === 'budidaya-kategori') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          {/* Back Button */}
-          <button
-            onClick={() => setStep('pilih')}
-            className="mb-6 flex items-center gap-2 text-emerald-700 hover:text-emerald-900 transition"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Kembali</span>
-          </button>
-
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Laporan Budidaya</h1>
-            <p className="text-gray-600">Pilih kategori</p>
-          </div>
-
-          {/* Kategori Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <button
-              onClick={() => handleSelectKategori('Pakan')}
-              className="p-8 rounded-xl border-2 border-green-300 bg-green-100 text-green-700 transition-all duration-200 hover:shadow-lg hover:scale-105 text-center"
-            >
-              <div className="text-4xl mb-3">🌾</div>
-              <h3 className="text-xl font-bold">Pakan</h3>
-            </button>
-            <button
-              onClick={() => handleSelectKategori('Kandang')}
-              className="p-8 rounded-xl border-2 border-blue-300 bg-blue-100 text-blue-700 transition-all duration-200 hover:shadow-lg hover:scale-105 text-center"
-            >
-              <div className="text-4xl mb-3">🏠</div>
-              <h3 className="text-xl font-bold">Kandang</h3>
-            </button>
-            <button
-              onClick={() => handleSelectKategori('Kesehatan')}
-              className="p-8 rounded-xl border-2 border-red-300 bg-red-100 text-red-700 transition-all duration-200 hover:shadow-lg hover:scale-105 text-center"
-            >
-              <div className="text-4xl mb-3">❤️</div>
-              <h3 className="text-xl font-bold">Kesehatan</h3>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // STEP 2: Form sesuai jenis
-  const getFormTitle = () => {
-    if (selectedJenis === 'Kelahiran') return 'Laporan Kelahiran';
-    if (selectedJenis === 'Kematian') return 'Laporan Kematian';
-    if (selectedJenis === 'Penjualan') return selectedSubJenis ? `Penjualan - ${selectedSubJenis}` : 'Penjualan';
-    return `Laporan Budidaya - ${selectedKategori}`;
-  };
-
-  const getBackHandler = () => {
-    if (selectedJenis === 'Budidaya') {
-      return () => setStep('budidaya-kategori');
-    }
-    return () => setStep('pilih');
-  };
+  const selectedConfig = JENIS_LAPORAN_LIST.find(j => j.id === selectedJenis);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 py-12 px-4 sm:px-6 lg:px-8">
-      {/* Notification */}
-      {notification && (
-        <div className={`fixed top-4 right-4 left-4 sm:left-auto sm:w-96 p-4 rounded-lg shadow-lg text-white z-50 ${
-          notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        }`}>
-          {notification.message}
+    <div className="space-y-6 pt-8 sm:pt-12">
+      {/* Header */}
+      <div className={`rounded-lg sm:rounded-2xl p-6 sm:p-8 text-white shadow-lg bg-gradient-to-r ${
+        selectedConfig?.color || 'from-emerald-600 to-emerald-500'
+      }`}>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
+          {step === 'select' ? 'Tambah Laporan Baru' : `Form ${selectedConfig?.label || ''}`}
+        </h1>
+        <p className="text-white/80 text-sm sm:text-base">
+          {step === 'select' 
+            ? 'Pilih jenis laporan yang ingin Anda buat'
+            : selectedConfig?.description || ''}
+        </p>
+      </div>
+
+      {/* Error/Success Messages */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          ⚠️ {error}
         </div>
       )}
-      <div className="max-w-2xl mx-auto">
-        {/* Back Button */}
-        <button
-          onClick={getBackHandler()}
-          className="mb-6 flex items-center gap-2 text-emerald-700 hover:text-emerald-900 transition"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="font-medium">Kembali</span>
-        </button>
 
-        {/* Form Container */}
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{getFormTitle()}</h2>
-          <p className="text-gray-600 mb-6">
-            {selectedJenis === 'Kelahiran' && 'Form Data Kelahiran'}
-            {selectedJenis === 'Kematian' && 'Form Data Kematian'}
-            {selectedJenis === 'Kurban-Aqiqah' && 'Form Data Siap Kurban/Aqiqah'}
-            {selectedJenis === 'Budidaya' && `Form Laporan ${selectedKategori}`}
-          </p>
+      {success && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+          <span className="text-lg">✓</span>
+          Laporan berhasil disimpan! Mengalihkan...
+        </div>
+      )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Tanggal (Universal) */}
+      {/* STEP 1: Select Jenis */}
+      {step === 'select' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {JENIS_LAPORAN_LIST.map((jenis) => {
+            return (
+              <button
+                key={jenis.id}
+                onClick={() => handleSelectJenis(jenis.id)}
+                className={`p-6 rounded-lg border-2 transition-all text-left hover:shadow-lg hover:scale-105 ${jenis.bgColor}`}
+              >
+                <h3 className="font-bold text-lg text-gray-900 mb-1">{jenis.label}</h3>
+                <p className="text-sm text-gray-700">{jenis.description}</p>
+                <div className="mt-4 flex items-center gap-2 text-gray-700 font-medium text-sm">
+                  Buat Laporan <ArrowRight size={16} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* STEP 2: Form */}
+      {step === 'form' && selectedConfig && (
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div className={`bg-gradient-to-r ${selectedConfig.color} text-white p-6`}>
+            <h2 className="text-2xl font-bold">{selectedConfig.label}</h2>
+          </div>
+
+          <div className="p-6 sm:p-8 space-y-6">
+            {/* Tanggal */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                {selectedJenis === 'Kelahiran' ? 'Tanggal Kelahiran' : 
-                 selectedJenis === 'Kematian' ? 'Tanggal Kematian' :
-                 selectedJenis === 'Kurban-Aqiqah' ? 'Tanggal Pencatatan' : 
-                 'Tanggal'} *
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Tanggal Laporan <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
-                name="tanggal"
-                value={form.tanggal}
-                onChange={handleChange}
-                max={new Date().toISOString().split('T')[0]}
+                max={today}
+                value={formData.tanggal}
+                onChange={handleDateChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-                className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
               />
-              <p className="text-xs text-gray-500 mt-1">Tanggal tidak boleh melampaui hari ini</p>
             </div>
 
-            {/* Form Kelahiran */}
-            {selectedJenis === 'Kelahiran' && (
+            {/* PAKAN Form */}
+            {selectedJenis === 'pakan' && (
               <>
-                {/* Header Information */}
-                {kelompokData && (
-                  <div className="bg-emerald-50 border-2 border-emerald-200 rounded-lg p-4 sm:p-6 mb-6">
-                    <h3 className="text-lg font-semibold text-emerald-900 mb-4">Informasi Kelompok</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-sm text-emerald-700 font-medium">Nama Kelompok</p>
-                        <p className="text-gray-900 font-semibold mt-1">{kelompokData.name}</p>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Jenis Pakan <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Rumput kering, Jagung, Dedak"
+                    value={formData.data.jenis_pakan || ''}
+                    onChange={(e) => handleFormChange('jenis_pakan', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Sumber Pakan <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Petani Lokal, Koperasi, Distributor"
+                    value={formData.data.sumber || ''}
+                    onChange={(e) => handleFormChange('sumber', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Keterangan
+                  </label>
+                  <textarea
+                    placeholder="Catatan tambahan tentang pakan..."
+                    value={formData.data.keterangan || ''}
+                    onChange={(e) => handleFormChange('keterangan', e.target.value)}
+                    rows="3"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* KANDANG Form */}
+            {selectedJenis === 'kandang' && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Pengembangan Kandang (jumlah penambahan) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Jumlah kandang yang ditambahkan"
+                    value={formData.data.pengembangan_kandang || ''}
+                    onChange={(e) => handleFormChange('pengembangan_kandang', parseInt(e.target.value) || '')}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    required
+                  />
+                </div>
+                
+                {/* Render multiple luas_kandang inputs based on pengembangan_kandang */}
+                {formData.data.pengembangan_kandang && formData.data.pengembangan_kandang > 0 && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <p className="text-sm font-semibold text-blue-900 mb-3">
+                      Masukkan Luas Kandang untuk {formData.data.pengembangan_kandang} kandang yang ditambahkan
+                    </p>
+                    {Array.from({ length: formData.data.pengembangan_kandang }).map((_, index) => (
+                      <div key={index} className="mb-3">
+                        <label className="block text-sm font-semibold text-gray-900 mb-2">
+                          Luas Kandang {index + 1} (m²) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder={`Kandang ${index + 1}`}
+                          value={
+                            formData.data.luas_kandang_list && formData.data.luas_kandang_list[index]
+                              ? formData.data.luas_kandang_list[index]
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const newList = formData.data.luas_kandang_list
+                              ? [...formData.data.luas_kandang_list]
+                              : [];
+                            newList[index] = parseInt(e.target.value) || '';
+                            handleFormChange('luas_kandang_list', newList);
+                          }}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          required
+                        />
                       </div>
-                      <div>
-                        <p className="text-sm text-emerald-700 font-medium">Alamat</p>
-                        <p className="text-gray-900 font-semibold mt-1">{kelompokData.desa || kelompokData.kecamatan || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-emerald-700 font-medium">Ketua Kelompok</p>
-                        <p className="text-gray-900 font-semibold mt-1">{kelompokData.pic1_nama || '-'}</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 )}
 
-                {/* Catatan Kelahiran Fields */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Catatan Kelahiran</h3>
-                </div>
-
-                {/* Row 1: Nama Anggota, Register, ID */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Anggota *</label>
-                    <input
-                      type="text"
-                      name="nama_anggota"
-                      value={form.data.nama_anggota || ''}
-                      onChange={handleChange}
-                      placeholder="Nama anggota"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Register *</label>
-                    <input
-                      type="text"
-                      name="register"
-                      value={form.data.register || ''}
-                      onChange={handleChange}
-                      placeholder="Register"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">ID *</label>
-                    <input
-                      type="text"
-                      name="id"
-                      value={form.data.id || ''}
-                      onChange={handleChange}
-                      placeholder="ID"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Row 2: Jenis Kelamin, Warna, Ras */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Jenis Kelamin *</label>
-                    <select
-                      name="jenis_kelamin"
-                      value={form.data.jenis_kelamin || ''}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    >
-                      <option value="">Pilih</option>
-                      <option value="Jantan">Jantan</option>
-                      <option value="Betina">Betina</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Warna *</label>
-                    <input
-                      type="text"
-                      name="warna"
-                      value={form.data.warna || ''}
-                      onChange={handleChange}
-                      placeholder="Warna"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Ras *</label>
-                    <input
-                      type="text"
-                      name="ras"
-                      value={form.data.ras || ''}
-                      onChange={handleChange}
-                      placeholder="Ras"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Row 3: Induk, Pejantan, Bobot */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Induk *</label>
-                    <input
-                      type="text"
-                      name="induk"
-                      value={form.data.induk || ''}
-                      onChange={handleChange}
-                      placeholder="Induk"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Pejantan *</label>
-                    <input
-                      type="text"
-                      name="pejantan"
-                      value={form.data.pejantan || ''}
-                      onChange={handleChange}
-                      placeholder="Pejantan"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Bobot (kg) *</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      name="bobot"
-                      value={form.data.bobot || ''}
-                      onChange={handleChange}
-                      placeholder="Bobot"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Form Kematian */}
-            {selectedJenis === 'Kematian' && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nomor Ternak *</label>
-                    <input
-                      type="text"
-                      name="nomor_ternak"
-                      value={form.data.nomor_ternak || ''}
-                      onChange={handleChange}
-                      placeholder="Masukkan nomor identitas ternak"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Penyebab Kematian *</label>
-                    <select
-                      name="penyebab"
-                      value={form.data.penyebab || ''}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    >
-                      <option value="">Pilih penyebab</option>
-                      <option value="Penyakit">Penyakit</option>
-                      <option value="Kelaparan">Kelaparan</option>
-                      <option value="Kecelakaan">Kecelakaan</option>
-                      <option value="Umur">Umur</option>
-                      <option value="Lainnya">Lainnya</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Detail Penyebab</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Keterangan
+                  </label>
                   <textarea
-                    name="detail_penyebab"
-                    value={form.data.detail_penyebab || ''}
-                    onChange={handleChange}
-                    placeholder="Jelaskan detail penyebab..."
-                    rows={3}
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Tindakan yang Diambil</label>
-                  <textarea
-                    name="tindakan"
-                    value={form.data.tindakan || ''}
-                    onChange={handleChange}
-                    placeholder="Tindakan atau pencegahan yang diambil..."
-                    rows={3}
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Catatan Tambahan</label>
-                  <textarea
-                    name="catatan"
-                    value={form.data.catatan || ''}
-                    onChange={handleChange}
-                    placeholder="Catatan tambahan..."
-                    rows={2}
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none resize-none"
+                    placeholder="Catatan tentang kandang..."
+                    value={formData.data.keterangan || ''}
+                    onChange={(e) => handleFormChange('keterangan', e.target.value)}
+                    rows="3"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
               </>
             )}
 
-            {/* Form Penjualan */}
-            {selectedJenis === 'Penjualan' && (
+            {/* KESEHATAN Form */}
+            {selectedJenis === 'kesehatan' && (
               <>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Jenis Penjualan</label>
-                  <input
-                    type="text"
-                    name="jenis_penjualan"
-                    value={selectedSubJenis || ''}
-                    disabled
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-700"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nomor Ternak *</label>
-                    <input
-                      type="text"
-                      name="nomor_ternak"
-                      value={form.data.nomor_ternak || ''}
-                      onChange={handleChange}
-                      placeholder="Masukkan nomor identitas ternak"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Umur (Bulan) *</label>
-                    <input
-                      type="number"
-                      name="umur"
-                      value={form.data.umur || ''}
-                      onChange={handleChange}
-                      placeholder="Umur"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Bobot (kg) *</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      name="bobot"
-                      value={form.data.bobot || ''}
-                      onChange={handleChange}
-                      placeholder="Bobot"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Jenis Kelamin *</label>
-                    <select
-                      name="jenis_kelamin"
-                      value={form.data.jenis_kelamin || ''}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    >
-                      <option value="">Pilih</option>
-                      <option value="Jantan">Jantan</option>
-                      <option value="Betina">Betina</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Kondisi Kesehatan *</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    ID Ternak <span className="text-red-500">*</span>
+                  </label>
                   <select
-                    name="kondisi_kesehatan"
-                    value={form.data.kondisi_kesehatan || ''}
-                    onChange={handleChange}
+                    value={formData.data.id_ternak || ''}
+                    onChange={(e) => handleFormChange('id_ternak', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                    disabled={loadingHewanTernak}
                     required
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
                   >
-                    <option value="">Pilih</option>
-                    <option value="Sehat">Sehat</option>
-                    <option value="Cacat Minor">Cacat Minor</option>
-                    <option value="Tidak Layak">Tidak Layak</option>
+                    <option value="">
+                      {loadingHewanTernak ? 'Memuat data ternak...' : 'Pilih Ternak'}
+                    </option>
+                    {hewanTernakList.map((hewan) => (
+                      <option key={hewan.id} value={hewan.id_hewan}>
+                        {hewan.id_hewan} - {hewan.jenis_kelamin} ({hewan.umur?.display || 'Umur unknown'})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Status Kesiapan *</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Status Kesehatan Ternak <span className="text-red-500">*</span>
+                  </label>
                   <select
-                    name="status_siap"
-                    value={form.data.status_siap || ''}
-                    onChange={handleChange}
+                    value={formData.data.status_kesehatan_ternak || ''}
+                    onChange={(e) => handleFormChange('status_kesehatan_ternak', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                     required
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
                   >
-                    <option value="">Pilih</option>
-                    <option value="Siap">Siap</option>
-                    <option value="Persiapan">Persiapan</option>
-                    <option value="Belum Siap">Belum Siap</option>
+                    <option value="">Pilih Status</option>
+                    <option value="sehat">Sehat</option>
+                    <option value="sakit_ringan">Sakit Ringan</option>
+                    <option value="sakit_berat">Sakit Berat</option>
+                    <option value="mati">Mati</option>
                   </select>
                 </div>
 
+                {/* Jenis Tindakan - hanya muncul jika status bukan "mati" */}
+                {formData.data.status_kesehatan_ternak && formData.data.status_kesehatan_ternak !== 'mati' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Jenis Tindakan <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.data.jenis_tindakan || ''}
+                      onChange={(e) => handleFormChange('jenis_tindakan', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                      required
+                    >
+                      <option value="">Pilih Jenis Tindakan</option>
+                      <option value="pencegahan">Pencegahan</option>
+                      <option value="pengobatan">Pengobatan</option>
+                      <option value="perawatan">Perawatan</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Jenis Pencegahan - muncul jika jenis_tindakan = pencegahan */}
+                {formData.data.jenis_tindakan === 'pencegahan' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Jenis Pencegahan <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Vaksinasi, Pembersihan kandang"
+                      value={formData.data.jenis_pencegahan || ''}
+                      onChange={(e) => handleFormChange('jenis_pencegahan', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                      required
+                    />
+                  </div>
+                )}
+
+                {/* Jenis Pengobatan - muncul jika jenis_tindakan = pengobatan */}
+                {formData.data.jenis_tindakan === 'pengobatan' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Jenis Pengobatan <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Antibiotik, Vitamin"
+                      value={formData.data.jenis_pengobatan || ''}
+                      onChange={(e) => handleFormChange('jenis_pengobatan', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                      required
+                    />
+                  </div>
+                )}
+
+                {/* Jenis Perawatan - muncul jika jenis_tindakan = perawatan */}
+                {formData.data.jenis_tindakan === 'perawatan' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Jenis Perawatan <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Isolasi, Kompres, Infus"
+                      value={formData.data.jenis_perawatan || ''}
+                      onChange={(e) => handleFormChange('jenis_perawatan', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                      required
+                    />
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Catatan Tambahan</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Keterangan
+                  </label>
                   <textarea
-                    name="catatan"
-                    value={form.data.catatan || ''}
-                    onChange={handleChange}
-                    placeholder="Catatan tambahan..."
-                    rows={3}
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none resize-none"
+                    placeholder="Catatan tambahan tentang kesehatan ternak..."
+                    value={formData.data.keterangan || ''}
+                    onChange={(e) => handleFormChange('keterangan', e.target.value)}
+                    rows="3"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
                 </div>
               </>
             )}
 
-            {/* Form Budidaya - Pakan */}
-            {selectedJenis === 'Budidaya' && selectedKategori === 'Pakan' && (
+            {/* POPULASI Form */}
+            {selectedJenis === 'populasi' && (
               <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Total Induk
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.data.total_induk || ''}
+                      onChange={(e) => handleFormChange('total_induk', parseInt(e.target.value) || '')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Total Pejantan
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.data.total_pejantan || ''}
+                      onChange={(e) => handleFormChange('total_pejantan', parseInt(e.target.value) || '')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Anakan Jantan
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.data.total_anakan_jantan || ''}
+                      onChange={(e) => handleFormChange('total_anakan_jantan', parseInt(e.target.value) || '')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Anakan Betina
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.data.total_anakan_betina || ''}
+                      onChange={(e) => handleFormChange('total_anakan_betina', parseInt(e.target.value) || '')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* KELAHIRAN Form */}
+            {selectedJenis === 'kelahiran' && (
+              <>
+                {/* BARIS 1: Tanggal Kelahiran */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Jenis Pakan *</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Tanggal Kelahiran <span className="text-red-500">*</span>
+                  </label>
                   <input
-                    type="text"
-                    name="jenis_pakan"
-                    value={form.data.jenis_pakan || ''}
-                    onChange={handleChange}
-                    placeholder="Jenis pakan"
+                    type="date"
+                    max={today}
+                    value={formData.data.tanggal_kelahiran || ''}
+                    onChange={(e) => handleFormChange('tanggal_kelahiran', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     required
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* BARIS 2: ID Anakan */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    ID Anakan (ID Bisnis) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Nomor identitas unik untuk anakan"
+                    value={formData.data.id || ''}
+                    onChange={(e) => handleFormChange('id', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    required
+                  />
+                </div>
+
+                {/* BARIS 3: Jenis Kelamin + Ras + Bobot */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Jumlah (kg) *</label>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Jenis Kelamin Anak <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.data.jenis_kelamin_anak || ''}
+                      onChange={(e) => handleFormChange('jenis_kelamin_anak', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      required
+                    >
+                      <option value="">Pilih</option>
+                      <option value="jantan">Jantan</option>
+                      <option value="betina">Betina</option>
+                      <option value="keduanya">Keduanya</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Ras Anak
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Domba Lokal"
+                      value={formData.data.ras || ''}
+                      onChange={(e) => handleFormChange('ras', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Bobot Awal (kg)
+                    </label>
                     <input
                       type="number"
+                      min="0"
                       step="0.1"
-                      name="jumlah"
-                      value={form.data.jumlah || ''}
-                      onChange={handleChange}
-                      placeholder="Jumlah"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Sumber Pakan *</label>
-                    <input
-                      type="text"
-                      name="sumber_pakan"
-                      value={form.data.sumber_pakan || ''}
-                      onChange={handleChange}
-                      placeholder="Sumber pakan"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
+                      placeholder="e.g., 2.5"
+                      value={formData.data.bobot || ''}
+                      onChange={(e) => handleFormChange('bobot', parseFloat(e.target.value) || '')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     />
                   </div>
                 </div>
 
+                {/* BARIS 4: Pejantan + Induk */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Pejantan (Ayah) <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.data.pejantan_id || ''}
+                      onChange={(e) => handleFormChange('pejantan_id', e.target.value || '')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      disabled={loadingCandidates}
+                      required
+                    >
+                      <option value="">
+                        {loadingCandidates ? 'Memuat...' : 'Pilih pejantan (jantan > 8 bulan)'}
+                      </option>
+                      {pejantanCandidates.map((hewan) => (
+                        <option key={hewan.id} value={hewan.id_hewan}>
+                          {hewan.id_hewan || `#${hewan.id}`} - {hewan.ras} ({hewan.umur_display})
+                        </option>
+                      ))}
+                    </select>
+                    {pejantanCandidates.length === 0 && !loadingCandidates && (
+                      <p className="text-xs text-yellow-600 mt-1">
+                        ⚠️ Tidak ada pejantan tersedia (jantan usia {'>'} 8 bulan)
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Induk (Ibu) <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.data.induk_id || ''}
+                      onChange={(e) => handleFormChange('induk_id', e.target.value || '')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      disabled={loadingCandidates}
+                      required
+                    >
+                      <option value="">
+                        {loadingCandidates ? 'Memuat...' : 'Pilih induk (betina > 8 bulan)'}
+                      </option>
+                      {indukCandidates.map((hewan) => (
+                        <option key={hewan.id} value={hewan.id_hewan}>
+                          {hewan.id_hewan || `#${hewan.id}`} - {hewan.ras} ({hewan.umur_display})
+                        </option>
+                      ))}
+                    </select>
+                    {indukCandidates.length === 0 && !loadingCandidates && (
+                      <p className="text-xs text-yellow-600 mt-1">
+                        ⚠️ Tidak ada induk tersedia (betina usia {'>'} 8 bulan)
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Detail Pejantan & Induk - 2 Column Layout */}
+                {(formData.data.pejantan_id || formData.data.induk_id) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Detail Pejantan */}
+                    {formData.data.pejantan_id && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-blue-900 mb-2">📊 Detail Pejantan</h4>
+                        {pejantanCandidates
+                          .filter(h => h.id_hewan === formData.data.pejantan_id)
+                          .map(h => (
+                            <div key={h.id} className="text-sm text-blue-800 space-y-1">
+                              <p><strong>ID Bisnis:</strong> {h.id_hewan || '-'}</p>
+                              <p><strong>Jenis Kelamin:</strong> {h.jenis_kelamin}</p>
+                              <p><strong>Ras:</strong> {h.ras}</p>
+                              <p><strong>Umur:</strong> {h.umur_display}</p>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {/* Detail Induk */}
+                    {formData.data.induk_id && (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-purple-900 mb-2">📊 Detail Induk</h4>
+                        {indukCandidates
+                          .filter(h => h.id_hewan === formData.data.induk_id)
+                          .map(h => (
+                            <div key={h.id} className="text-sm text-purple-800 space-y-1">
+                              <p><strong>ID Bisnis:</strong> {h.id_hewan || '-'}</p>
+                              <p><strong>Jenis Kelamin:</strong> {h.jenis_kelamin}</p>
+                              <p><strong>Ras:</strong> {h.ras}</p>
+                              <p><strong>Umur:</strong> {h.umur_display}</p>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Catatan (Opsional) */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Catatan</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Catatan (Opsional)
+                  </label>
                   <textarea
-                    name="catatan"
-                    value={form.data.catatan || ''}
-                    onChange={handleChange}
-                    placeholder="Catatan tambahan..."
-                    rows={3}
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none resize-none"
+                    placeholder="Catatan tambahan tentang kelahiran..."
+                    value={formData.data.catatan || ''}
+                    onChange={(e) => handleFormChange('catatan', e.target.value)}
+                    rows="2"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
                   />
                 </div>
               </>
             )}
 
-            {/* Form Budidaya - Kandang */}
-            {selectedJenis === 'Budidaya' && selectedKategori === 'Kandang' && (
+            {/* PENJUALAN Form */}
+            {selectedJenis === 'penjualan' && (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Kondisi Kandang *</label>
-                    <select
-                      name="kondisi_kandang"
-                      value={form.data.kondisi_kandang || ''}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    >
-                      <option value="">Pilih</option>
-                      <option value="Baik">Baik</option>
-                      <option value="Perlu Perbaikan">Perlu Perbaikan</option>
-                      <option value="Buruk">Buruk</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Kebersihan *</label>
-                    <select
-                      name="kebersihan"
-                      value={form.data.kebersihan || ''}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    >
-                      <option value="">Pilih</option>
-                      <option value="Bersih">Bersih</option>
-                      <option value="Cukup">Cukup</option>
-                      <option value="Kotor">Kotor</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Kapasitas (ekor) *</label>
-                    <input
-                      type="number"
-                      name="kapasitas"
-                      value={form.data.kapasitas || ''}
-                      onChange={handleChange}
-                      placeholder="Kapasitas"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Jumlah Ternak *</label>
-                    <input
-                      type="number"
-                      name="jumlah_ternak"
-                      value={form.data.jumlah_ternak || ''}
-                      onChange={handleChange}
-                      placeholder="Jumlah"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
+                {/* Jumlah Hewan yang Dijual */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Catatan</label>
-                  <textarea
-                    name="catatan"
-                    value={form.data.catatan || ''}
-                    onChange={handleChange}
-                    placeholder="Catatan tambahan..."
-                    rows={3}
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none resize-none"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Form Budidaya - Kesehatan */}
-            {selectedJenis === 'Budidaya' && selectedKategori === 'Kesehatan' && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Kondisi Kesehatan *</label>
-                    <select
-                      name="kondisi_kesehatan"
-                      value={form.data.kondisi_kesehatan || ''}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    >
-                      <option value="">Pilih</option>
-                      <option value="Sehat">Sehat</option>
-                      <option value="Ada yang Sakit">Ada yang Sakit</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Program Vaksinasi *</label>
-                    <input
-                      type="text"
-                      name="program_vaksinasi"
-                      value={form.data.program_vaksinasi || ''}
-                      onChange={handleChange}
-                      placeholder="Program vaksinasi"
-                      required
-                      className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Penyakit yang Ditemukan *</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Jumlah Hewan yang Dijual <span className="text-red-500">*</span>
+                  </label>
                   <input
-                    type="text"
-                    name="penyakit"
-                    value={form.data.penyakit || ''}
-                    onChange={handleChange}
-                    placeholder="Penyakit (jika ada)"
+                    type="number"
+                    min="1"
+                    value={formData.data.jumlah_hewan || ''}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || '';
+                      handleFormChange('jumlah_hewan', value);
+                      // Initialize penjualan_list if not exists
+                      if (value && (!formData.data.penjualan_list || formData.data.penjualan_list.length !== value)) {
+                        const newList = Array(value).fill(null).map(() => ({
+                          jenis_penjualan: '',
+                          jenis_hewan: '',
+                          id_hewan: '',
+                          catatan: ''
+                        }));
+                        handleFormChange('penjualan_list', newList);
+                      }
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Tindakan Pengobatan</label>
-                  <textarea
-                    name="tindakan_pengobatan"
-                    value={form.data.tindakan_pengobatan || ''}
-                    onChange={handleChange}
-                    placeholder="Tindakan pengobatan yang dilakukan..."
-                    rows={3}
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none resize-none"
-                  />
-                </div>
+                {/* Dynamic Penjualan Items */}
+                {formData.data.jumlah_hewan && formData.data.jumlah_hewan > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-6">
+                    <p className="text-sm font-semibold text-blue-900">
+                      Masukkan detail penjualan untuk {formData.data.jumlah_hewan} hewan
+                    </p>
 
+                    {Array.from({ length: formData.data.jumlah_hewan }).map((_, idx) => {
+                      const item = formData.data.penjualan_list?.[idx] || {};
+                      
+                      return (
+                        <div key={idx} className="bg-white rounded-lg p-4 border border-blue-100">
+                          <h4 className="font-semibold text-gray-900 mb-4">Hewan #{idx + 1}</h4>
+
+                          {/* Jenis Penjualan */}
+                          <div className="mb-4">
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                              Jenis Penjualan <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              value={item.jenis_penjualan || ''}
+                              onChange={(e) => {
+                                const newList = [...(formData.data.penjualan_list || [])];
+                                newList[idx] = { ...newList[idx], jenis_penjualan: e.target.value };
+                                handleFormChange('penjualan_list', newList);
+                              }}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              required
+                            >
+                              <option value="">Pilih jenis penjualan</option>
+                              <option value="Retail">Retail</option>
+                              <option value="Aqiqah">Aqiqah</option>
+                              <option value="Qurban">Qurban</option>
+                            </select>
+                          </div>
+
+                          {/* Jenis Hewan */}
+                          <div className="mb-4">
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                              Jenis Hewan <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              value={item.jenis_hewan || ''}
+                              onChange={(e) => {
+                                const newList = [...(formData.data.penjualan_list || [])];
+                                newList[idx] = { ...newList[idx], jenis_hewan: e.target.value, id_hewan: '' };
+                                handleFormChange('penjualan_list', newList);
+                              }}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              required
+                            >
+                              <option value="">Pilih jenis hewan</option>
+                              <option value="Pejantan">Pejantan</option>
+                              <option value="Indukan">Indukan</option>
+                              <option value="Calon Indukan">Calon Indukan</option>
+                              <option value="Calon Pejantan">Calon Pejantan</option>
+                              <option value="Jantan Potong">Jantan Potong</option>
+                              <option value="Betina Potong">Betina Potong</option>
+                            </select>
+                          </div>
+
+                          {/* ID Hewan */}
+                          <div className="mb-4">
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                              ID Hewan (ID Bisnis) <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              value={item.id_hewan || ''}
+                              onChange={(e) => {
+                                const newList = [...(formData.data.penjualan_list || [])];
+                                newList[idx] = { ...newList[idx], id_hewan: e.target.value };
+                                handleFormChange('penjualan_list', newList);
+                              }}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              disabled={!item.jenis_hewan}
+                              required
+                            >
+                              <option value="">
+                                {!item.jenis_hewan ? 'Pilih jenis hewan dulu' : (loadingPenjualanCandidates ? 'Memuat...' : 'Pilih hewan')}
+                              </option>
+                              {item.jenis_hewan && penjualanCandidates[item.jenis_hewan]?.map((hewan) => (
+                                <option key={hewan.id} value={hewan.id_hewan}>
+                                  {hewan.id_hewan} - {hewan.ras} ({hewan.umur_display || `${hewan.umur_bulan} bulan`})
+                                </option>
+                              ))}
+                            </select>
+                            {!item.jenis_hewan && (
+                              <p className="text-xs text-yellow-600 mt-1">⚠️ Pilih jenis hewan dulu</p>
+                            )}
+                            {item.jenis_hewan && penjualanCandidates[item.jenis_hewan]?.length === 0 && (
+                              <p className="text-xs text-yellow-600 mt-1">⚠️ Tidak ada hewan tersedia untuk jenis ini</p>
+                            )}
+                          </div>
+
+                          {/* Data Hewan (Read-only) */}
+                          {item.id_hewan && item.jenis_hewan && (
+                            (() => {
+                              const selectedHewan = penjualanCandidates[item.jenis_hewan]?.find(h => h.id_hewan === item.id_hewan);
+                              return selectedHewan ? (
+                                <div className="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                  <p className="text-sm font-semibold text-gray-900 mb-2">Data Hewan</p>
+                                  <div className="text-sm text-gray-700 space-y-1">
+                                    <p><strong>Jenis Kelamin:</strong> <span className="text-gray-600">{selectedHewan.jenis_kelamin || '-'}</span></p>
+                                    <p><strong>Umur:</strong> <span className="text-gray-600">{selectedHewan.umur_display || `${selectedHewan.umur_bulan} bulan` || '-'}</span></p>
+                                    <p><strong>Ras:</strong> <span className="text-gray-600">{selectedHewan.ras || '-'}</span></p>
+                                    <p><strong>Bobot:</strong> <span className="text-gray-600">{selectedHewan.bobot || '-'} kg</span></p>
+                                  </div>
+                                </div>
+                              ) : null;
+                            })()
+                          )}
+
+                          {/* Catatan Penjualan */}
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                              Catatan Penjualan
+                            </label>
+                            <textarea
+                              placeholder="Catatan tentang penjualan hewan ini..."
+                              value={item.catatan || ''}
+                              onChange={(e) => {
+                                const newList = [...(formData.data.penjualan_list || [])];
+                                newList[idx] = { ...newList[idx], catatan: e.target.value };
+                                handleFormChange('penjualan_list', newList);
+                              }}
+                              rows="2"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Catatan Umum */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Catatan</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Catatan Umum (Opsional)
+                  </label>
                   <textarea
-                    name="catatan"
-                    value={form.data.catatan || ''}
-                    onChange={handleChange}
-                    placeholder="Catatan tambahan..."
-                    rows={2}
-                    className="w-full px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none resize-none"
+                    placeholder="Catatan tambahan tentang penjualan..."
+                    value={formData.data.catatan || ''}
+                    onChange={(e) => handleFormChange('catatan', e.target.value)}
+                    rows="2"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   />
                 </div>
               </>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-200">
+            {/* PENGEMBANGAN Form */}
+            {selectedJenis === 'pengembangan' && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Jenis Kegiatan <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.data.jenis_kegiatan || ''}
+                    onChange={(e) => handleFormChange('jenis_kegiatan', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    required
+                  >
+                    <option value="">Pilih Jenis</option>
+                    <option value="pelatihan">Pelatihan</option>
+                    <option value="pertemuan">Pertemuan</option>
+                    <option value="sosialisasi">Sosialisasi</option>
+                    <option value="pendampingan">Pendampingan</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Deskripsi Kegiatan
+                  </label>
+                  <textarea
+                    placeholder="Jelaskan kegiatan..."
+                    value={formData.data.deskripsi_kegiatan || ''}
+                    onChange={(e) => handleFormChange('deskripsi_kegiatan', e.target.value)}
+                    rows="3"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Jumlah Peserta
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.data.peserta || ''}
+                    onChange={(e) => handleFormChange('peserta', parseInt(e.target.value) || '')}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Buttons */}
+          <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 sm:py-6 flex gap-3 sm:gap-4 flex-col sm:flex-row">
+            <button
+              type="button"
+              onClick={() => setStep('select')}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-100 font-medium transition"
+            >
+              <ArrowLeft size={18} />
+              Kembali
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className={`flex-1 px-6 py-3 rounded-lg font-medium text-white transition flex items-center justify-center gap-2 ${
+                saving
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : `bg-gradient-to-r ${selectedConfig.color} hover:shadow-lg`
+              }`}
+            >
+              {saving ? 'Menyimpan...' : 'Simpan Laporan'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Modal Pengolahan Pupuk */}
+      {showPupukModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-8 text-center space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100">
+              <span className="text-2xl">🌱</span>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Pengolahan Pupuk</h2>
+              <p className="text-gray-600">Fitur akan segera hadir</p>
+            </div>
+            <button
+              onClick={() => setShowPupukModal(false)}
+              className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal ID Bisnis Duplikat */}
+      {duplicateIDModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="bg-orange-50 border-b border-orange-200 px-6 py-4">
+              <h3 className="text-lg font-bold text-orange-900">
+                ⚠️ ID Bisnis Sudah Terdaftar
+              </h3>
+            </div>
+            
+            <div className="px-6 py-4 space-y-3">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-sm text-orange-800">
+                  ID Bisnis <span className="font-bold">"{duplicateIDModal}"</span> sudah terdaftar di kelompok ini.
+                </p>
+              </div>
+              
+              <p className="text-sm text-gray-700">
+                Silakan gunakan ID Bisnis yang berbeda untuk hewan ini.
+              </p>
+            </div>
+
+            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3">
               <button
-                type="button"
-                onClick={getBackHandler()}
-                className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition"
+                onClick={() => setDuplicateIDModal(null)}
+                className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition"
               >
-                {selectedJenis === 'Budidaya' ? 'Ganti' : 'Batal'}
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 px-6 py-3 bg-emerald-600 rounded-lg font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
-              >
-                {saving ? 'Menyimpan...' : 'Simpan Laporan'}
+                Tutup
               </button>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
-    </div>
+      )}    </div>
   );
 }

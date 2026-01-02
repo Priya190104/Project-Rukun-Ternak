@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus, Eye, Edit2, Trash2 } from 'lucide-react';
 import client from '../api/client';
 import AddUserModal from '../components/user/AddUserModal';
 
@@ -52,6 +52,7 @@ export default function KelolaUser() {
 
   const adminCount = users.filter(u => u.role === 'admin').length;
   const kelompokCount = users.filter(u => u.role === 'kelompok').length;
+  const viewerCount = users.filter(u => u.role === 'viewer').length;
   const pendingCount = users.filter(u => !u.role || u.role === 'pending' || u.role === 'belum ditentukan').length;
 
   const changeRole = async (userId, role) => {
@@ -93,7 +94,7 @@ export default function KelolaUser() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="text-4xl font-bold text-gray-900">{users.length}</div>
           <div className="text-sm font-medium text-gray-600 mt-2">Total</div>
@@ -105,6 +106,10 @@ export default function KelolaUser() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="text-4xl font-bold text-emerald-600">{kelompokCount}</div>
           <div className="text-sm font-medium text-gray-600 mt-2">Kelompok</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="text-4xl font-bold text-blue-600">{viewerCount}</div>
+          <div className="text-sm font-medium text-gray-600 mt-2">Viewer</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="text-4xl font-bold text-yellow-600">{pendingCount}</div>
@@ -128,6 +133,7 @@ export default function KelolaUser() {
           <button 
             onClick={() => setIsModalOpen(true)}
             className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium flex items-center justify-center gap-2 whitespace-nowrap"
+            title="Tambah pengguna baru"
           >
             <UserPlus size={18} />
             Tambah Pengguna
@@ -184,10 +190,33 @@ export default function KelolaUser() {
                         <option value="belum ditentukan">Belum Ditentukan</option>
                         <option value="admin">Admin</option>
                         <option value="kelompok">Kelompok</option>
+                        <option value="viewer">Viewer</option>
                       </select>
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <button onClick={() => removeUser(user.id)} className="text-red-600 hover:text-red-700 font-medium">Hapus</button>
+                      <div className="flex gap-2 items-center">
+                        <button 
+                          title="Fitur detail pengguna sedang dalam pengembangan"
+                          disabled
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button 
+                          title="Fitur edit pengguna sedang dalam pengembangan"
+                          disabled
+                          className="p-2 text-amber-600 hover:bg-amber-50 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          title="Hapus"
+                          onClick={() => removeUser(user.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded transition"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

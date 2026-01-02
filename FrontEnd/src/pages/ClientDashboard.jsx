@@ -1,17 +1,18 @@
 import React from 'react';
 import AppLogo from '../components/branding/AppLogo';
 import SupportedByLogo from '../components/branding/SupportedByLogo';
-import { Leaf, AlertCircle } from 'lucide-react';
+import {AlertCircle } from 'lucide-react';
 import client from '../api/client';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import KelompokDashboardCard from '../components/KelompokDashboardCard';
-import LaporanProgressCard from '../components/LaporanProgressCard';
+import PenyaluranBantuanCard from '../components/PenyaluranBantuanCard';
 
 export default function ClientDashboard() {
   const { user, appRole } = useAuth();
   const [kelompok, setKelompok] = useState(null);
   const [dashboardKelompok, setDashboardKelompok] = useState(null);
+  const [kelahiranStats, setKelahiranStats] = useState(null);
   const [stats, setStats] = useState({ totals: { laporan: 0 }, latest: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,6 +40,16 @@ export default function ClientDashboard() {
             }
           } catch (err) {
             console.warn('Dashboard kelompok fetch failed:', err);
+          }
+
+          // Load kelahiran stats from hewan_ternak
+          try {
+            const kelahiranRes = await client.get('/api/stats/kelahiran');
+            if (mounted && kelahiranRes.data?.data) {
+              setKelahiranStats(kelahiranRes.data.data);
+            }
+          } catch (err) {
+            console.warn('Kelahiran stats fetch failed:', err);
           }
 
           // Load kelompok data
@@ -86,9 +97,9 @@ export default function ClientDashboard() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{dashboardTitle}</h1>
-            <p className="text-emerald-100 text-sm sm:text-base lg:text-lg">{dashboardDesc}</p>
+            <p className="text-emerald-1000 text-sm sm:text-base lg:text-lg">{dashboardDesc}</p>
             {user?.full_name && (
-              <p className="text-emerald-200 text-xs sm:text-sm mt-2">Halo, {user.full_name}</p>
+              <p className="text-emerald-1000 text-sm sm:text-base lg:text-lg">Halo, {user.full_name}</p>
             )}
           </div>
           <div className="flex flex-col items-center gap-3">
@@ -103,9 +114,9 @@ export default function ClientDashboard() {
         <KelompokDashboardCard kelompok={kelompok} loading={loading} />
       )}
 
-      {/* SECTION C: Laporan Progress */}
+      {/* SECTION B: Penyaluran dan Bantuan (untuk kelompok role) */}
       {appRole === 'kelompok' && (
-        <LaporanProgressCard loading={loading} />
+        <PenyaluranBantuanCard penyaluran={dashboardKelompok?.penyaluran} bantuan={dashboardKelompok?.bantuan} loading={loading} />
       )}
 
       {/* Quick Stats */}
@@ -128,14 +139,15 @@ export default function ClientDashboard() {
         </div>
       )}
 
-      {/* SECTION D: Dashboard Kelompok (7 Cards) */}
-      {appRole === 'kelompok' && dashboardKelompok && (
+      {/* SECTION D: Dashboard Kelompok (8 Cards) */}
+      {appRole === 'kelompok' && (
         <>
           <div className="pt-6 sm:pt-8 border-t-2 border-gray-200">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">📊 Progress Kelompok</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Progress Kelompok</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {dashboardKelompok ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Card 1: Pakan */}
             <div className="bg-white rounded-xl shadow-md border border-orange-200 overflow-hidden hover:shadow-lg transition">
@@ -170,44 +182,36 @@ export default function ClientDashboard() {
               </div>
               <div className="p-6 space-y-3">
                 <div className="bg-amber-50 p-3 rounded-lg">
-                  <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold mb-1">Kandang Kelompok</p>
-                  <p className="text-2xl font-bold text-amber-900">{dashboardKelompok.kandang?.kelompok || 0}</p>
+                  <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold mb-1">Kandang Kelompok (Penyaluran)</p>
+                  <p className="text-2xl font-bold text-amber-900">{dashboardKelompok.penyaluran?.jumlahKandang || 0}</p>
                 </div>
                 <div className="bg-amber-50 p-3 rounded-lg">
-                  <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold mb-1">Kandang Penjualan</p>
-                  <p className="text-2xl font-bold text-amber-900">{dashboardKelompok.kandang?.penjualan || 0}</p>
-                </div>
-                <div className="bg-amber-50 p-3 rounded-lg">
-                  <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold mb-1">Kandang Anggota</p>
-                  <p className="text-2xl font-bold text-amber-900">{dashboardKelompok.kandang?.anggota || 0}</p>
-                </div>
-                <div className="bg-amber-50 p-3 rounded-lg">
-                  <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold mb-1">Kandang Perkembangan</p>
-                  <p className="text-2xl font-bold text-amber-900">{dashboardKelompok.kandang?.perkembangan || 0}</p>
+                  <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold mb-1">Kandang Anggota (Pengembangan)</p>
+                  <p className="text-2xl font-bold text-amber-900">{dashboardKelompok.kandang?.pengembanganTotal || 0}</p>
                 </div>
               </div>
             </div>
 
-            {/* Card 3: Kelahiran (30 hari) */}
+            {/* Card 3: Kelahiran */}
             <div className="bg-white rounded-xl shadow-md border border-pink-200 overflow-hidden hover:shadow-lg transition">
               <div className="bg-gradient-to-br from-pink-500 to-pink-600 text-white p-4 flex items-center gap-3">
-                <h3 className="font-bold text-lg">Kelahiran (30 hari)</h3>
+                <h3 className="font-bold text-lg">Kelahiran</h3>
               </div>
               <div className="p-6 space-y-4">
                 <div className="bg-pink-50 p-4 rounded-lg text-center">
                   <p className="text-xs uppercase tracking-wide text-pink-700 font-semibold mb-1">Total Kelahiran</p>
-                  <p className="text-4xl font-bold text-pink-900">{dashboardKelompok.kelahiran?.totalEkor || 0}</p>
+                  <p className="text-4xl font-bold text-pink-900">{kelahiranStats?.total_kelahiran ?? dashboardKelompok?.kelahiran?.totalEkor ?? 0}</p>
                   <p className="text-xs text-pink-600 mt-1">ekor</p>
                 </div>
                 <hr className="border-pink-100" />
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-pink-50 p-3 rounded-lg">
                     <p className="text-xs uppercase tracking-wide text-pink-700 font-semibold mb-1">Betina</p>
-                    <p className="text-2xl font-bold text-pink-900">{dashboardKelompok.kelahiran?.anakBetina || 0}</p>
+                    <p className="text-2xl font-bold text-pink-900">{kelahiranStats?.kelahiran_betina ?? dashboardKelompok?.kelahiran?.anakBetina ?? 0}</p>
                   </div>
                   <div className="bg-pink-50 p-3 rounded-lg">
                     <p className="text-xs uppercase tracking-wide text-pink-700 font-semibold mb-1">Jantan</p>
-                    <p className="text-2xl font-bold text-pink-900">{dashboardKelompok.kelahiran?.anakJantan || 0}</p>
+                    <p className="text-2xl font-bold text-pink-900">{kelahiranStats?.kelahiran_jantan ?? dashboardKelompok?.kelahiran?.anakJantan ?? 0}</p>
                   </div>
                 </div>
               </div>
@@ -221,25 +225,18 @@ export default function ClientDashboard() {
               <div className="p-6 space-y-3">
                 <div className="bg-green-50 p-4 rounded-lg text-center">
                   <p className="text-xs uppercase tracking-wide text-green-700 font-semibold mb-1">Total Populasi</p>
-                  <p className="text-3xl font-bold text-green-900">{dashboardKelompok.populasi?.totalPopulasi || 0}</p>
+                  <p className="text-3xl font-bold text-green-900">{dashboardKelompok.populasiHewan?.total || dashboardKelompok.populasi?.totalPopulasi || 0}</p>
                   <p className="text-xs text-green-600 mt-1">ekor</p>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center bg-green-50 p-2 rounded">
-                    <span className="text-xs font-semibold text-gray-700">Indukan</span>
-                    <span className="text-lg font-bold text-green-900">{dashboardKelompok.populasi?.indukan || 0}</span>
+                <hr className="border-green-100" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <p className="text-xs uppercase tracking-wide text-green-700 font-semibold mb-1">Jantan</p>
+                    <p className="text-2xl font-bold text-green-900">{dashboardKelompok.populasiHewan?.jantan || 0}</p>
                   </div>
-                  <div className="flex justify-between items-center bg-green-50 p-2 rounded">
-                    <span className="text-xs font-semibold text-gray-700">Pejantan</span>
-                    <span className="text-lg font-bold text-green-900">{dashboardKelompok.populasi?.pejantan || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center bg-green-50 p-2 rounded">
-                    <span className="text-xs font-semibold text-gray-700">Anakan ♂ (0-8bln)</span>
-                    <span className="text-lg font-bold text-green-900">{dashboardKelompok.populasi?.anakanJantan || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center bg-green-50 p-2 rounded">
-                    <span className="text-xs font-semibold text-gray-700">Anakan ♀ (0-8bln)</span>
-                    <span className="text-lg font-bold text-green-900">{dashboardKelompok.populasi?.anakanBetina || 0}</span>
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <p className="text-xs uppercase tracking-wide text-green-700 font-semibold mb-1">Betina</p>
+                    <p className="text-2xl font-bold text-green-900">{dashboardKelompok.populasiHewan?.betina || 0}</p>
                   </div>
                 </div>
               </div>
@@ -248,7 +245,7 @@ export default function ClientDashboard() {
             {/* Card 5: Penjualan (30 hari) */}
             <div className="bg-white rounded-xl shadow-md border border-blue-200 overflow-hidden hover:shadow-lg transition">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 flex items-center gap-3">
-                <h3 className="font-bold text-lg">Penjualan (30 hari)</h3>
+                <h3 className="font-bold text-lg">Penjualan</h3>
               </div>
               <div className="p-6 space-y-4">
                 <div className="bg-blue-50 p-4 rounded-lg text-center">
@@ -263,12 +260,24 @@ export default function ClientDashboard() {
                     <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.pejantanTerjual || 0}</span>
                   </div>
                   <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
-                    <span className="text-xs font-semibold text-gray-700">Betina/Indukan</span>
-                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.betinaTerjual || 0}</span>
+                    <span className="text-xs font-semibold text-gray-700">Indukan</span>
+                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.indukanTerjual || 0}</span>
                   </div>
                   <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
-                    <span className="text-xs font-semibold text-gray-700">Anakan</span>
-                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.anakanTerjual || 0}</span>
+                    <span className="text-xs font-semibold text-gray-700">Calon Indukan (8-11 bln)</span>
+                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.calonIndukanTerjual || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
+                    <span className="text-xs font-semibold text-gray-700">Calon Pejantan (8-11 bln)</span>
+                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.calonPejantanTerjual || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
+                    <span className="text-xs font-semibold text-gray-700">Jantan Potong</span>
+                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.jantanPotongTerjual || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
+                    <span className="text-xs font-semibold text-gray-700">Betina Potong</span>
+                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.betinaPotongTerjual || 0}</span>
                   </div>
                 </div>
               </div>
@@ -277,7 +286,6 @@ export default function ClientDashboard() {
             {/* Card 6: Pengolahan */}
             <div className="bg-white rounded-xl shadow-md border border-lime-200 overflow-hidden hover:shadow-lg transition">
               <div className="bg-gradient-to-br from-lime-500 to-lime-600 text-white p-4 flex items-center gap-3">
-                <Leaf className="w-6 h-6" />
                 <h3 className="font-bold text-lg">Pengolahan</h3>
               </div>
               <div className="p-6 space-y-4">
@@ -302,21 +310,27 @@ export default function ClientDashboard() {
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-900">
-              <p className="font-semibold mb-1">ℹ️ Informasi Dashboard</p>
-              <ul className="text-xs space-y-1 text-blue-800">
-                <li>• Data pakan menampilkan laporan terakhir</li>
-                <li>• Data kelahiran dan penjualan adalah periode 30 hari terakhir</li>
-                <li>• Data populasi menampilkan laporan populasi terbaru</li>
-                <li>• Semua data diperbarui otomatis sesuai laporan yang masuk</li>
-              </ul>
+            {/* Info Box */}
+            <div className="col-span-1 md:col-span-2 bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-900">
+                <p className="font-semibold mb-1">ℹ️ Informasi Dashboard</p>
+                <ul className="text-xs space-y-1 text-blue-800">
+                  <li>• Data pakan menampilkan laporan terakhir</li>
+                  <li>• Data kelahiran dan penjualan adalah periode 30 hari terakhir</li>
+                  <li>• Data populasi menampilkan laporan populasi terbaru</li>
+                  <li>• Data penyaluran & bantuan awal ditampilkan dalam card terpisah</li>
+                  <li>• Semua data diperbarui otomatis sesuai laporan yang masuk</li>
+                </ul>
+              </div>
             </div>
-          </div>
+            </div>
+          ) : (
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 text-center">
+              <p className="text-yellow-800 font-medium">Memuat data progress kelompok...</p>
+            </div>
+          )}
         </>
       )}
     </div>

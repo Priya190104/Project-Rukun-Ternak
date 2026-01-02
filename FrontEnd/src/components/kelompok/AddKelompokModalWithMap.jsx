@@ -82,7 +82,7 @@ export default function AddKelompokModalWithMap({
     jumlahKandang: '',
     jumlahTernak: '',
     ternakDetails: [],
-    pakanList: [{ jenisPakan: '', jumlahPakan: '' }],
+    peralatanList: [{ jenisPeralatan: '', jumlahPeralatan: '' }],
     kesehatanList: [{ jenisKesehatan: '', jumlah: '' }],
   });
 
@@ -109,7 +109,7 @@ export default function AddKelompokModalWithMap({
           jumlahKandang: '',
           jumlahTernak: '',
           ternakDetails: [],
-          pakanList: [{ jenisPakan: '', jumlahPakan: '' }],
+          peralatanList: [{ jenisPeralatan: '', jumlahPeralatan: '' }],
           kesehatanList: [{ jenisKesehatan: '', jumlah: '' }],
         });
         if (initialData.kecamatan) {
@@ -131,7 +131,7 @@ export default function AddKelompokModalWithMap({
           jumlahKandang: '',
           jumlahTernak: '',
           ternakDetails: [],
-          pakanList: [{ jenisPakan: '', jumlahPakan: '' }],
+          peralatanList: [{ jenisPeralatan: '', jumlahPeralatan: '' }],
           kesehatanList: [{ jenisKesehatan: '', jumlah: '' }],
         });
         setDesaOptions([]);
@@ -198,7 +198,8 @@ export default function AddKelompokModalWithMap({
             jenisKelamin: '',
             ras: '',
             bobot: '',
-            umur: ''
+            umur: '',
+            catatan: ''
           });
         }
       } 
@@ -245,10 +246,10 @@ export default function AddKelompokModalWithMap({
     }
   };
 
-  const handlePakanChange = (index, field, value) => {
-    const newList = [...form.pakanList];
+  const handlePeralatanChange = (index, field, value) => {
+    const newList = [...form.peralatanList];
     newList[index] = { ...newList[index], [field]: value };
-    setForm(prev => ({ ...prev, pakanList: newList }));
+    setForm(prev => ({ ...prev, peralatanList: newList }));
   };
 
   const handleKesehatanChange = (index, field, value) => {
@@ -257,17 +258,17 @@ export default function AddKelompokModalWithMap({
     setForm(prev => ({ ...prev, kesehatanList: newList }));
   };
 
-  const addPakanRow = () => {
+  const addPeralatanRow = () => {
     setForm(prev => ({
       ...prev,
-      pakanList: [...prev.pakanList, { jenisPakan: '', jumlahPakan: '' }]
+      peralatanList: [...prev.peralatanList, { jenisPeralatan: '', jumlahPeralatan: '' }]
     }));
   };
 
-  const removePakanRow = (index) => {
+  const removePeralatanRow = (index) => {
     setForm(prev => ({
       ...prev,
-      pakanList: prev.pakanList.filter((_, i) => i !== index)
+      peralatanList: prev.peralatanList.filter((_, i) => i !== index)
     }));
   };
 
@@ -295,6 +296,18 @@ export default function AddKelompokModalWithMap({
 
     setLoading(true);
     try {
+      // Filter and normalize ternakDetails - remove empty rows and convert jenisKelamin to uppercase
+      const normalizedTernakDetails = form.ternakDetails
+        .filter(t => t.jenisKelamin && t.ras && t.bobot)  // Must have jenis kelamin, ras, and bobot
+        .map(t => ({
+          ...t,
+          idHewan: t.idTernak || null,  // Map idTernak from form to idHewan for backend
+          jenisKelamin: (t.jenisKelamin === 'Jantan' ? 'JANTAN' : t.jenisKelamin === 'Betina' ? 'BETINA' : t.jenisKelamin).toUpperCase(),
+          bobot: parseFloat(t.bobot) || 0,
+          umur: t.umur ? parseInt(t.umur) : null,
+          tanggalLahir: t.tanggalLahir || null
+        }));
+      
       const payload = {
         name: form.namaKelompok.trim(),
         email: form.emailKelompok.trim(),
@@ -310,8 +323,8 @@ export default function AddKelompokModalWithMap({
         // Penyaluran & Bantuan
         jumlahKandang: form.jumlahKandang ? parseInt(form.jumlahKandang) : null,
         jumlahTernak: form.jumlahTernak ? parseInt(form.jumlahTernak) : null,
-        ternakDetails: form.ternakDetails.filter(t => t.idTernak || t.jenisKelamin || t.ras || t.bobot || t.umur),
-        pakanList: form.pakanList.filter(p => p.jenisPakan && p.jumlahPakan),
+        ternakDetails: normalizedTernakDetails,
+        pakanList: form.peralatanList.filter(p => p.jenisPeralatan && p.jumlahPeralatan),
         kesehatanList: form.kesehatanList.filter(k => k.jenisKesehatan && k.jumlah),
       };
 
@@ -654,6 +667,19 @@ export default function AddKelompokModalWithMap({
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
+
+                        {/* Catatan */}
+                        <div className="md:col-span-2 lg:col-span-3">
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Catatan (Opsional)</label>
+                          <textarea
+                            placeholder="Catatan tambahan untuk hewan ini"
+                            value={ternak.catatan || ''}
+                            onChange={(e) => handleTernakChange(index, 'catatan', e.target.value)}
+                            disabled={loading}
+                            rows="2"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -661,28 +687,28 @@ export default function AddKelompokModalWithMap({
               </div>
             )}
 
-            {/* Pakan */}
+            {/* Peralatan Pendukung */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-semibold text-gray-700">Jenis Pakan</label>
+                <label className="block text-sm font-semibold text-gray-700">Peralatan Pendukung</label>
                 <button
                   type="button"
-                  onClick={addPakanRow}
+                  onClick={addPeralatanRow}
                   disabled={loading}
                   className="px-3 py-1 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
                 >
-                  + Tambah Pakan
+                  + Tambah Peralatan
                 </button>
               </div>
               <div className="space-y-3">
-                {form.pakanList.map((pakan, index) => (
+                {form.peralatanList.map((peralatan, index) => (
                   <div key={index} className="flex gap-3">
                     <div className="flex-1">
                       <input
                         type="text"
-                        placeholder="Jenis pakan (contoh: Rumput, Konsentrat, dll)"
-                        value={pakan.jenisPakan}
-                        onChange={(e) => handlePakanChange(index, 'jenisPakan', e.target.value)}
+                        placeholder="Jenis peralatan (contoh: Sekop, Tempat Minum, dll)"
+                        value={peralatan.jenisPeralatan}
+                        onChange={(e) => handlePeralatanChange(index, 'jenisPeralatan', e.target.value)}
                         disabled={loading}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -690,19 +716,19 @@ export default function AddKelompokModalWithMap({
                     <div className="flex-1">
                       <input
                         type="number"
-                        placeholder="Jumlah (kg/unit)"
-                        value={pakan.jumlahPakan}
-                        onChange={(e) => handlePakanChange(index, 'jumlahPakan', e.target.value)}
+                        placeholder="Jumlah (unit)"
+                        value={peralatan.jumlahPeralatan}
+                        onChange={(e) => handlePeralatanChange(index, 'jumlahPeralatan', e.target.value)}
                         disabled={loading}
                         min="0"
-                        step="0.1"
+                        step="1"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-                    {form.pakanList.length > 1 && (
+                    {form.peralatanList.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => removePakanRow(index)}
+                        onClick={() => removePeralatanRow(index)}
                         disabled={loading}
                         className="px-3 py-2 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
                       >
@@ -743,7 +769,7 @@ export default function AddKelompokModalWithMap({
                     <div className="flex-1">
                       <input
                         type="number"
-                        placeholder="Jumlah hewan"
+                        placeholder="Jumlah"
                         value={kesehatan.jumlah}
                         onChange={(e) => handleKesehatanChange(index, 'jumlah', e.target.value)}
                         disabled={loading}

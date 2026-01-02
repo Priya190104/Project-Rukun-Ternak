@@ -111,7 +111,7 @@ export default function PetaSebaranKelompok() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Map section */}
               <div className="lg:col-span-2">
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden h-96 md:h-[600px]">
                   <MapSebaranKelompok
                     kelompokList={kelompok}
                     onMarkerClick={handleMarkerClick}

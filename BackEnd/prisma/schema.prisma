@@ -28,28 +28,29 @@ model User {
 }
 
 model Kelompok {
-  id         Int      @id @default(autoincrement())
-  name       String
-  email      String?
-  kecamatan  String?
-  desa       String?
-  catatan    String?
-  latitude   Float?
-  longitude  Float?
-  pic1Nik    String?  @map("pic1_nik")
-  pic1Nama   String?  @map("pic1_nama")
-  pic1Alamat String?  @map("pic1_alamat")
-  pic1NoHp   String?  @map("pic1_no_hp")
-  pic1Email  String?  @map("pic1_email")
-  pic2Nik    String?  @map("pic2_nik")
-  pic2Nama   String?  @map("pic2_nama")
-  pic2Alamat String?  @map("pic2_alamat")
-  pic2NoHp   String?  @map("pic2_no_hp")
-  pic2Email  String?  @map("pic2_email")
-  users      User[]
-  laporan    Laporan[]
-  hewanTernak HewanTernak[]
-  updateTernak UpdateTernak[]
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String?
+  kecamatan      String?
+  desa           String?
+  catatan        String?
+  latitude       Float?
+  longitude      Float?
+  pic1Nik        String?  @map("pic1_nik")
+  pic1Nama       String?  @map("pic1_nama")
+  pic1Alamat     String?  @map("pic1_alamat")
+  pic1NoHp       String?  @map("pic1_no_hp")
+  pic1Email      String?  @map("pic1_email")
+  jumlahKandang  Int?     @map("jumlah_kandang")
+  jumlahTernak   Int?     @map("jumlah_ternak")
+  tarnakJantan   Int?     @map("ternak_jantan")
+  tarnakBetina   Int?     @map("ternak_betina")
+  pakanList      Json?    @map("pakan_list")
+  kesehatanList  Json?    @map("kesehatan_list")
+  users          User[]
+  laporan        Laporan[]
+  hewanTernak    HewanTernak[]
+  updateTernak   UpdateTernak[]
 
   @@index([name])
   @@map("kelompok")
@@ -58,16 +59,20 @@ model Kelompok {
 model Laporan {
   id         Int       @id @default(autoincrement())
   jenis      String?
+  laporanType String?  @default("regular") @map("laporan_type") // regular, penyaluran_dan_bantuan, etc
   kelompok   String?
   data       Json?
   userId     Int?      @map("user_id")
   kelompokId Int?      @map("kelompok_id")
   tanggal    DateTime  @default(now())
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
   kelompokRel Kelompok? @relation(fields: [kelompokId], references: [id])
 
   @@index([userId])
   @@index([kelompokId])
   @@index([jenis])
+  @@index([laporanType])
   @@index([tanggal])
   @@map("laporan")
 }
@@ -104,13 +109,18 @@ model Banner {
 
 model HewanTernak {
   id              Int             @id @default(autoincrement())
+  idHewan         String?         @map("id_hewan") // User-provided identifier (ID Bisnis)
   kelompokId      Int             @map("kelompok_id")
   kelompok        Kelompok        @relation(fields: [kelompokId], references: [id], onDelete: Cascade)
   jenisKelamin    String          @map("jenis_kelamin") // JANTAN, BETINA
   ras             String
   tanggalLahir    DateTime        @map("tanggal_lahir")
   bobot           Float?          // Bobot terakhir dalam kg
+  catatan         String?         // Catatan tambahan untuk hewan
   status          String          @default("AKTIF") // AKTIF, MATI, TERJUAL
+  source          String          @default("Kelahiran") @map("source") // Penyaluran, Kelahiran, Pembelian
+  tanggalTerjual  DateTime?       @map("tanggal_terjual") // Tanggal hewan dijual
+  umurSaatTerjual Int?            @map("umur_saat_terjual") // Umur (dalam bulan) saat dijual, untuk freeze age
   idInduk         Int?            @map("id_induk")
   induk           HewanTernak?    @relation("AnakDariInduk", fields: [idInduk], references: [id])
   anak            HewanTernak[]   @relation("AnakDariInduk")
@@ -118,11 +128,15 @@ model HewanTernak {
   pejantan        HewanTernak?    @relation("AnakDariPejantan", fields: [idPejantan], references: [id])
   anaknya         HewanTernak[]   @relation("AnakDariPejantan")
   riwayatBobot    RiwayatBobot[]
+  updateTernak    UpdateTernak[]
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 
+  @@unique([kelompokId, idHewan]) // ID Bisnis harus unique per kelompok
   @@index([kelompokId])
+  @@index([idHewan])
   @@index([status])
+  @@index([source])
   @@index([idInduk])
   @@index([idPejantan])
   @@index([tanggalLahir])
@@ -146,13 +160,15 @@ model UpdateTernak {
   id              Int             @id @default(autoincrement())
   hewanId         Int             @map("hewan_id")
   kelompokId      Int             @map("kelompok_id")
-  kelompok        Kelompok        @relation(fields: [kelompokId], references: [id], onDelete: Cascade)
-  bobot           Float           // kg
+  bobot           Float?          // kg - bobot yang di-update
   keterangan      String?
   tanggalUpdate   DateTime        @default(now()) @map("tanggal_update")
   status          String          @default("SELESAI") // SELESAI, DITOLAK
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  kelompok        Kelompok        @relation(fields: [kelompokId], references: [id], onDelete: Cascade)
+  hewan           HewanTernak     @relation(fields: [hewanId], references: [id], onDelete: Cascade)
 
   @@index([hewanId])
   @@index([kelompokId])

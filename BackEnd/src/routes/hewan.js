@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuth, RoleGuard } = require('../middleware/auth');
+const { attachUser, requireAuth, RoleGuard, ViewerReadOnlyGuard } = require('../middleware/auth');
 const hewanController = require('../controllers/hewanController');
 const updateTernakController = require('../controllers/updateTernakController');
 
@@ -8,7 +8,14 @@ const updateTernakController = require('../controllers/updateTernakController');
 const kelompokOnly = RoleGuard(['kelompok']);
 const adminOnly = RoleGuard(['admin']);
 
+// Attach user dan apply viewer read-only guard
+router.use(attachUser);
+router.use(ViewerReadOnlyGuard);
+
 // ==================== HEWAN TERNAK ROUTES ====================
+
+// Create hewan ternak (KELOMPOK - manual input with validation)
+router.post('/hewan', requireAuth, kelompokOnly, hewanController.createHewan);
 
 // Get list hewan ternak (KELOMPOK)
 router.get('/hewan', requireAuth, kelompokOnly, hewanController.getHewanTernak);
@@ -24,6 +31,12 @@ router.get('/admin/hewan/:id', requireAuth, adminOnly, hewanController.getDetail
 
 // Get dropdown hewan aktif (untuk form)
 router.get('/hewan-aktif', requireAuth, kelompokOnly, hewanController.getHewanAktif);
+
+// Get candidates untuk pejantan (form kelahiran)
+router.get('/candidates/pejantan', requireAuth, kelompokOnly, hewanController.getPejantanCandidates);
+
+// Get candidates untuk induk (form kelahiran)
+router.get('/candidates/induk', requireAuth, kelompokOnly, hewanController.getIndukCandidates);
 
 // ==================== UPDATE TERNAK ROUTES ====================
 

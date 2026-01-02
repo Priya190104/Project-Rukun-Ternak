@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import client from '../api/client';
-import { AlertCircle, Loader, ArrowLeft, Calendar, Weight, Heart } from 'lucide-react';
+import { AlertCircle, Loader, ArrowLeft, Calendar, Weight } from 'lucide-react';
 
 export default function DetailHewanPage() {
   const { id } = useParams();
   const { appRole } = useAuth();
   const [hewan, setHewan] = useState(null);
+  const [laporanKematian, setLaporanKematian] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -31,7 +32,28 @@ export default function DetailHewanPage() {
         
         const res = await client.get(endpoint);
         if (res.data?.success) {
-          setHewan(res.data.data);
+          const hewanData = res.data.data;
+          setHewan(hewanData);
+          
+          // Fetch laporan kematian jika status TIDAK_AKTIF
+          if (hewanData.status === 'TIDAK_AKTIF' && hewanData.id_hewan) {
+            try {
+              const laporanRes = await client.get(`/api/laporan/list?jenis=kesehatan&limit=100`);
+              if (laporanRes.data?.success && laporanRes.data.data) {
+                // Find laporan kesehatan dengan status=mati untuk hewan ini
+                const kematianLaporan = laporanRes.data.data.find(laporan => 
+                  laporan.jenis === 'kesehatan' && 
+                  laporan.data?.status_kesehatan_ternak === 'mati' &&
+                  laporan.data?.id_ternak === hewanData.id_hewan
+                );
+                if (kematianLaporan) {
+                  setLaporanKematian(kematianLaporan);
+                }
+              }
+            } catch (laporanError) {
+              console.warn('Failed to fetch laporan kematian:', laporanError);
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching detail:', err);
@@ -113,7 +135,7 @@ export default function DetailHewanPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 pb-6 border-b border-gray-200">
             <div>
-              <p className="text-sm text-gray-500 uppercase tracking-wider font-semibold">ID {hewan.id}</p>
+              <p className="text-sm text-gray-500 uppercase tracking-wider font-semibold">ID {hewan.id_hewan || `#${hewan.id}`}</p>
               <h2 className="text-3xl font-bold text-gray-900 mt-2">{hewan.ras}</h2>
               <p className="text-gray-600 mt-2">
                 {hewan.jenis_kelamin === 'JANTAN' ? '♂️ Pejantan' : '♀️ Betina'}
@@ -163,7 +185,7 @@ export default function DetailHewanPage() {
                 <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
                   <p className="text-xs text-pink-700 uppercase tracking-wider font-semibold mb-1">Induk (Ibu)</p>
                   <div>
-                    <p className="text-lg font-semibold text-pink-900">ID {hewan.induk.id}</p>
+                    <p className="text-lg font-semibold text-pink-900">ID {hewan.induk.id_hewan || `#${hewan.induk.id}`}</p>
                     <p className="text-sm text-pink-700 mt-1">Ras: {hewan.induk.ras}</p>
                     <p className="text-xs text-pink-600 mt-0.5">
                       {hewan.induk.jenis_kelamin === 'JANTAN' ? '♂️ Jantan' : '♀️ Betina'}
@@ -181,7 +203,7 @@ export default function DetailHewanPage() {
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                   <p className="text-xs text-blue-700 uppercase tracking-wider font-semibold mb-1">Pejantan (Ayah)</p>
                   <div>
-                    <p className="text-lg font-semibold text-blue-900">ID {hewan.pejantan.id}</p>
+                    <p className="text-lg font-semibold text-blue-900">ID {hewan.pejantan.id_hewan || `#${hewan.pejantan.id}`}</p>
                     <p className="text-sm text-blue-700 mt-1">Ras: {hewan.pejantan.ras}</p>
                     <p className="text-xs text-blue-600 mt-0.5">
                       {hewan.pejantan.jenis_kelamin === 'JANTAN' ? '♂️ Jantan' : '♀️ Betina'}
@@ -196,6 +218,22 @@ export default function DetailHewanPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Catatan */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h3 className="font-bold text-gray-900 mb-4">Catatan Hewan</h3>
+          
+          {hewan.catatan ? (
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-gray-900 whitespace-pre-wrap">{hewan.catatan}</p>
+              <p className="text-xs text-gray-500 mt-3">Catatan tersimpan untuk hewan ini</p>
+            </div>
+          ) : (
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-gray-600 italic">Tidak ada catatan</p>
+            </div>
+          )}
         </div>
 
         {/* Riwayat Bobot */}
@@ -233,6 +271,60 @@ export default function DetailHewanPage() {
                 Mulai catat bobot hewan ini melalui fitur &quot;Update Ternak&quot;
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Data Kematian - Displayed at bottom if hewan status = TIDAK_AKTIF */}
+        {hewan.status === 'TIDAK_AKTIF' && laporanKematian && (
+          <div className="bg-red-50 rounded-2xl shadow-sm border border-red-200 p-6">
+            <h3 className="font-bold text-red-900 mb-4">Data Kematian</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-start gap-4 p-4 bg-white rounded-lg border border-red-100">
+                <Calendar className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Tanggal Laporan</p>
+                  <p className="text-base text-gray-900 mt-1">
+                    {laporanKematian.tanggal 
+                      ? new Date(laporanKematian.tanggal).toLocaleDateString('id-ID', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })
+                      : '-'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-white rounded-lg border border-red-100">
+                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Status</p>
+                <p className="text-base text-red-700 font-semibold mt-1">Mati</p>
+              </div>
+
+              {laporanKematian.data?.keterangan && (
+                <div className="p-4 bg-white rounded-lg border border-red-100">
+                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Keterangan</p>
+                  <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap break-words">
+                    {laporanKematian.data.keterangan}
+                  </p>
+                </div>
+              )}
+
+              {!laporanKematian.data?.keterangan && (
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-gray-600 italic">Tidak ada keterangan</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {hewan.status === 'TIDAK_AKTIF' && !laporanKematian && (
+          <div className="bg-red-50 rounded-2xl shadow-sm border border-red-200 p-6">
+            <h3 className="font-bold text-red-900 mb-4">Data Kematian</h3>
+            <p className="text-red-700">Tidak tersedia</p>
           </div>
         )}
       </div>

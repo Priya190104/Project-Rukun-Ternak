@@ -36,14 +36,25 @@ client.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.error('[API] 401 Unauthorized - token expired or invalid');
-      // Token expired or invalid
+      
+      // Check if user had a token (meaning it expired)
+      const hadToken = !!localStorage.getItem('rukun_token');
+      
+      // Clear auth tokens
       localStorage.removeItem('rukun_token');
       localStorage.removeItem('rukun_user');
       delete client.defaults.headers.common['Authorization'];
-      // Redirect to login ONLY if not already on login page
-      if (!window.location.pathname.includes('/login')) {
-        console.log('[API] Redirecting to login from', window.location.pathname);
+      
+      // Only redirect to login if:
+      // 1. User had a token (meaning they were previously logged in)
+      // 2. AND not already on login page
+      if (hadToken && !window.location.pathname.includes('/login')) {
+        console.log('[API] Token expired, redirecting to login from', window.location.pathname);
         window.location.href = '/login?expired=true';
+      }
+      // If no token was present, 401 is expected for public endpoints - don't redirect
+      else if (!hadToken) {
+        console.log('[API] 401 on public route (no token present) - allowing page to handle gracefully');
       }
     } else if (error.response?.status === 403) {
       console.error('[API] 403 Forbidden - access denied');

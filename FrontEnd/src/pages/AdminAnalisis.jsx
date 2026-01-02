@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   BarChart3, TrendingUp, Users, AlertCircle, 
-  Filter, Download, Building2
+  Filter, Building2
 } from 'lucide-react';
 import client from '../api/client';
 
@@ -170,10 +170,6 @@ export default function AdminAnalisis() {
           <h1 className="text-3xl font-bold text-gray-900">Analisis Admin</h1>
           <p className="text-gray-600 mt-1">Visualisasi data laporan global dari semua kelompok</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-          <Download size={18} />
-          Export
-        </button>
       </div>
 
       {/* Global Statistics Cards */}

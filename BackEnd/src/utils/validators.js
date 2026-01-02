@@ -122,10 +122,6 @@ function validateKelompok(data) {
     errors.push('Invalid phone number format for PIC 1');
   }
 
-  if (data.pic2_no_hp && !isValidPhone(data.pic2_no_hp)) {
-    errors.push('Invalid phone number format for PIC 2');
-  }
-
   return {
     isValid: errors.length === 0,
     errors

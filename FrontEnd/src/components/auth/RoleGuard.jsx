@@ -44,6 +44,11 @@ export default function RoleGuard({ allowedRoles = [], children }) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  if (appRole === 'viewer') {
+    console.log('[RoleGuard] Viewer user denied access, redirecting to viewer dashboard');
+    return <Navigate to="/viewer-dashboard" replace />;
+  }
+
   // Fallback: redirect to login
   console.log('[RoleGuard] Fallback: redirecting to login');
   return <Navigate to="/login" replace />;

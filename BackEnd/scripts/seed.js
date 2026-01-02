@@ -1,5 +1,5 @@
 require('dotenv').config();
-const db = require('./src/db');
+const db = require('../src/db');
 const bcrypt = require('bcrypt');
 
 async function run() {

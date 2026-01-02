@@ -19,6 +19,8 @@ export default function Login() {
         navigate('/dashboard', { replace: true });
       } else if (user.role === 'kelompok') {
         navigate('/client', { replace: true });
+      } else if (user.role === 'viewer') {
+        navigate('/viewer-dashboard', { replace: true });
       }
     }
   }, [loading, user, navigate]);
@@ -35,6 +37,8 @@ export default function Login() {
         navigate('/dashboard');
       } else if (result.user.role === 'kelompok') {
         navigate('/client');
+      } else if (result.user.role === 'viewer') {
+        navigate('/viewer-dashboard');
       }
     } else {
       // Show specific error message for invalid credentials

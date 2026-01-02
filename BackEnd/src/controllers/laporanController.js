@@ -126,7 +126,7 @@ async function getLaporanList(req, res) {
       id: row.id,
       jenis: row.jenis,
       kelompok_id: row.kelompok_id,
-      kelompok_name: row.kelompok_name,
+      kelompok: row.kelompok_name,
       author_name: row.author_name,
       tanggal: row.tanggal,
       // NOTE: Don't include 'data' field in list (it's JSONB and large)
@@ -221,6 +221,16 @@ async function getSummary(req, res) {
 /**
  * GET /api/laporan/:id - Get single laporan with full details
  * Time: 100-200ms
+ * 
+ * OWNERSHIP CHECK:
+ * - Admin: can access any laporan
+ * - Kelompok: can access laporan.kelompok_id === user.kelompok_id
+ * - Other: can access laporan.user_id === user.id
+ * 
+ * RESPONSE CODES:
+ * - 200: Success, laporan found and user has access
+ * - 403: Laporan exists but user does not have permission to access
+ * - 404: Laporan does not exist
  */
 async function getLaporanById(req, res) {
   try {
@@ -229,20 +239,43 @@ async function getLaporanById(req, res) {
     const userId = req.user?.id;
     const userKelompokId = req.user?.kelompok_id;
 
-    // Access control
-    let whereCondition = '';
-    const params = [parseInt(id)];
+    // STEP 1: Check if laporan exists (regardless of access)
+    const existsQuery = `
+      SELECT id, kelompok_id, user_id FROM laporan WHERE id = $1
+    `;
+    const existsResult = await db.query(existsQuery, [parseInt(id)]);
 
-    if (userRole === 'admin') {
-      whereCondition = 'WHERE l.id = $1';
-    } else if (userRole === 'kelompok') {
-      whereCondition = 'WHERE l.id = $1 AND l.kelompok_id = $2';
-      params.push(userKelompokId);
-    } else {
-      whereCondition = 'WHERE l.id = $1 AND l.user_id = $2';
-      params.push(userId);
+    if (existsResult.rows.length === 0) {
+      // Laporan truly does not exist
+      return res.status(404).json({
+        success: false,
+        message: 'Laporan not found'
+      });
     }
 
+    const laporanOwnership = existsResult.rows[0];
+
+    // STEP 2: Check access permissions
+    let hasAccess = false;
+    if (userRole === 'admin') {
+      hasAccess = true; // Admin can access everything
+    } else if (userRole === 'kelompok') {
+      // Kelompok can access if laporan belongs to their kelompok
+      hasAccess = laporanOwnership.kelompok_id === userKelompokId;
+    } else {
+      // Other roles can access if they created it
+      hasAccess = laporanOwnership.user_id === userId;
+    }
+
+    if (!hasAccess) {
+      // Laporan exists but user does not have access
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You do not have permission to view this laporan.'
+      });
+    }
+
+    // STEP 3: Retrieve full laporan details
     const query = `
       SELECT 
         l.id,
@@ -258,21 +291,72 @@ async function getLaporanById(req, res) {
       FROM laporan l
       LEFT JOIN users u ON l.user_id = u.id
       LEFT JOIN kelompok k ON l.kelompok_id = k.id
-      ${whereCondition}
+      WHERE l.id = $1
     `;
 
-    const result = await db.query(query, params);
+    const result = await db.query(query, [parseInt(id)]);
+    const laporan = result.rows[0];
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Laporan not found or access denied'
-      });
+    // STEP 4: For Kelahiran laporan, enrich data with ID Bisnis untuk induk dan pejantan
+    if (laporan && laporan.jenis === 'Kelahiran' && laporan.data) {
+      const enrichedData = { ...laporan.data };
+      
+      // Get induk ID Bisnis jika ada induk_id
+      if (enrichedData.induk_id) {
+        try {
+          let indukIdBisnis = null;
+          
+          // Check apakah induk_id adalah numeric (old format) atau string (new format)
+          if (typeof enrichedData.induk_id === 'number') {
+            // Old format: numeric primary key - lookup from database
+            const indukQuery = `SELECT id_hewan FROM hewan_ternak WHERE id = $1`;
+            const indukRes = await db.query(indukQuery, [enrichedData.induk_id]);
+            if (indukRes.rows.length > 0) {
+              indukIdBisnis = indukRes.rows[0].id_hewan;
+            }
+          } else {
+            // New format: sudah ID Bisnis string
+            indukIdBisnis = enrichedData.induk_id;
+          }
+          
+          enrichedData.induk_id_bisnis = indukIdBisnis;
+          console.log(`[laporanController] Enriched induk: id=${enrichedData.induk_id}, id_bisnis=${indukIdBisnis}`);
+        } catch (err) {
+          console.error('[laporanController] Error enriching induk data:', err);
+        }
+      }
+      
+      // Get pejantan ID Bisnis jika ada pejantan_id
+      if (enrichedData.pejantan_id) {
+        try {
+          let pejantanIdBisnis = null;
+          
+          // Check apakah pejantan_id adalah numeric (old format) atau string (new format)
+          if (typeof enrichedData.pejantan_id === 'number') {
+            // Old format: numeric primary key - lookup from database
+            const pejantanQuery = `SELECT id_hewan FROM hewan_ternak WHERE id = $1`;
+            const pejantanRes = await db.query(pejantanQuery, [enrichedData.pejantan_id]);
+            if (pejantanRes.rows.length > 0) {
+              pejantanIdBisnis = pejantanRes.rows[0].id_hewan;
+            }
+          } else {
+            // New format: sudah ID Bisnis string
+            pejantanIdBisnis = enrichedData.pejantan_id;
+          }
+          
+          enrichedData.pejantan_id_bisnis = pejantanIdBisnis;
+          console.log(`[laporanController] Enriched pejantan: id=${enrichedData.pejantan_id}, id_bisnis=${pejantanIdBisnis}`);
+        } catch (err) {
+          console.error('[laporanController] Error enriching pejantan data:', err);
+        }
+      }
+      
+      laporan.data = enrichedData;
     }
 
     return res.json({
       success: true,
-      data: result.rows[0]
+      data: laporan
     });
 
   } catch (error) {
@@ -287,12 +371,18 @@ async function getLaporanById(req, res) {
 /**
  * POST /api/laporan - Create new laporan
  * With cache invalidation
+ * 
+ * OWNERSHIP ENFORCEMENT:
+ * - If user.role = 'kelompok': laporan MUST be assigned to user's kelompok_id (ignore client-provided kelompok_id)
+ * - If user.role = 'admin': can create laporan for any kelompok_id
+ * - This prevents kelompok users from creating reports for other kelompoks
  */
 async function createLaporan(req, res) {
   try {
     const { jenis, kelompok_id, data } = req.body;
     const userId = req.user?.id;
     const userRole = req.user?.role;
+    const userKelompokId = req.user?.kelompok_id;
 
     // Validation
     if (!jenis || !data) {
@@ -300,6 +390,27 @@ async function createLaporan(req, res) {
         success: false,
         message: 'Missing required fields: jenis, data'
       });
+    }
+
+    // OWNERSHIP ENFORCEMENT: Determine which kelompok_id to use
+    let finalKelompokId = kelompok_id;
+    
+    if (userRole === 'kelompok') {
+      // Kelompok users can only create laporan for their own kelompok
+      if (kelompok_id && kelompok_id !== userKelompokId) {
+        console.warn(`[laporanController] Security: Kelompok user ${userId} attempted to create laporan for different kelompok ${kelompok_id}. Assigning to their own kelompok ${userKelompokId}`);
+      }
+      finalKelompokId = userKelompokId; // OVERRIDE with user's kelompok_id
+      
+      if (!finalKelompokId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Kelompok user must be assigned to a kelompok'
+        });
+      }
+    } else if (userRole === 'admin') {
+      // Admin can create for any kelompok (if provided) or leave null
+      finalKelompokId = kelompok_id || null;
     }
 
     const query = `
@@ -310,21 +421,226 @@ async function createLaporan(req, res) {
 
     const result = await db.query(query, [
       jenis,
-      kelompok_id,
+      finalKelompokId,
       JSON.stringify(data),
       userId
     ]);
 
+    const laporan = result.rows[0];
+    
+    // AUTO-UPDATE HEWAN STATUS IF KESEHATAN WITH STATUS = MATI
+    if (jenis.toLowerCase() === 'kesehatan' && data.status_kesehatan_ternak === 'mati' && data.id_ternak && finalKelompokId) {
+      try {
+        const updateHewanQuery = `
+          UPDATE hewan_ternak 
+          SET status = 'TIDAK_AKTIF', 
+              tanggal_status_tidak_aktif = NOW(),
+              updated_at = NOW()
+          WHERE kelompok_id = $1 AND id_hewan = $2
+          RETURNING id, id_hewan, status, tanggal_status_tidak_aktif
+        `;
+        
+        const updateResult = await db.query(updateHewanQuery, [finalKelompokId, data.id_ternak]);
+        
+        if (updateResult.rows.length > 0) {
+          const updatedHewan = updateResult.rows[0];
+          console.log(`[laporanController] ✅ Auto-updated hewan ternak status to TIDAK_AKTIF: ${updatedHewan.id_hewan} (ID: ${updatedHewan.id}) with tanggal_status_tidak_aktif = ${updatedHewan.tanggal_status_tidak_aktif} from kesehatan laporan ${laporan.id}`);
+        } else {
+          console.warn(`[laporanController] ⚠️ Hewan with id_hewan ${data.id_ternak} not found for status update`);
+        }
+      } catch (hewanError) {
+        console.error(`[laporanController] ⚠️ Warning: Failed to update hewan status from kesehatan:`, hewanError.message);
+        // Don't fail the whole laporan creation if hewan update fails
+      }
+    }
+    
+    // AUTO-UPDATE HEWAN STATUS IF PENJUALAN - UPDATE MULTIPLE ANIMALS
+    if (jenis.toLowerCase() === 'penjualan' && finalKelompokId) {
+      try {
+        const penjualanList = data.penjualan_list || [];
+        
+        if (Array.isArray(penjualanList) && penjualanList.length > 0) {
+          for (const penjualan of penjualanList) {
+            const idHewan = penjualan.id_hewan;
+            
+            if (idHewan) {
+              try {
+                // Get current umur_bulan before updating
+                const getUmurQuery = `
+                  SELECT id, id_hewan, jenis_kelamin, bobot, ras,
+                         EXTRACT(DAY FROM (NOW() - tanggal_lahir)) / 30.0 as umur_bulan_calculated
+                  FROM hewan_ternak
+                  WHERE kelompok_id = $1 AND id_hewan = $2
+                  LIMIT 1
+                `;
+                
+                const umurResult = await db.query(getUmurQuery, [finalKelompokId, idHewan]);
+                
+                if (umurResult.rows.length > 0) {
+                  const hewan = umurResult.rows[0];
+                  const umurBulanSaat = Math.round(hewan.umur_bulan_calculated);
+                  
+                  // Update hewan status to TERJUAL and freeze umur
+                  const updateHewanQuery = `
+                    UPDATE hewan_ternak 
+                    SET status = 'TERJUAL',
+                        tanggal_terjual = NOW(),
+                        umur_saat_terjual = $3,
+                        updated_at = NOW()
+                    WHERE kelompok_id = $1 AND id_hewan = $2
+                    RETURNING id, id_hewan, status, tanggal_terjual, umur_saat_terjual
+                  `;
+                  
+                  const updateResult = await db.query(updateHewanQuery, [finalKelompokId, idHewan, umurBulanSaat]);
+                  
+                  if (updateResult.rows.length > 0) {
+                    const updatedHewan = updateResult.rows[0];
+                    console.log(`[laporanController] ✅ Auto-updated hewan status to TERJUAL: ${updatedHewan.id_hewan} (ID: ${updatedHewan.id}, umur: ${umurBulanSaat} bulan) from penjualan laporan ${laporan.id}`);
+                  } else {
+                    console.warn(`[laporanController] ⚠️ Hewan with id_hewan ${idHewan} not found for status update`);
+                  }
+                } else {
+                  console.warn(`[laporanController] ⚠️ Could not find hewan with id_hewan ${idHewan} to update`);
+                }
+              } catch (itemError) {
+                console.error(`[laporanController] ⚠️ Warning: Failed to update hewan ${idHewan} status from penjualan:`, itemError.message);
+                // Don't fail the whole laporan creation if updating one hewan fails
+              }
+            }
+          }
+        }
+      } catch (penjualanError) {
+        console.error(`[laporanController] ⚠️ Warning: Failed to process penjualan hewan updates:`, penjualanError.message);
+        // Don't fail the whole laporan creation if hewan updates fail
+      }
+    }
+    
+    // AUTO-CREATE HEWAN TERNAK IF KELAHIRAN
+    if (jenis.toLowerCase() === 'kelahiran' && finalKelompokId) {
+      try {
+        // Determine gender configuration - now only single animal per kelahiran
+        const jenisCacheKelamin = (data.jenis_kelamin_anak || data.jenis_kelamin || '').toLowerCase();
+        const baseIdHewan = data.id || null; // Capture the ID Hewan from form (ID Bisnis)
+        
+        // VALIDATION: Check if ID Bisnis already exists for this kelompok
+        if (baseIdHewan) {
+          try {
+            const checkDuplicateQuery = `
+              SELECT id, id_hewan FROM hewan_ternak 
+              WHERE kelompok_id = $1 AND id_hewan = $2
+              LIMIT 1
+            `;
+            const duplicateCheck = await db.query(checkDuplicateQuery, [finalKelompokId, baseIdHewan]);
+            
+            if (duplicateCheck.rows.length > 0) {
+              console.warn(`[laporanController] ⚠️ ID Bisnis "${baseIdHewan}" already exists in kelompok ${finalKelompokId}`);
+              return res.status(400).json({
+                success: false,
+                message: `ID Bisnis "${baseIdHewan}" sudah digunakan di kelompok ini. Gunakan ID Bisnis yang berbeda.`,
+                error_code: 'DUPLICATE_ID_BISNIS'
+              });
+            }
+          } catch (checkError) {
+            console.error('[laporanController] Error checking duplicate ID Bisnis:', checkError.message);
+            // If check fails, we'll let the database constraint catch it
+          }
+        }
+        
+        // Determine gender for the single hewan to create
+        let genderForHewan = 'JANTAN'; // Default
+        if (jenisCacheKelamin === 'betina') {
+          genderForHewan = 'BETINA';
+        } else if (jenisCacheKelamin === 'keduanya') {
+          // If 'keduanya' selected, randomly choose or default to jantan
+          genderForHewan = Math.random() > 0.5 ? 'JANTAN' : 'BETINA';
+        }
+
+        try {
+          const createHewanQuery = `
+            INSERT INTO hewan_ternak (
+              kelompok_id,
+              id_hewan,
+              jenis_kelamin,
+              ras,
+              bobot,
+              tanggal_lahir,
+              catatan,
+              source,
+              id_induk,
+              id_pejantan,
+              status,
+              created_at,
+              updated_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+            RETURNING id, id_hewan, jenis_kelamin, ras, bobot, source
+          `;
+          
+          const hewanResult = await db.query(createHewanQuery, [
+            finalKelompokId,
+            baseIdHewan,
+            genderForHewan,
+            data.ras || 'Unknown',
+            parseFloat(data.bobot) || 0,
+            data.tanggal_kelahiran || laporan.tanggal || new Date(),
+            data.catatan || null,
+            'Kelahiran',
+            data.induk_id || null,
+            data.pejantan_id || null,
+            'AKTIF'
+          ]);
+          
+          if (hewanResult.rows.length > 0) {
+            const createdHewan = hewanResult.rows[0];
+            console.log(`[laporanController] ✅ Auto-created hewan ternak: ID database ${createdHewan.id} (id_hewan: ${createdHewan.id_hewan}, ${genderForHewan}, ${createdHewan.ras}) dari kelahiran laporan ${laporan.id}`);
+          } else {
+            console.warn(`[laporanController] ⚠️ Hewan failed to create`);
+          }
+        } catch (innerError) {
+          console.error(`[laporanController] Error creating hewan:`, innerError.message);
+          // Check if it's a unique constraint violation
+          if (innerError.code === '23505' && innerError.message.includes('hewan_ternak_kelompok_id_hewan_key')) {
+            console.warn(`[laporanController] ⚠️ Unique constraint violation: ID Bisnis "${baseIdHewan}" already exists`);
+            return res.status(400).json({
+              success: false,
+              message: `ID Bisnis "${baseIdHewan}" sudah digunakan di kelompok ini. Gunakan ID Bisnis yang berbeda.`,
+              error_code: 'DUPLICATE_ID_BISNIS'
+            });
+          }
+          // For other errors, still return error but allow continuation
+          throw innerError;
+        }
+      } catch (hewanError) {
+        console.error(`[laporanController] ⚠️ Warning: Failed to create hewan ternak from kelahiran:`, hewanError.message);
+        // For critical errors, return the error response
+        if (hewanError.code === '23505') {
+          return res.status(400).json({
+            success: false,
+            message: 'ID Bisnis sudah digunakan. Gunakan ID Bisnis yang berbeda.',
+            error_code: 'DUPLICATE_ID_BISNIS'
+          });
+        }
+        // For other errors, don't fail the whole laporan creation
+      }
+    }
+
     // INVALIDATE CACHE (if caching is enabled)
-    const { dashboardCache } = require('../middleware/cache');
+    // Clear all dashboard caches since we might have updated hewan_ternak (populasi)
+    const { dashboardCache, statsCache } = require('../middleware/cache');
     if (dashboardCache) {
-      dashboardCache.del(`dashboard_${kelompok_id}`);
+      // Invalidate all dashboard caches for this user and kelompok
+      dashboardCache.del(`dashboard_${finalKelompokId}`);
       dashboardCache.del(`dashboard_${userId}`);
+      dashboardCache.del(`dashboard_kelompok_${finalKelompokId}`);
+    }
+    if (statsCache) {
+      statsCache.del(`stats_summary_${finalKelompokId}`);
+      statsCache.del(`stats_summary_${userId}`);
     }
 
     return res.status(201).json({
       success: true,
-      data: result.rows[0],
+      data: laporan,
       message: 'Laporan created successfully'
     });
 

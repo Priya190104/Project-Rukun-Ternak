@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../hooks/useAuth';
-import { Filter } from 'lucide-react';
+import { Filter, Eye, Edit2, Trash2, Download } from 'lucide-react';
+import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 
 const jenisLaporan = ['Budidaya', 'Kelahiran', 'Kematian', 'Penjualan'];
 
 export default function DaftarSemuaLaporan() {
   const { user, appRole } = useAuth();
+  const navigate = useNavigate();
   const [reports, setReports] = useState([]);
   const [filteredReports, setFilteredReports] = useState([]);
   const [filterKelompok, setFilterKelompok] = useState('Semua Kelompok');
@@ -15,13 +17,18 @@ export default function DaftarSemuaLaporan() {
   const [filterBulan, setFilterBulan] = useState('Semua Bulan');
   const [filterSubJenis, setFilterSubJenis] = useState('Semua');
   const [kelompokOptions, setKelompokOptions] = useState(['Semua Kelompok']);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
       try {
         const res = await client.get('/api/laporan');
-        const data = res.data?.data || [];
+        const data = (res.data?.data || []).map(item => ({
+          ...item,
+          // Normalize kelompok field (backend returns kelompok or kelompok_name)
+          kelompok: item.kelompok || item.kelompok_name || '-'
+        }));
         if (mounted) {
           setReports(data);
           setFilteredReports(data);
@@ -83,6 +90,35 @@ export default function DaftarSemuaLaporan() {
 
     setFilteredReports(filtered);
   }, [filterKelompok, filterJenis, filterBulan, filterSubJenis, reports]);
+
+  const handleEditLaporan = (id) => {
+    // Navigate to detail page where edit can be done
+    navigate(`/laporan/${id}`);
+  };
+
+  const handleDeleteLaporan = async (id) => {
+    const confirmDelete = window.confirm('Yakin ingin menghapus laporan ini?');
+    if (!confirmDelete) return;
+
+    try {
+      await client.delete(`/api/laporan/${id}`);
+      // Remove from state
+      setReports(reports.filter(r => r.id !== id));
+    } catch (err) {
+      console.error('Failed to delete laporan:', err);
+      alert('Gagal menghapus laporan');
+    }
+  };
+
+  const handleExportCSV = () => {
+    exportToCSV(filteredReports, `laporan_${new Date().toISOString().split('T')[0]}.csv`);
+    setShowExportMenu(false);
+  };
+
+  const handleExportPDF = () => {
+    exportToPDF(filteredReports, `laporan_${new Date().toISOString().split('T')[0]}.pdf`);
+    setShowExportMenu(false);
+  };
 
   return (
     <div className="space-y-6 pt-6 sm:pt-6">
@@ -173,6 +209,36 @@ export default function DaftarSemuaLaporan() {
         </div>
       </div>
 
+      {/* Export Button */}
+      <div className="flex gap-3">
+        <div className="relative">
+          <button
+            onClick={() => setShowExportMenu(!showExportMenu)}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+          >
+            <Download size={20} />
+            Export
+          </button>
+          
+          {showExportMenu && (
+            <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <button
+                onClick={handleExportCSV}
+                className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-900 border-b border-gray-200 flex items-center gap-2"
+              >
+                Export ke Excel
+              </button>
+              <button
+                onClick={handleExportPDF}
+                className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-900 flex items-center gap-2"
+              >
+                Export ke PDF
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Table Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {filteredReports.length === 0 ? (
@@ -211,12 +277,33 @@ export default function DaftarSemuaLaporan() {
                       }
                     </td>
                     <td className="px-6 py-4 text-sm text-center">
-                      <Link
-                        to={`/laporan/${report.id}`}
-                        className="text-emerald-600 hover:text-emerald-700 font-semibold transition"
-                      >
-                        Lihat Detail
-                      </Link>
+                      <div className="flex gap-2 items-center justify-center">
+                        <Link
+                          to={`/laporan/${report.id}`}
+                          title="Lihat detail"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded transition"
+                        >
+                          <Eye size={16} />
+                        </Link>
+                        {appRole !== 'viewer' && (
+                          <>
+                            <button 
+                              title="Edit laporan"
+                              onClick={() => handleEditLaporan(report.id)}
+                              className="p-2 text-amber-600 hover:bg-amber-50 rounded transition"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button 
+                              title="Hapus laporan"
+                              onClick={() => handleDeleteLaporan(report.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded transition"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

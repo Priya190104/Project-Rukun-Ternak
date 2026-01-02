@@ -182,7 +182,7 @@ export default function FormUpdateTernakPage() {
                 <option value="">-- Pilih Hewan --</option>
                 {hewan.map(h => (
                   <option key={h.id} value={h.id}>
-                    ID {h.id} - {h.ras} ({h.umur.display})
+                    ID {h.id_hewan || `#${h.id}`} - {h.ras} ({h.umur.display})
                   </option>
                 ))}
               </select>

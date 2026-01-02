@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { attachUser, requireAuth } = require('../middleware/auth');
+const { attachUser, requireAuth, ViewerReadOnlyGuard } = require('../middleware/auth');
 const { 
   getLaporanList, 
   getSummary, 
@@ -13,10 +13,14 @@ const {
 const { generateSertifikatKelahiran } = require('../controllers/sertifikatController');
 
 router.use(attachUser);
+router.use(ViewerReadOnlyGuard);
 
 // =====================================================================
 // OPTIMIZED ENDPOINTS - Phase 4
 // =====================================================================
+// Default GET / -> list endpoint (for backwards compatibility)
+router.get('/', requireAuth, getLaporanList);
+
 // Summary endpoint (lightweight counts only) - MUST come before /list
 router.get('/summary', requireAuth, getSummary);
 

@@ -4,6 +4,19 @@ const db = require('../db');
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
 
 async function attachUser(req, res, next) {
+  // TEST MODE: Allow X-Test-User header untuk testing (DEVELOPMENT ONLY)
+  const testUser = req.headers['x-test-user'];
+  if (testUser && process.env.NODE_ENV !== 'production') {
+    try {
+      const userObj = JSON.parse(Buffer.from(testUser, 'base64').toString());
+      req.user = userObj;
+      console.log('[Auth] TEST MODE: User attached from X-Test-User header:', userObj.username);
+      return next();
+    } catch (err) {
+      console.warn('[Auth] Invalid X-Test-User header');
+    }
+  }
+
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) {
     console.warn('[Auth] No valid Authorization header');
@@ -70,4 +83,27 @@ function RoleGuard(allowedRoles) {
   };
 }
 
-module.exports = { attachUser, requireAuth, RoleGuard, JWT_SECRET };
+// Middleware untuk prevent write operations (POST, PUT, DELETE) untuk role viewer
+function ViewerReadOnlyGuard(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+  
+  // Allow semua role untuk read operations (GET)
+  if (req.method === 'GET') {
+    return next();
+  }
+  
+  // Block viewer dari write operations
+  if (req.user.role === 'viewer' && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    return res.status(403).json({ 
+      success: false, 
+      message: 'Viewer tidak memiliki akses untuk melakukan operasi ini (read-only access)' 
+    });
+  }
+  
+  // Allow non-viewer untuk write operations
+  return next();
+}
+
+module.exports = { attachUser, requireAuth, RoleGuard, ViewerReadOnlyGuard, JWT_SECRET };

@@ -112,35 +112,6 @@ export default function KelompokDashboardCard({ kelompok, loading }) {
                 </div>
               </div>
             )}
-
-            {/* PIC 2 */}
-            {(kelompok.pic2_nama || kelompok.pic2_nik) && (
-              <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4 border border-teal-200">
-                <p className="text-sm font-bold text-teal-900 mb-3">Penanggung Jawab 2</p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex">
-                    <span className="w-24 text-gray-700 font-medium">Nama</span>
-                    <span className="text-gray-900">{kelompok.pic2_nama || '-'}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="w-24 text-gray-700 font-medium">NIK</span>
-                    <span className="text-gray-900">{kelompok.pic2_nik || '-'}</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="w-24 text-gray-700 font-medium">Alamat</span>
-                    <span className="text-gray-900">{kelompok.pic2_alamat || '-'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone size={16} className="text-teal-600 flex-shrink-0" />
-                    <span className="text-gray-900 text-sm">{kelompok.pic2_no_hp || '-'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail size={16} className="text-teal-600 flex-shrink-0" />
-                    <span className="text-gray-900 text-sm break-all">{kelompok.pic2_email || '-'}</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
