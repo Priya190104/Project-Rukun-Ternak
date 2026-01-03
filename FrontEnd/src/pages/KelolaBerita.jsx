@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Plus, Newspaper } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import AdminPageHeader from '../components/admin/AdminPageHeader';
 import BeritaForm from '../components/berita/BeritaForm';
 import BeritaList from '../components/berita/BeritaList';
 import {
@@ -113,21 +114,13 @@ export default function KelolaBerita() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-sky-50 to-emerald-100">
-      <div className="max-w-6xl mx-auto px-4 py-12 pt-6 sm:pt-9">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="p-2 hover:bg-white/50 rounded-lg transition"
-          >
-            <ArrowLeft className="w-6 h-6 text-gray-700" />
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Kelola Berita</h1>
-            <p className="text-gray-600 mt-1">Tambah, edit, dan kelola berita Rukun Ternak</p>
-          </div>
-        </div>
+    <div className="space-y-8 pb-12">
+      <AdminPageHeader
+        title="Kelola Berita"
+        subtitle="Tambah, edit, dan kelola berita Rukun Ternak"
+        backTo="/dashboard"
+        showBackButton={true}
+      />
 
         {/* Error */}
         {error && (
@@ -178,7 +171,6 @@ export default function KelolaBerita() {
             />
           </div>
         </div>
-      </div>
     </div>
   );
 }

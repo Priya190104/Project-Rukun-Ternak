@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import AdminPageHeader from '../components/admin/AdminPageHeader';
 import client from '../api/client';
 import { 
   ArrowRight, ArrowLeft
@@ -390,20 +391,13 @@ export default function ClientPilihJenisLaporan() {
   const selectedConfig = JENIS_LAPORAN_LIST.find(j => j.id === selectedJenis);
 
   return (
-    <div className="space-y-6 pt-8 sm:pt-12">
-      {/* Header */}
-      <div className={`rounded-lg sm:rounded-2xl p-6 sm:p-8 text-white shadow-lg bg-gradient-to-r ${
-        selectedConfig?.color || 'from-emerald-600 to-emerald-500'
-      }`}>
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
-          {step === 'select' ? 'Tambah Laporan Baru' : `Form ${selectedConfig?.label || ''}`}
-        </h1>
-        <p className="text-white/80 text-sm sm:text-base">
-          {step === 'select' 
+    <div className="space-y-8 pb-12">
+      <AdminPageHeader
+        title={step === 'select' ? 'Tambah Laporan Baru' : `Form ${selectedConfig?.label || ''}`}
+        subtitle={step === 'select' 
             ? 'Pilih jenis laporan yang ingin Anda buat'
             : selectedConfig?.description || ''}
-        </p>
-      </div>
+      />
 
       {/* Error/Success Messages */}
       {error && (

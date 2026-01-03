@@ -12,11 +12,226 @@ const db = require('../db');
 const { dashboardCache, statsCache, invalidateKelompokStats } = require('../middleware/cache');
 
 /**
- * GET /api/stats/summary - Quick summary (cached)
- * Returns: Total counts only
- * Time: <100ms (from cache)
- * Cache TTL: 10 minutes
+ * GET /api/stats/admin/dashboard - Comprehensive admin dashboard
+ * Returns: All data needed for admin dashboard UI
+ * Includes: Population, births, deaths, sales, reports, users, kelompok, news
+ * Time: 1-2s first request, <100ms cached
+ * Cache TTL: 5 minutes
  */
+async function getAdminDashboard(req, res) {
+  try {
+    // Only admin can access this
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required'
+      });
+    }
+
+    const cacheKey = 'admin_dashboard_all';
+    
+    // Try cache first
+    const cached = dashboardCache.get(cacheKey);
+    if (cached) {
+      return res.json({
+        success: true,
+        data: cached,
+        fromCache: true,
+        cacheAge: Math.round((Date.now() - cached.generatedAt) / 1000) + 's'
+      });
+    }
+
+    // Execute all queries in parallel for better performance
+    const [
+      countResult,
+      populationResult,
+      kelahiranResult,
+      kematianResult,
+      penjualanResult,
+      latestResult,
+      monthlyResult,
+      kelompokStatsResult,
+      beritaResult,
+      usersResult,
+      kelompokResult
+    ] = await Promise.all([
+      // COUNT basic totals
+      db.query(`
+        SELECT 
+          COUNT(*)::int as total_laporan,
+          COUNT(CASE WHEN DATE_TRUNC('month', tanggal) = DATE_TRUNC('month', NOW()) THEN 1 END)::int as laporan_this_month
+        FROM laporan
+      `),
+      
+      // POPULASI TERNAK - Total hewan aktif
+      db.query(`
+        SELECT 
+          COUNT(*)::int as total_hewan,
+          COUNT(CASE WHEN jenis_kelamin = 'JANTAN' THEN 1 END)::int as hewan_jantan,
+          COUNT(CASE WHEN jenis_kelamin = 'BETINA' THEN 1 END)::int as hewan_betina
+        FROM hewan_ternak
+        WHERE status = 'AKTIF'
+      `),
+      
+      // KELAHIRAN - Hewan dengan source = 'Kelahiran'
+      db.query(`
+        SELECT 
+          COUNT(*)::int as total_kelahiran,
+          COUNT(CASE WHEN jenis_kelamin = 'JANTAN' THEN 1 END)::int as kelahiran_jantan,
+          COUNT(CASE WHEN jenis_kelamin = 'BETINA' THEN 1 END)::int as kelahiran_betina,
+          COUNT(CASE WHEN DATE_TRUNC('month', tanggal_lahir) = DATE_TRUNC('month', NOW()) THEN 1 END)::int as kelahiran_this_month
+        FROM hewan_ternak
+        WHERE source = 'Kelahiran'
+      `),
+      
+      // KEMATIAN - Hewan dengan status tidak_aktif
+      db.query(`
+        SELECT 
+          COUNT(*)::int as total_mati,
+          COUNT(CASE WHEN jenis_kelamin = 'JANTAN' THEN 1 END)::int as mati_jantan,
+          COUNT(CASE WHEN jenis_kelamin = 'BETINA' THEN 1 END)::int as mati_betina,
+          COUNT(CASE WHEN DATE_TRUNC('month', updated_at) = DATE_TRUNC('month', NOW()) THEN 1 END)::int as mati_this_month
+        FROM hewan_ternak
+        WHERE status = 'TIDAK_AKTIF'
+      `),
+      
+      // PENJUALAN - Hewan dengan status = 'TERJUAL'
+      db.query(`
+        SELECT 
+          COUNT(*)::int as total_terjual,
+          COUNT(CASE WHEN DATE_TRUNC('month', tanggal_terjual) = DATE_TRUNC('month', NOW()) THEN 1 END)::int as terjual_this_month
+        FROM hewan_ternak
+        WHERE status = 'TERJUAL'
+      `),
+      
+      // LATEST REPORTS - Top 5 terbaru
+      db.query(`
+        SELECT 
+          id, jenis, kelompok_id, tanggal, 
+          (SELECT name FROM kelompok WHERE id = laporan.kelompok_id) as kelompok_name
+        FROM laporan
+        ORDER BY tanggal DESC
+        LIMIT 5
+      `),
+      
+      // MONTHLY LAPORAN - Last 6 months
+      db.query(`
+        SELECT 
+          DATE_TRUNC('month', tanggal)::date as month,
+          COUNT(*)::int as count
+        FROM laporan
+        WHERE tanggal >= NOW() - INTERVAL '6 months'
+        GROUP BY DATE_TRUNC('month', tanggal)
+        ORDER BY month DESC
+      `),
+      
+      // KELOMPOK STATS - Per-kelompok laporan count (top 10)
+      db.query(`
+        SELECT 
+          k.id, k.name,
+          COUNT(l.id)::int as laporan_count
+        FROM kelompok k
+        LEFT JOIN laporan l ON l.kelompok_id = k.id
+        GROUP BY k.id, k.name
+        ORDER BY laporan_count DESC
+        LIMIT 10
+      `),
+      
+      // BERITA - Total news
+      db.query(`
+        SELECT COUNT(*)::int as total_berita
+        FROM berita
+      `),
+
+      // USERS COUNT
+      db.query(`
+        SELECT COUNT(*)::int as total_users
+        FROM users
+      `),
+
+      // KELOMPOK COUNT
+      db.query(`
+        SELECT COUNT(*)::int as total_kelompok
+        FROM kelompok
+      `)
+    ]);
+
+    // Format response matching frontend expectations
+    const adminDashboard = {
+      totals: {
+        laporan: countResult.rows[0].total_laporan || 0,
+        users: usersResult.rows[0].total_users || 0,
+        kelompok: kelompokResult.rows[0].total_kelompok || 0
+      },
+      populasi: {
+        total_hewan: populationResult.rows[0].total_hewan || 0,
+        hewan_jantan: populationResult.rows[0].hewan_jantan || 0,
+        hewan_betina: populationResult.rows[0].hewan_betina || 0
+      },
+      kelahiran: {
+        total_kelahiran: kelahiranResult.rows[0].total_kelahiran || 0,
+        kelahiran_jantan: kelahiranResult.rows[0].kelahiran_jantan || 0,
+        kelahiran_betina: kelahiranResult.rows[0].kelahiran_betina || 0,
+        this_month: kelahiranResult.rows[0].kelahiran_this_month || 0
+      },
+      kematian: {
+        total_mati: kematianResult.rows[0].total_mati || 0,
+        mati_jantan: kematianResult.rows[0].mati_jantan || 0,
+        mati_betina: kematianResult.rows[0].mati_betina || 0,
+        this_month: kematianResult.rows[0].mati_this_month || 0
+      },
+      penjualan: {
+        total_terjual: penjualanResult.rows[0].total_terjual || 0,
+        this_month: penjualanResult.rows[0].terjual_this_month || 0
+      },
+      latest: latestResult.rows.map(row => ({
+        id: row.id,
+        jenis: row.jenis,
+        kelompok_id: row.kelompok_id,
+        kelompok_name: row.kelompok_name,
+        tanggal: row.tanggal
+      })),
+      perMonth: monthlyResult.rows.map(row => ({
+        month: row.month,
+        count: row.count
+      })),
+      perKelompok: kelompokStatsResult.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        laporan_count: row.laporan_count
+      })),
+      berita: {
+        total: beritaResult.rows[0].total_berita || 0
+      },
+      generatedAt: new Date()
+    };
+
+    // Cache for 5 minutes
+    dashboardCache.set(cacheKey, adminDashboard);
+
+    console.log('[statsController] getAdminDashboard - Success', {
+      populasi: adminDashboard.populasi.total_hewan,
+      kelahiran: adminDashboard.kelahiran.total_kelahiran,
+      kematian: adminDashboard.kematian.total_mati,
+      penjualan: adminDashboard.penjualan.total_terjual
+    });
+
+    return res.json({
+      success: true,
+      data: adminDashboard,
+      fromCache: false
+    });
+
+  } catch (error) {
+    console.error('[statsController] Error in getAdminDashboard:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
+
 async function getSummary(req, res) {
   try {
     const userRole = req.user?.role;
@@ -733,7 +948,9 @@ module.exports = {
   getSummary,
   getDashboardSummary,
   getDashboardKelompok,
+  getAdminDashboard,
   getLaporanByMonth,
-  getKelahiranStats,  getCacheStatus,
+  getKelahiranStats,
+  getCacheStatus,
   invalidateCache
 };

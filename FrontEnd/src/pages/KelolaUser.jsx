@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Search, UserPlus, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Search, UserPlus, Eye, Edit2, Trash2, Users } from 'lucide-react';
 import client from '../api/client';
+import AdminPageHeader from '../components/admin/AdminPageHeader';
 import AddUserModal from '../components/user/AddUserModal';
 
 export default function KelolaUser() {
@@ -86,12 +87,13 @@ export default function KelolaUser() {
 
 
   return (
-    <div className="space-y-6 pt-6 sm:pt-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Kelola Pengguna</h1>
-        <p className="text-gray-600 mt-2">Atur role dan kelompok pengguna</p>
-      </div>
+    <div className="space-y-8 pb-12">
+      <AdminPageHeader
+        title="Kelola Pengguna"
+        subtitle="Atur role dan kelompok pengguna"
+        backTo="/dashboard"
+        showBackButton={true}
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

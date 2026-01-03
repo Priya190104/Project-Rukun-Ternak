@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Plus, Loader } from 'lucide-react';
+import { AlertCircle, Plus, Loader, Image } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import AdminPageHeader from '../components/admin/AdminPageHeader';
 import BannerForm from '../components/banners/BannerForm';
 import BannerList from '../components/banners/BannerList';
 import {
@@ -95,27 +96,26 @@ export default function KelolaBanner() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto pt-8 sm:pt-12">
-      {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Manajemen Banner</h1>
-            <p className="text-gray-600">Kelola banner yang tampil di halaman landing utama</p>
-          </div>
+    <div className="space-y-8 pb-12">
+      <AdminPageHeader
+        title="Manajemen Banner"
+        subtitle="Kelola banner yang tampil di halaman landing utama"
+        backTo="/dashboard"
+        showBackButton={true}
+        actionButton={
           <button
             onClick={() => setShowForm(!showForm)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+            className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${
               showForm
-                ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
+                ? 'bg-white/30 text-white hover:bg-white/40'
+                : 'bg-white text-emerald-600 hover:bg-gray-50'
             }`}
           >
             <Plus size={20} />
             {showForm ? 'Batal' : 'Tambah Banner'}
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Error Alert */}
       {error && (

@@ -15,7 +15,6 @@ import DaftarSemuaLaporan from '../pages/DaftarSemuaLaporan';
 import DetailLaporan from '../pages/DetailLaporan';
 import DetailBerita from '../pages/DetailBerita';
 import MenungguHakAkses from '../pages/MenungguHakAkses';
-import Analisis from '../pages/Analisis';
 import AdminAnalisis from '../pages/AdminAnalisis';
 import ListKelompok from '../pages/ListKelompok';
 import PetaSebaranKelompok from '../pages/PetaSebaranKelompok';
@@ -207,19 +206,6 @@ export default function AppRouter() {
                 <RoleGuard allowedRoles={[ 'kelompok' ]}>
                   <AppLayout>
                     <ClientDaftarLaporan />
-                  </AppLayout>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/klg-analisis"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'kelompok' ]}>
-                  <AppLayout>
-                    <Analisis />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>

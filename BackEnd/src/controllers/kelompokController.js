@@ -88,6 +88,19 @@ async function createKelompok(req, res) {
     console.log(`[DEBUG createKelompok] Received ternakDetails:`, JSON.stringify(ternakDetails, null, 2));
     
     if (!name) return res.status(400).json({ success: false, message: 'Missing name' });
+    
+    // Validate NIK and No HP - must be numeric only
+    if (pic1_nik && typeof pic1_nik === 'string' && !/^\d+$/.test(pic1_nik.trim())) {
+      return res.status(400).json({ success: false, message: 'NIK harus berisi angka saja' });
+    }
+    if (pic1_noHp && typeof pic1_noHp === 'string' && !/^\d+$/.test(pic1_noHp.trim())) {
+      return res.status(400).json({ success: false, message: 'No HP harus berisi angka saja' });
+    }
+    
+    // Convert NIK and NoHp to BigInt (PostgreSQL BIGINT), or null if empty
+    const nikValue = pic1_nik && /^\d+$/.test(pic1_nik.toString().trim()) ? BigInt(pic1_nik.toString().trim()) : null;
+    const noHpValue = pic1_noHp && /^\d+$/.test(pic1_noHp.toString().trim()) ? BigInt(pic1_noHp.toString().trim()) : null;
+    
     const latToUseRaw = latitude === undefined || latitude === null || latitude === '' ? null : Number(latitude);
     const lonToUseRaw = longitude === undefined || longitude === null || longitude === '' ? null : Number(longitude);
     const latToUse = Number.isFinite(latToUseRaw) ? latToUseRaw : null;
@@ -108,7 +121,7 @@ async function createKelompok(req, res) {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) 
          RETURNING *`,
         [name, email || null, kecamatan || null, desa || null, catatan || null, latToUse, lonToUse,
-         pic1_nik || null, pic1_nama || null, pic1_alamat || null, pic1_noHp || null, pic1_email || null,
+         nikValue, pic1_nama || null, pic1_alamat || null, noHpValue, pic1_email || null,
          jumlahKandang || null, jumlahTernak || null, pakanListJson, kesehatanListJson]
       );
       
@@ -275,6 +288,19 @@ async function updateKelompok(req, res) {
     const id = parseInt(req.params.id, 10);
     const { name, email, kecamatan, desa, catatan, latitude, longitude, pic1_nik, pic1_nama, pic1_alamat, pic1_noHp, pic1_email, jumlahKandang, jumlahTernak, pakanList, kesehatanList } = req.body || {};
     if (!name) return res.status(400).json({ success: false, message: 'Missing name' });
+    
+    // Validate NIK and No HP - must be numeric only
+    if (pic1_nik && typeof pic1_nik === 'string' && !/^\d+$/.test(pic1_nik.trim())) {
+      return res.status(400).json({ success: false, message: 'NIK harus berisi angka saja' });
+    }
+    if (pic1_noHp && typeof pic1_noHp === 'string' && !/^\d+$/.test(pic1_noHp.trim())) {
+      return res.status(400).json({ success: false, message: 'No HP harus berisi angka saja' });
+    }
+    
+    // Convert NIK and NoHp to BigInt, or null if empty
+    const nikValue = pic1_nik && /^\d+$/.test(pic1_nik.toString().trim()) ? BigInt(pic1_nik.toString().trim()) : null;
+    const noHpValue = pic1_noHp && /^\d+$/.test(pic1_noHp.toString().trim()) ? BigInt(pic1_noHp.toString().trim()) : null;
+    
     const latToUseRaw = latitude === undefined || latitude === null || latitude === '' ? null : Number(latitude);
     const lonToUseRaw = longitude === undefined || longitude === null || longitude === '' ? null : Number(longitude);
     const latToUse = Number.isFinite(latToUseRaw) ? latToUseRaw : null;
@@ -291,7 +317,7 @@ async function updateKelompok(req, res) {
        jumlah_kandang=$13, jumlah_ternak=$14, pakan_list=$15, kesehatan_list=$16
        WHERE id=$17 RETURNING *`,
       [name, email || null, kecamatan || null, desa || null, catatan || null, latToUse, lonToUse,
-       pic1_nik || null, pic1_nama || null, pic1_alamat || null, pic1_noHp || null, pic1_email || null,
+       nikValue, pic1_nama || null, pic1_alamat || null, noHpValue, pic1_email || null,
        jumlahKandang || null, jumlahTernak || null, pakanListJson, kesehatanListJson, id]
     );
     if (!rows[0]) return res.status(404).json({ success: false, message: 'Not found' });

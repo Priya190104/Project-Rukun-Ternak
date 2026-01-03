@@ -36,10 +36,10 @@ model Kelompok {
   catatan        String?
   latitude       Float?
   longitude      Float?
-  pic1Nik        String?  @map("pic1_nik")
+  pic1Nik        BigInt?  @map("pic1_nik")
   pic1Nama       String?  @map("pic1_nama")
   pic1Alamat     String?  @map("pic1_alamat")
-  pic1NoHp       String?  @map("pic1_no_hp")
+  pic1NoHp       BigInt?  @map("pic1_no_hp")
   pic1Email      String?  @map("pic1_email")
   jumlahKandang  Int?     @map("jumlah_kandang")
   jumlahTernak   Int?     @map("jumlah_ternak")

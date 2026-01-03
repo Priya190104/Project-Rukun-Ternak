@@ -4,6 +4,7 @@ import {
   Filter, Building2
 } from 'lucide-react';
 import client from '../api/client';
+import AdminPageHeader from '../components/admin/AdminPageHeader';
 
 const JENIS_COLORS = {
   pakan: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
@@ -163,14 +164,13 @@ export default function AdminAnalisis() {
   const uniqueKelompok = new Set(filteredLaporan.map(l => l.kelompok_id)).size;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analisis Admin</h1>
-          <p className="text-gray-600 mt-1">Visualisasi data laporan global dari semua kelompok</p>
-        </div>
-      </div>
+    <div className="space-y-8 pb-12">
+      <AdminPageHeader
+        title="Analisis Admin"
+        subtitle="Visualisasi data laporan global dari semua kelompok"
+        backTo="/dashboard"
+        showBackButton={true}
+      />
 
       {/* Global Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

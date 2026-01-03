@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import AdminPageHeader from '../components/admin/AdminPageHeader';
 import client from '../api/client';
 import { AlertCircle, Loader, Heart, Plus } from 'lucide-react';
 import AddHewanModal from '../components/AddHewanModal';
@@ -137,20 +138,14 @@ export default function HewanTernakPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-8 sm:pt-12">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-6 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
-            <Heart className="w-7 h-7" />
-            Hewan Ternak
-          </h1>
-          <p className="text-emerald-50 mt-1">Kelola data hewan ternak kelompok Anda</p>
-        </div>
-      </div>
+    <div className="space-y-8 pb-12">
+      <AdminPageHeader
+        title="Hewan Ternak"
+        subtitle="Kelola data hewan ternak kelompok Anda"
+      />
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto py-6 px-4 sm:px-6">
+      <div className="space-y-6">
         
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">

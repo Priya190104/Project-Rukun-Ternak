@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Users, Search, Phone, MapPin, User, Mail, MapPinIcon, Plus, Map, Eye, Edit2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
+import AdminPageHeader from '../components/admin/AdminPageHeader';
 import AddKelompokModalWithMap from '../components/kelompok/AddKelompokModalWithMap';
+import AlertModal from '../components/common/AlertModal';
 import { useAuth } from '../hooks/useAuth';
 
 export default function ListKelompok() {
@@ -20,6 +22,7 @@ export default function ListKelompok() {
   const [filterKecamatan, setFilterKecamatan] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [alert, setAlert] = useState({ isOpen: false, type: 'success', title: '', message: '' });
 
   useEffect(() => {
     fetchKelompok();
@@ -103,12 +106,30 @@ export default function ListKelompok() {
     try {
       setIsDeleting(true);
       await client.delete(`/api/kelompok/${id}`);
-      showNotif('success', `Kelompok "${deleteConfirmation.name}" dan semua data terkait berhasil dihapus`);
+      
+      // Show success alert
+      setAlert({
+        isOpen: true,
+        type: 'success',
+        title: '✓ Data Dihapus',
+        message: `Kelompok "${deleteConfirmation.name}" dan semua data terkait berhasil dihapus.`,
+        autoCloseMs: 2000
+      });
+      
       setDeleteConfirmation(null);
-      fetchKelompok();
+      setTimeout(() => {
+        fetchKelompok();
+      }, 2000);
     } catch (err) {
       console.error('Delete kelompok failed', err);
-      showNotif('error', err.response?.data?.message || 'Gagal menghapus kelompok');
+      const errorMessage = err.response?.data?.message || 'Gagal menghapus kelompok';
+      setAlert({
+        isOpen: true,
+        type: 'error',
+        title: '✗ Kesalahan Penghapusan',
+        message: errorMessage
+      });
+      setDeleteConfirmation(null);
     } finally {
       setIsDeleting(false);
     }
@@ -121,36 +142,37 @@ export default function ListKelompok() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 pt-8 sm:pt-12">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg sm:rounded-2xl p-6 sm:p-8 text-white shadow-lg">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Daftar Kelompok Ternak</h1>
-        <p className="text-blue-100">Kelola dan lihat profil semua kelompok ternak di wilayah Cilacap</p>
-      </div>
-
-      {/* Action Buttons */}
-      {appRole === 'admin' && (
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={() => {
-              setModalMode('add');
-              setEditingKelompok(null);
-              setIsModalOpen(true);
-            }}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition"
-          >
-            <Plus size={20} />
-            Tambah Kelompok
-          </button>
-          <button
-            onClick={() => navigate('/peta-sebaran')}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
-          >
-            <Map size={20} />
-            Lihat Peta Sebaran
-          </button>
-        </div>
-      )}
+    <div className="space-y-8 pb-12">
+      <AdminPageHeader
+        title="Daftar Kelompok Ternak"
+        subtitle="Kelola dan lihat profil semua kelompok ternak di wilayah Cilacap"
+        backTo="/dashboard"
+        showBackButton={true}
+        actionButton={
+          appRole === 'admin' ? (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => {
+                  setModalMode('add');
+                  setEditingKelompok(null);
+                  setIsModalOpen(true);
+                }}
+                className="px-6 py-3 bg-white text-emerald-600 rounded-lg hover:bg-gray-50 transition font-semibold flex items-center gap-2 justify-center"
+              >
+                <Plus size={18} />
+                Tambah Kelompok
+              </button>
+              <button
+                onClick={() => navigate('/peta-sebaran')}
+                className="px-6 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition font-semibold flex items-center gap-2 justify-center"
+              >
+                <Map size={18} />
+                Peta Sebaran
+              </button>
+            </div>
+          ) : null
+        }
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -432,6 +454,16 @@ export default function ListKelompok() {
         onKelompokAdded={fetchKelompok}
         mode={modalMode}
         initialData={editingKelompok}
+      />
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alert.isOpen}
+        type={alert.type}
+        title={alert.title}
+        message={alert.message}
+        onClose={() => setAlert({ ...alert, isOpen: false })}
+        autoCloseMs={alert.autoCloseMs || 3000}
       />
     </div>
   );

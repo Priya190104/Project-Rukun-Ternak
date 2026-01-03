@@ -1,24 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import client from '../../api/client';
 
 export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokList = [] }) {
   const [form, setForm] = useState({
     username: '',
     password: '',
+    passwordConfirm: '',
     full_name: '',
     role: 'kelompok',
     kelompok_id: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (isOpen) {
-      setForm({ username: '', password: '', full_name: '', role: 'kelompok', kelompok_id: '' });
+      setForm({ username: '', password: '', passwordConfirm: '', full_name: '', role: 'kelompok', kelompok_id: '' });
       setErrors({});
       setNotification(null);
+      setShowPassword(false);
+      setShowPasswordConfirm(false);
     }
   }, [isOpen]);
 
@@ -34,6 +39,12 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
     }
     if (!form.password.trim() || form.password.length < 6) {
       newErrors.password = 'Password minimal 6 karakter';
+    }
+    if (!form.passwordConfirm.trim()) {
+      newErrors.passwordConfirm = 'Konfirmasi password wajib diisi';
+    }
+    if (form.password && form.passwordConfirm && form.password !== form.passwordConfirm) {
+      newErrors.passwordConfirm = 'Password dan konfirmasi password tidak sama';
     }
     if (!form.full_name.trim()) {
       newErrors.full_name = 'Nama lengkap wajib diisi';
@@ -79,7 +90,9 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
 
       if (response.data?.success) {
         showNotification('success', 'Pengguna berhasil ditambahkan!');
-        setForm({ username: '', password: '', full_name: '', role: 'kelompok', kelompok_id: '' });
+        setForm({ username: '', password: '', passwordConfirm: '', full_name: '', role: 'kelompok', kelompok_id: '' });
+        setShowPassword(false);
+        setShowPasswordConfirm(false);
         setTimeout(() => {
           onClose();
           if (onUserAdded) onUserAdded();
@@ -135,18 +148,54 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
 
           <div>
             <label className="block text-xs font-semibold text-gray-900 mb-1">Password *</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Min. 6 karakter"
-              disabled={loading}
-              className={`w-full h-9 px-3 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Min. 6 karakter"
+                disabled={loading}
+                className={`w-full h-9 px-3 pr-10 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition ${
+                  errors.password ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition disabled:opacity-50"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password}</p>}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-900 mb-1">Konfirmasi Password *</label>
+            <div className="relative">
+              <input
+                type={showPasswordConfirm ? 'text' : 'password'}
+                name="passwordConfirm"
+                value={form.passwordConfirm}
+                onChange={handleChange}
+                placeholder="Ketik ulang password"
+                disabled={loading}
+                className={`w-full h-9 px-3 pr-10 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition ${
+                  errors.passwordConfirm ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                disabled={loading}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition disabled:opacity-50"
+              >
+                {showPasswordConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {errors.passwordConfirm && <p className="text-red-600 text-xs mt-1">{errors.passwordConfirm}</p>}
           </div>
 
           <div>

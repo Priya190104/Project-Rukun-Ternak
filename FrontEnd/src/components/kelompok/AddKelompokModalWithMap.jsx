@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import client from '../../api/client';
 import MapPickerKelompok from './MapPickerKelompok';
+import AlertModal from '../common/AlertModal';
 
 const KECAMATAN_OPTIONS = [
   { value: 'Adipala', label: 'Adipala' },
@@ -90,6 +91,11 @@ export default function AddKelompokModalWithMap({
   const [notification, setNotification] = useState(null);
   const [errors, setErrors] = useState({});
   const [desaOptions, setDesaOptions] = useState([]);
+  const [kecamatanFilter, setKecamatanFilter] = useState('');
+  const [desaFilter, setDesaFilter] = useState('');
+  const [showKecamatanDropdown, setShowKecamatanDropdown] = useState(false);
+  const [showDesaDropdown, setShowDesaDropdown] = useState(false);
+  const [alert, setAlert] = useState({ isOpen: false, type: 'success', title: '', message: '' });
 
   useEffect(() => {
     if (isOpen) {
@@ -114,6 +120,8 @@ export default function AddKelompokModalWithMap({
         });
         if (initialData.kecamatan) {
           setDesaOptions(DESA_BY_KECAMATAN[initialData.kecamatan] || []);
+          setKecamatanFilter(initialData.kecamatan);
+          setDesaFilter(initialData.desa || '');
         }
       } else {
         setForm({
@@ -134,7 +142,8 @@ export default function AddKelompokModalWithMap({
           peralatanList: [{ jenisPeralatan: '', jumlahPeralatan: '' }],
           kesehatanList: [{ jenisKesehatan: '', jumlah: '' }],
         });
-        setDesaOptions([]);
+        setKecamatanFilter('');
+        setDesaFilter('');        setDesaOptions([]);
       }
       setErrors({});
       setNotification(null);
@@ -182,6 +191,18 @@ export default function AddKelompokModalWithMap({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Special handling for NIK and No HP - only allow digits
+    if (name === 'pic1_nik' || name === 'pic1_noHp') {
+      // Only keep digits
+      const digitOnly = value.replace(/\D/g, '');
+      setForm(prev => ({ ...prev, [name]: digitOnly }));
+      
+      if (errors[name]) {
+        setErrors(prev => ({ ...prev, [name]: '' }));
+      }
+      return;
+    }
     
     // Special handling for jumlahTernak
     if (name === 'jumlahTernak') {
@@ -224,7 +245,53 @@ export default function AddKelompokModalWithMap({
     if (name === 'kecamatan') {
       setDesaOptions(DESA_BY_KECAMATAN[value] || []);
       setForm(prev => ({ ...prev, desa: '' }));
+      setKecamatanFilter('');
+      setDesaFilter('');
+      setShowKecamatanDropdown(false);
     }
+  };
+
+  const handleKecamatanFilterChange = (value) => {
+    setKecamatanFilter(value);
+    if (value) {
+      setShowKecamatanDropdown(true);
+    }
+  };
+
+  const handleKecamatanSelect = (value) => {
+    setForm(prev => ({ ...prev, kecamatan: value }));
+    setDesaOptions(DESA_BY_KECAMATAN[value] || []);
+    setForm(prev => ({ ...prev, desa: '' }));
+    setKecamatanFilter(value);
+    setDesaFilter('');
+    setShowKecamatanDropdown(false);
+  };
+
+  const handleDesaFilterChange = (value) => {
+    setDesaFilter(value);
+    if (value) {
+      setShowDesaDropdown(true);
+    }
+  };
+
+  const handleDesaSelect = (value) => {
+    setForm(prev => ({ ...prev, desa: value }));
+    setDesaFilter(value);
+    setShowDesaDropdown(false);
+  };
+
+  const getFilteredKecamatan = () => {
+    if (!kecamatanFilter) return KECAMATAN_OPTIONS;
+    return KECAMATAN_OPTIONS.filter(opt =>
+      opt.label.toLowerCase().includes(kecamatanFilter.toLowerCase())
+    );
+  };
+
+  const getFilteredDesa = () => {
+    if (!desaFilter) return desaOptions;
+    return desaOptions.filter(desa =>
+      desa.toLowerCase().includes(desaFilter.toLowerCase())
+    );
   };
 
   const handleTernakChange = (index, field, value) => {
@@ -290,7 +357,12 @@ export default function AddKelompokModalWithMap({
     e.preventDefault();
 
     if (!validateForm()) {
-      showNotification('error', 'Mohon lengkapi form dengan benar');
+      setAlert({
+        isOpen: true,
+        type: 'error',
+        title: 'Validasi Gagal',
+        message: 'Mohon lengkapi form dengan benar'
+      });
       return;
     }
 
@@ -334,17 +406,37 @@ export default function AddKelompokModalWithMap({
           : await client.post('/api/kelompok', payload);
 
       if (response.data?.success) {
-        showNotification('success', mode === 'edit' ? 'Kelompok berhasil diperbarui!' : 'Kelompok berhasil ditambahkan!');
+        const isEdit = mode === 'edit';
+        setAlert({
+          isOpen: true,
+          type: 'success',
+          title: isEdit ? '✓ Kelompok Diperbarui' : '✓ Kelompok Ditambahkan',
+          message: isEdit 
+            ? `Kelompok "${form.namaKelompok}" berhasil diperbarui. Anda akan dialihkan dalam beberapa detik.`
+            : `Kelompok "${form.namaKelompok}" berhasil ditambahkan. Anda akan dialihkan dalam beberapa detik.`,
+          autoCloseMs: 2000
+        });
         setTimeout(() => {
           onClose();
           if (onKelompokAdded) onKelompokAdded();
-        }, 1000);
+        }, 2000);
       } else {
-        showNotification('error', 'Gagal menyimpan kelompok');
+        setAlert({
+          isOpen: true,
+          type: 'error',
+          title: '✗ Gagal Menyimpan',
+          message: response.data?.message || 'Gagal menyimpan kelompok'
+        });
       }
     } catch (err) {
       console.error('Error saving kelompok:', err);
-      showNotification('error', err.response?.data?.message || 'Terjadi kesalahan saat menyimpan');
+      const errorMessage = err.response?.data?.message || 'Terjadi kesalahan saat menyimpan kelompok';
+      setAlert({
+        isOpen: true,
+        type: 'error',
+        title: '✗ Kesalahan',
+        message: errorMessage
+      });
     } finally {
       setLoading(false);
     }
@@ -424,22 +516,38 @@ export default function AddKelompokModalWithMap({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Kecamatan <span className="text-red-500">*</span>
                 </label>
-                <select
-                  name="kecamatan"
-                  value={form.kecamatan}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.kecamatan ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">- Pilih Kecamatan -</option>
-                  {KECAMATAN_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Cari atau ketik kecamatan"
+                    value={kecamatanFilter}
+                    onChange={(e) => handleKecamatanFilterChange(e.target.value)}
+                    onFocus={() => setShowKecamatanDropdown(true)}
+                    disabled={loading}
+                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.kecamatan ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {showKecamatanDropdown && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {getFilteredKecamatan().length > 0 ? (
+                        getFilteredKecamatan().map(opt => (
+                          <div
+                            key={opt.value}
+                            onClick={() => handleKecamatanSelect(opt.value)}
+                            className={`px-3 py-2 cursor-pointer hover:bg-blue-50 ${
+                              form.kecamatan === opt.value ? 'bg-blue-100 font-semibold' : ''
+                            }`}
+                          >
+                            {opt.label}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-gray-500 text-sm">Tidak ada hasil</div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {errors.kecamatan && <p className="text-red-600 text-xs mt-1">{errors.kecamatan}</p>}
               </div>
 
@@ -447,22 +555,38 @@ export default function AddKelompokModalWithMap({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Desa <span className="text-red-500">*</span>
                 </label>
-                <select
-                  name="desa"
-                  value={form.desa}
-                  onChange={handleChange}
-                  disabled={loading || !form.kecamatan}
-                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.desa ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">- Pilih Desa -</option>
-                  {desaOptions.map(desa => (
-                    <option key={desa} value={desa}>
-                      {desa}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Cari atau ketik desa"
+                    value={desaFilter}
+                    onChange={(e) => handleDesaFilterChange(e.target.value)}
+                    onFocus={() => setShowDesaDropdown(true)}
+                    disabled={loading || !form.kecamatan}
+                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.desa ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {showDesaDropdown && form.kecamatan && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {getFilteredDesa().length > 0 ? (
+                        getFilteredDesa().map(desa => (
+                          <div
+                            key={desa}
+                            onClick={() => handleDesaSelect(desa)}
+                            className={`px-3 py-2 cursor-pointer hover:bg-blue-50 ${
+                              form.desa === desa ? 'bg-blue-100 font-semibold' : ''
+                            }`}
+                          >
+                            {desa}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-gray-500 text-sm">Tidak ada hasil</div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {errors.desa && <p className="text-red-600 text-xs mt-1">{errors.desa}</p>}
               </div>
             </div>
@@ -821,6 +945,16 @@ export default function AddKelompokModalWithMap({
             </button>
           </div>
         </form>
+
+        {/* Alert Modal */}
+        <AlertModal
+          isOpen={alert.isOpen}
+          type={alert.type}
+          title={alert.title}
+          message={alert.message}
+          onClose={() => setAlert({ ...alert, isOpen: false })}
+          autoCloseMs={alert.autoCloseMs || 3000}
+        />
       </div>
     </div>
   );

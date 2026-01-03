@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../hooks/useAuth';
+import AdminPageHeader from '../components/admin/AdminPageHeader';
 import { Filter, Eye, Edit2, Trash2, Download } from 'lucide-react';
 import { exportToCSV, exportToPDF } from '../utils/exportUtils';
 
@@ -100,12 +101,11 @@ export default function ClientDaftarLaporan() {
   };
 
   return (
-    <div className="space-y-6 pt-6 sm:pt-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Laporan Saya</h1>
-        <p className="text-gray-600 mt-2">Kelola laporan ternak kelompok Anda</p>
-      </div>
+    <div className="space-y-8 pb-12">
+      <AdminPageHeader
+        title="Laporan Saya"
+        subtitle="Kelola laporan ternak kelompok Anda"
+      />
 
       {/* Filter Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

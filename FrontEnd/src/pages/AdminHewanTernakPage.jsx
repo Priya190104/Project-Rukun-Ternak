@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import client from '../api/client';
+import AdminPageHeader from '../components/admin/AdminPageHeader';
 import { AlertCircle, Loader, Heart } from 'lucide-react';
 
 export default function AdminHewanTernakPage() {
@@ -125,21 +126,18 @@ export default function AdminHewanTernakPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-8 sm:pt-12">
-      {/* Header */}
-      <div className="w-full px-3 py-2 border border-gray-300 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-6 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
-            Hewan Ternak
-          </h1>
-          <p className="text-emerald-50 mt-1">Kelola semua data hewan ternak dari semua kelompok</p>
-        </div>
-      </div>
+    <div className="space-y-8 pb-12">
+      <AdminPageHeader
+        title="Hewan Ternak"
+        subtitle="Kelola semua data hewan ternak dari semua kelompok"
+        backTo="/dashboard"
+        showBackButton={true}
+      />
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6">
+      <div className="space-y-6">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-red-900 font-semibold">Error</p>

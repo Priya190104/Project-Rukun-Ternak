@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import StatsCard from '../components/StatsCard';
 import AppLogo from '../components/branding/AppLogo';
 import SupportedByLogo from '../components/branding/SupportedByLogo';
-import { FileText, Users, TrendingUp, Newspaper, Image } from 'lucide-react';
+import { FileText, Users, TrendingUp, Newspaper, Image, Activity, BarChart3, Heart, Gift, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import client from '../api/client';
 
@@ -18,15 +18,15 @@ export default function Dashboard() {
       try {
         setLoading(true);
         setError(null);
-        console.log('[Dashboard] Loading stats...');
-        const res = await client.get('/api/stats');
+        console.log('[Dashboard] Loading admin stats...');
+        const res = await client.get('/api/stats/admin/dashboard');
         if (!mounted) return;
-        console.log('[Dashboard] Stats loaded:', res.data?.data);
-        setStats(res.data?.data || { totals: { laporan: 0, users: 0, kelompok: 0 }, latest: [], perMonth: [], perKelompok: [] });
+        console.log('[Dashboard] Admin stats loaded:', res.data?.data);
+        setStats(res.data?.data || { totals: { laporan: 0, users: 0, kelompok: 0 }, latest: [], perMonth: [], perKelompok: [], populasi: {}, kelahiran: {}, kematian: {}, penjualan: {} });
       } catch (err) {
         console.error('[Dashboard] Failed to load stats:', err);
         setError(err.response?.data?.message || err.message || 'Failed to load stats');
-        setStats({ totals: { laporan: 0, users: 0, kelompok: 0 }, latest: [], perMonth: [], perKelompok: [] });
+        setStats({ totals: { laporan: 0, users: 0, kelompok: 0 }, latest: [], perMonth: [], perKelompok: [], populasi: {}, kelahiran: {}, kematian: {}, penjualan: {} });
       } finally {
         setLoading(false);
       }
@@ -43,7 +43,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 pt-8 sm:pt-12">
+    <div className="space-y-8 pt-6 pb-12">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-medium">
           ⚠️ {error}
@@ -64,149 +64,264 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Grid - GLOBAL */}
+      {/* SECTION 1: SUMMARY CARDS (KPI TOP) */}
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Ringkasan Data Global</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Ringkasan</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard 
-            title="Total Laporan" 
-            value={stats.totals?.laporan ?? 0}
-            icon={<FileText className="w-5 h-5 sm:w-6 sm:h-6" />}
-            color="bg-blue-100 text-blue-600"
+            title="Total Kelompok" 
+            value={stats.totals?.kelompok ?? 0}
+            icon={<Users className="w-5 h-5" />}
+            color="bg-emerald-100 text-emerald-600"
           />
           <StatsCard 
             title="Total User" 
             value={stats.totals?.users ?? 0}
-            icon={<Users className="w-5 h-5 sm:w-6 sm:h-6" />}
-            color="bg-green-100 text-green-600"
+            icon={<Users className="w-5 h-5" />}
+            color="bg-blue-100 text-blue-600"
           />
           <StatsCard 
-            title="Total Kelompok" 
-            value={stats.totals?.kelompok ?? 0}
-            icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />}
-            color="bg-purple-100 text-purple-600"
+            title="Total Laporan" 
+            value={stats.totals?.laporan ?? 0}
+            icon={<FileText className="w-5 h-5" />}
+            color="bg-orange-100 text-orange-600"
+          />
+          <StatsCard 
+            title="Status Sistem" 
+            value="Aktif"
+            icon={<Activity className="w-5 h-5" />}
+            color="bg-green-100 text-green-600"
           />
         </div>
       </div>
 
-      {/* Stats Per Kelompok */}
-      {stats.perKelompok && stats.perKelompok.length > 0 && (
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Statistik Per Kelompok</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {stats.perKelompok.map((k) => (
-              <div key={k.id} className="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md border border-gray-200 p-4 sm:p-6 hover:shadow-lg transition">
-                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">{k.name}</h3>
-                <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{k.laporan_count}</div>
-                <div className="text-xs sm:text-sm text-gray-600 mt-1">Total Laporan</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Latest Reports */}
+      {/* SECTION 2: INFORMATION CARDS GRID (MAJOO STYLE) */}
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Laporan Terbaru</h2>
-        <div className="bg-white rounded-lg sm:rounded-xl shadow-sm sm:shadow-md border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm sm:text-base">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis</th>
-                  <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kelompok</th>
-                  <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {stats.latest && stats.latest.length > 0 ? (
-                  stats.latest.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 text-xs sm:text-sm">
-                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-gray-600">
-                        {new Date(item.tanggal).toLocaleDateString('id-ID')}
-                      </td>
-                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
-                        <span className="px-2 sm:px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
-                          {item.jenis || 'N/A'}
-                        </span>
-                      </td>
-                      <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-gray-900">
-                        {item.kelompok_name || item.kelompok || '-'}
-                      </td>
-                      <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap text-gray-600">
-                        {item.full_name || item.username || '-'}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="px-3 sm:px-6 py-8 sm:py-12 text-center text-gray-500">
-                      <FileText className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-gray-300 mb-2" />
-                      <p>Belum ada laporan</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Analisis & Informasi</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Card 1: Populasi Ternak */}
+          <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-gray-900">Populasi Ternak</h3>
+            </div>
+            <div className="flex-1">
+              {stats.populasi?.total_hewan ? (
+                <div className="space-y-2">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {stats.populasi.total_hewan}
+                  </div>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <p>Jantan: <span className="font-semibold">{stats.populasi.hewan_jantan}</span></p>
+                    <p>Betina: <span className="font-semibold">{stats.populasi.hewan_betina}</span></p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 py-6">Belum ada data</p>
+              )}
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <a href="/daftar-laporan" className="text-emerald-600 text-xs font-semibold hover:text-emerald-700">
+                Lihat Semua →
+              </a>
+            </div>
+          </div>
+
+          {/* Card 2: Data Kelahiran */}
+          <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-gray-900">Data Kelahiran</h3>
+            </div>
+            <div className="flex-1">
+              {stats.kelahiran?.total_kelahiran ? (
+                <div className="space-y-2">
+                  <div className="text-2xl font-bold text-pink-600">
+                    {stats.kelahiran.total_kelahiran}
+                  </div>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <p>Jantan: <span className="font-semibold">{stats.kelahiran.kelahiran_jantan}</span></p>
+                    <p>Betina: <span className="font-semibold">{stats.kelahiran.kelahiran_betina}</span></p>
+                    <p className="text-emerald-600 font-semibold">Bulan ini: {stats.kelahiran.this_month}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 py-6">Belum ada data</p>
+              )}
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <a href="#" className="text-emerald-600 text-xs font-semibold hover:text-emerald-700">
+                Lihat Semua →
+              </a>
+            </div>
+          </div>
+
+          {/* Card 3: Data Kematian */}
+          <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-gray-900">Data Kematian</h3>
+            </div>
+            <div className="flex-1">
+              {stats.kematian?.total_mati ? (
+                <div className="space-y-2">
+                  <div className="text-2xl font-bold text-red-600">
+                    {stats.kematian.total_mati}
+                  </div>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <p>Jantan: <span className="font-semibold">{stats.kematian.mati_jantan}</span></p>
+                    <p>Betina: <span className="font-semibold">{stats.kematian.mati_betina}</span></p>
+                    <p className="text-red-600 font-semibold">Bulan ini: {stats.kematian.this_month}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 py-6">Belum ada data</p>
+              )}
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <a href="#" className="text-emerald-600 text-xs font-semibold hover:text-emerald-700">
+                Lihat Semua →
+              </a>
+            </div>
+          </div>
+
+          {/* Card 4: Data Penjualan */}
+          <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-gray-900">Data Penjualan</h3>
+            </div>
+            <div className="flex-1">
+              {stats.penjualan?.total_terjual ? (
+                <div className="space-y-2">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {stats.penjualan.total_terjual}
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    <p>Bulan ini: <span className="font-semibold text-blue-600">{stats.penjualan.this_month}</span></p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 py-6">Belum ada data</p>
+              )}
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <a href="#" className="text-emerald-600 text-xs font-semibold hover:text-emerald-700">
+                Lihat Semua →
+              </a>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Aksi Cepat</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <button className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 hover:border-blue-400 transition text-left group">
-            <div className="flex items-center gap-3">
-              <FileText className="w-6 h-6 text-blue-600 group-hover:scale-110 transition" />
-              <div>
-                <div className="font-semibold text-gray-900">Lihat Semua Laporan</div>
-                <div className="text-sm text-gray-600">Kelola semua laporan</div>
-              </div>
+      {/* SECTION 3: MANAGEMENT CARDS (SECOND ROW) */}
+      <div>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Manajemen & Konten</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Card: Kelompok */}
+          <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-gray-900">Kelompok</h3>
             </div>
-          </button>
-          <button className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg border border-emerald-200 hover:border-emerald-400 transition text-left group">
-            <div className="flex items-center gap-3">
-              <Users className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition" />
-              <div>
-                <div className="font-semibold text-gray-900">Kelompok</div>
-                <div className="text-sm text-gray-600">Kelola kelompok</div>
+            <div className="flex-1">
+              <div className="text-2xl font-bold text-emerald-600 mb-1">
+                {stats.totals?.kelompok ?? 0}
               </div>
+              <p className="text-xs text-gray-600">Total kelompok terdaftar</p>
             </div>
-          </button>
-          <button className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200 hover:border-purple-400 transition text-left group">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-6 h-6 text-purple-600 group-hover:scale-110 transition" />
-              <div>
-                <div className="font-semibold text-gray-900">Analisis</div>
-                <div className="text-sm text-gray-600">Lihat statistik & trend</div>
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <a href="/list-kelompok" className="text-emerald-600 text-xs font-semibold hover:text-emerald-700">
+                Kelola Kelompok →
+              </a>
+            </div>
+          </div>
+
+          {/* Card: User */}
+          <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-gray-900">Pengguna</h3>
+            </div>
+            <div className="flex-1">
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {stats.totals?.users ?? 0}
               </div>
+              <p className="text-xs text-gray-600">Total user aktif</p>
             </div>
-          </button>
-          {/* Admin-only shortcuts */}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <a href="#" className="text-emerald-600 text-xs font-semibold hover:text-emerald-700">
+                Lihat Semua →
+              </a>
+            </div>
+          </div>
+
+          {/* Card: Berita */}
           {user?.role === 'admin' && (
-            <>
-              <a href="/kelola-banner" className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200 hover:border-orange-400 transition text-left group">
-                <div className="flex items-center gap-3">
-                  <Image className="w-6 h-6 text-orange-600 group-hover:scale-110 transition" />
-                  <div>
-                    <div className="font-semibold text-gray-900">Kelola Banner</div>
-                    <div className="text-sm text-gray-600">Tambah, kelola banner</div>
-                  </div>
-                </div>
-              </a>
-              <a href="/kelola-berita" className="p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg border border-pink-200 hover:border-pink-400 transition text-left group">
-                <div className="flex items-center gap-3">
-                  <Newspaper className="w-6 h-6 text-pink-600 group-hover:scale-110 transition" />
-                  <div>
-                    <div className="font-semibold text-gray-900">Kelola Berita</div>
-                    <div className="text-sm text-gray-600">Tambah, edit, hapus berita</div>
-                  </div>
-                </div>
-              </a>
-            </>
+            <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-gray-900">Berita</h3>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-gray-500">Kelola konten berita</p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <a href="/kelola-berita" className="text-emerald-600 text-xs font-semibold hover:text-emerald-700">
+                  Kelola Berita →
+                </a>
+              </div>
+            </div>
           )}
+
+          {/* Card: Banner */}
+          {user?.role === 'admin' && (
+            <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-gray-900">Banner</h3>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-gray-500">Kelola banner website</p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <a href="/kelola-banner" className="text-emerald-600 text-xs font-semibold hover:text-emerald-700">
+                  Kelola Banner →
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* SECTION 4: LAPORAN TERBARU (COMPACT) */}
+      <div>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Laporan Terbaru</h2>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          {stats.latest && stats.latest.length > 0 ? (
+            <div className="divide-y divide-gray-200">
+              {stats.latest.slice(0, 5).map((item) => (
+                <div key={item.id} className="p-4 hover:bg-gray-50 transition flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-emerald-100 text-emerald-700">
+                        {item.jenis || 'N/A'}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(item.tanggal).toLocaleDateString('id-ID')}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 truncate">{item.kelompok_name || item.kelompok || '-'}</p>
+                    <p className="text-xs text-gray-500">{item.full_name || item.username || '-'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="px-4 py-12 text-center text-gray-500">
+              <FileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm">Belum ada laporan</p>
+            </div>
+          )}
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+            <a href="/daftar-laporan" className="text-emerald-600 text-xs font-semibold hover:text-emerald-700">
+              Lihat Semua Laporan →
+            </a>
+          </div>
         </div>
       </div>
     </div>

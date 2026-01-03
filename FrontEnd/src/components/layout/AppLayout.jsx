@@ -12,10 +12,19 @@ export default function AppLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showAnalisisAlert, setShowAnalisisAlert] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleMenuClick = (e, menuKey) => {
+    // Block Analisis menu for admin role
+    if (menuKey === 'analisis' && appRole === 'admin') {
+      e.preventDefault();
+      setShowAnalisisAlert(true);
+    }
   };
 
   const adminMenu = [
@@ -72,11 +81,13 @@ export default function AppLayout({ children }) {
           {menu.map((m) => {
             const Icon = m.icon;
             const active = isActive(m.to);
+            const isAnalisisAdminMenu = m.key === 'analisis' && appRole === 'admin';
+            
             return (
               <Link
                 key={m.key}
-                to={m.to}
-                onClick={() => setSidebarOpen(false)}
+                to={isAnalisisAdminMenu ? '#' : m.to}
+                onClick={(e) => handleMenuClick(e, m.key)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
                   active
                     ? 'bg-emerald-100 text-emerald-700 shadow-sm'
@@ -138,7 +149,7 @@ export default function AppLayout({ children }) {
                   </div>
                 </div>
               )}
-              {isAdmin && <NotificationBell />}
+              {isAdmin && appRole !== 'admin' && <NotificationBell />}
             </div>
           </div>
         </header>
@@ -157,6 +168,25 @@ export default function AppLayout({ children }) {
           className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
+      )}
+
+      {/* Analisis Feature Alert Modal */}
+      {showAnalisisAlert && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-sm w-full">
+            <div className="p-6 text-center">
+              <div className="text-5xl mb-4">🔧</div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Fitur akan segera hadir</h2>
+              <p className="text-gray-600 mb-6">Menu Analisis sedang dalam pengembangan. Kami akan menghadirkan fitur ini segera.</p>
+              <button
+                onClick={() => setShowAnalisisAlert(false)}
+                className="w-full px-4 py-2.5 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition"
+              >
+                Mengerti
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
