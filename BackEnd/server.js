@@ -1,4 +1,4 @@
-require('dotenv').config();
+	require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { attachUser, requireAuth } = require('./src/middleware/auth');
@@ -16,6 +16,8 @@ const corsOptions = {
     'http://localhost:3001',
     'http://127.0.0.1:3000',
     'http://202.10.45.79:3000',
+'http://202.10.45.79',
+'http://202.10.45.79:80',
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true,
