@@ -1,7 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import client from '../../api/client';
-import MapPickerKelompok from './MapPickerKelompok';
 import AlertModal from '../common/AlertModal';
 
 const KECAMATAN_OPTIONS = [
@@ -301,13 +300,6 @@ export default function AddKelompokModalWithMap({
     }));
   };
 
-  const handleLocationChange = ({ latitude, longitude }) => {
-    setForm(prev => ({ ...prev, latitude, longitude }));
-    if (errors.location) {
-      setErrors(prev => ({ ...prev, location: '' }));
-    }
-  };
-
   const handlePeralatanChange = (index, field, value) => {
     const newList = [...form.peralatanList];
     newList[index] = { ...newList[index], [field]: value };
@@ -587,22 +579,65 @@ export default function AddKelompokModalWithMap({
             </div>
           </div>
 
-          {/* Pilih Lokasi di Peta */}
+          {/* Input Koordinat */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Pilih Lokasi di Peta</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Koordinat Lokasi</h3>
             {errors.location && (
               <div className="mb-3 p-3 bg-danger-50 border border-danger-100 rounded-lg text-red-800 text-sm flex items-start gap-2">
                 <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
                 <p>{errors.location}</p>
               </div>
             )}
-            <div className="rounded-lg overflow-hidden border border-gray-300">
-              <MapPickerKelompok
-                latitude={form.latitude}
-                longitude={form.longitude}
-                onLocationChange={handleLocationChange}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Latitude <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.000001"
+                  placeholder="Contoh: -7.7338"
+                  value={form.latitude || ''}
+                  onChange={(e) => {
+                    const lat = e.target.value ? parseFloat(e.target.value) : null;
+                    setForm(prev => ({ ...prev, latitude: lat }));
+                    if (errors.location) {
+                      setErrors(prev => ({ ...prev, location: '' }));
+                    }
+                  }}
+                  disabled={loading}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.location ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Longitude <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.000001"
+                  placeholder="Contoh: 109.0199"
+                  value={form.longitude || ''}
+                  onChange={(e) => {
+                    const lng = e.target.value ? parseFloat(e.target.value) : null;
+                    setForm(prev => ({ ...prev, longitude: lng }));
+                    if (errors.location) {
+                      setErrors(prev => ({ ...prev, location: '' }));
+                    }
+                  }}
+                  disabled={loading}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.location ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+              </div>
             </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Masukkan koordinat latitude dan longitude lokasi kelompok ternak
+            </p>
           </div>
 
           {/* PIC 1 */}
