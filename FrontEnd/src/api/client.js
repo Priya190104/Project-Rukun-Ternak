@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getFromCache, setInCache } from '../hooks/useApiCache';
+import { setInCache } from '../hooks/useApiCache';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 

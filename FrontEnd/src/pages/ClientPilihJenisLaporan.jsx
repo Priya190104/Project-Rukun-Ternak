@@ -112,7 +112,7 @@ export default function ClientPilihJenisLaporan() {
     'Jantan Potong': [],
     'Betina Potong': []
   });
-  const [loadingPenjualanCandidates, setLoadingPenjualanCandidates] = useState(false);
+  const [loadingPenjualanCandidates] = useState(false);
 
   // Get today's date as max
   const today = new Date().toISOString().split('T')[0];

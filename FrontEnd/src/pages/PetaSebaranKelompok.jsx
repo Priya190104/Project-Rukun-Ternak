@@ -1,6 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { MapPin, Loader } from 'lucide-react';
-import client from '../api/client';
 import MapSebaranKelompok from '../components/kelompok/MapSebaranKelompok';
 import ListKelompokMap from '../components/kelompok/ListKelompokMap';
 import { useCachedData } from '../hooks/useCachedData';

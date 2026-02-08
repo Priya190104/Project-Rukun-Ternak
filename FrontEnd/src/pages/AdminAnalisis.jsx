@@ -3,7 +3,6 @@ import {
   BarChart3, TrendingUp, Users, AlertCircle, 
   Filter, Building2
 } from 'lucide-react';
-import client from '../api/client';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
 import { useCachedData } from '../hooks/useCachedData';
 

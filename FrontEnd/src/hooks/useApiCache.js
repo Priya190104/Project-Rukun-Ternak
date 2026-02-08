@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { useRef, useCallback, useState } from 'react';
 
 /**
  * useApiCache - Custom hook untuk caching API responses dengan TTL
@@ -113,7 +113,7 @@ export const getCacheStats = () => {
   let expiredCount = 0;
   const now = Date.now();
 
-  for (const [key, item] of globalApiCache.entries()) {
+  for (const [, item] of globalApiCache.entries()) {
     if (now > item.expiresAt) {
       expiredCount++;
     } else {

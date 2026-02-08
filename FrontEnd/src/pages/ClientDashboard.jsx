@@ -2,7 +2,6 @@
 import AppLogo from '../components/branding/AppLogo';
 import SupportedByLogo from '../components/branding/SupportedByLogo';
 import {AlertCircle } from 'lucide-react';
-import client from '../api/client';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import KelompokDashboardCard from '../components/KelompokDashboardCard';
@@ -45,7 +44,7 @@ export default function ClientDashboard() {
   const [dashboardKelompok, setDashboardKelompok] = useState(null);
   const [kelahiranStats, setKelahiranStats] = useState(null);
   const [stats, setStats] = useState({ totals: { laporan: 0 }, latest: [] });
-  const [error, setError] = useState(null);
+  const [error] = useState(null);
 
   // Sync cached data to state
   useEffect(() => {

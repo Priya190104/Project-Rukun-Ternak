@@ -150,11 +150,6 @@ export default function AddKelompokModalWithMap({
     }
   }, [isOpen, mode, initialData]);
 
-  const _showNotification = (type, message) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 4000);
-  };
-
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };

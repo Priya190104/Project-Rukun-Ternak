@@ -62,6 +62,7 @@ export const useCachedData = (url, dependencies = [url], options = {}) => {
 
   useEffect(() => {
     refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, dependencies);
 
   return {

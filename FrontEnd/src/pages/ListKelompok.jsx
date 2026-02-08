@@ -22,7 +22,7 @@ export default function ListKelompok() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [editingKelompok, setEditingKelompok] = useState(null);
-  const [notif, setNotif] = useState(null);
+  const [notif] = useState(null);
   const [filterDesa, setFilterDesa] = useState('');
   const [filterKecamatan, setFilterKecamatan] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
@@ -73,11 +73,6 @@ export default function ListKelompok() {
     }
 
     setFiltered(result);
-  };
-
-  const _showNotif = (type, message) => {
-    setNotif({ type, message });
-    setTimeout(() => setNotif(null), 3000);
   };
 
   const kecamatanList = [...new Set(kelompok.map(k => k.kecamatan).filter(Boolean))].sort();
