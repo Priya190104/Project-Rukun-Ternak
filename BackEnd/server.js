@@ -52,29 +52,10 @@ app.use((req, res, next) => {
 // =====================================================================
 // RATE LIMITING
 // =====================================================================
-// RATE LIMITING
+// RATE LIMITING (Disabled temporarily due to proxy issues)
 // =====================================================================
-// Prevents abuse and helps with connection pool management
-const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000,  // 1 minute window
-  max: 300,                  // 300 requests per minute per IP
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,     // Return rate limit info in `RateLimit-*` headers
-  legacyHeaders: false,      // Disable `X-RateLimit-*` headers
-  skip: (req) => {
-    // Skip rate limiting for health checks
-    return req.path === '/health' || req.path === '/ping';
-  },
-  keyGenerator: (req, res) => {
-    // Simple, safe IP extraction without validation
-    const xForwardedFor = req.headers['x-forwarded-for'];
-    if (xForwardedFor && typeof xForwardedFor === 'string') {
-      return xForwardedFor.split(',')[0].trim();
-    }
-    return req.socket?.remoteAddress || req.ip || 'unknown';
-  },
-  validate: { xForwardedForHeader: false } // Disable X-Forwarded-For validation
-});
+// TODO: Re-enable after proper proxy configuration
+const limiter = (req, res, next) => next(); // Passthrough middleware
 
 app.use('/api/', limiter);
 
