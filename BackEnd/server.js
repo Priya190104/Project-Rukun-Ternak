@@ -52,6 +52,8 @@ app.use((req, res, next) => {
 // =====================================================================
 // RATE LIMITING
 // =====================================================================
+// RATE LIMITING
+// =====================================================================
 // Prevents abuse and helps with connection pool management
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,  // 1 minute window
@@ -64,14 +66,14 @@ const limiter = rateLimit({
     return req.path === '/health' || req.path === '/ping';
   },
   keyGenerator: (req, res) => {
-    // Custom key generator to safely extract IP from proxy
+    // Simple, safe IP extraction without validation
     const xForwardedFor = req.headers['x-forwarded-for'];
-    if (xForwardedFor) {
-      const firstIp = xForwardedFor.split(',')[0].trim();
-      return firstIp;
+    if (xForwardedFor && typeof xForwardedFor === 'string') {
+      return xForwardedFor.split(',')[0].trim();
     }
-    return req.ip || req.connection.remoteAddress || 'unknown';
-  }
+    return req.socket?.remoteAddress || req.ip || 'unknown';
+  },
+  validate: { xForwardedForHeader: false } // Disable X-Forwarded-For validation
 });
 
 app.use('/api/', limiter);
