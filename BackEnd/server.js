@@ -61,7 +61,8 @@ const limiter = rateLimit({
   skip: (req) => {
     // Skip rate limiting for health checks
     return req.path === '/health' || req.path === '/ping';
-  }
+  },
+  trustProxy: true  // Trust Nginx proxy headers
 });
 
 app.use('/api/', limiter);
