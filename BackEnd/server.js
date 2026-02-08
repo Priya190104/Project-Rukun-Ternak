@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { attachUser, requireAuth } = require('./src/middleware/auth');
 const timeout = require('connect-timeout');
-const rateLimit = require('express-rate-limit');
+// const rateLimit = require('express-rate-limit'); // Temporarily disabled
 const { cacheMiddleware, startCacheMaintenanceTimer } = require('./src/middleware/cache');
 
 const app = express();
@@ -53,23 +53,23 @@ app.use((req, res, next) => {
 // RATE LIMITING
 // =====================================================================
 // Properly configured rate limiter that works with proxy
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  skip: (req) => {
-    // Skip rate limiting for health checks and public endpoints
-    return req.path === '/api/health' || req.path.startsWith('/api/public');
-  },
-  keyGenerator: (req, res) => {
-    // Use X-Forwarded-For if present (behind proxy), otherwise use ip()
-    return req.ip;
-  }
-});
-
-app.use('/api/', limiter);
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100, // Limit each IP to 100 requests per windowMs
+//   message: 'Too many requests from this IP, please try again later.',
+//   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+//   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+//   skip: (req) => {
+//     // Skip rate limiting for health checks and public endpoints
+//     return req.path === '/api/health' || req.path.startsWith('/api/public');
+//   },
+//   keyGenerator: (req, res) => {
+//     // Use X-Forwarded-For if present (behind proxy), otherwise use ip()
+//     return req.ip;
+//   }
+// });
+// 
+// app.use('/api/', limiter);
 
 // =====================================================================
 // CACHE MIDDLEWARE
