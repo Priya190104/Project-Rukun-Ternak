@@ -25,6 +25,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.set('trust proxy', 1); // Trust first proxy (Nginx)
 app.use('/uploads', express.static(require('path').join(__dirname, 'uploads')));
 
 // Apply attachUser middleware GLOBALLY before routes
@@ -62,7 +63,15 @@ const limiter = rateLimit({
     // Skip rate limiting for health checks
     return req.path === '/health' || req.path === '/ping';
   },
-  trustProxy: true  // Trust Nginx proxy headers
+  keyGenerator: (req, res) => {
+    // Custom key generator to safely extract IP from proxy
+    const xForwardedFor = req.headers['x-forwarded-for'];
+    if (xForwardedFor) {
+      const firstIp = xForwardedFor.split(',')[0].trim();
+      return firstIp;
+    }
+    return req.ip || req.connection.remoteAddress || 'unknown';
+  }
 });
 
 app.use('/api/', limiter);
