@@ -34,8 +34,8 @@ async function getLaporanList(req, res) {
     let paramCount = 1;
 
     // Role-based filtering
-    if (userRole === 'admin') {
-      // Admin sees all
+    if (userRole === 'admin' || userRole === 'viewer') {
+      // Admin and Viewer see all
       whereCondition = '1=1';
     } else if (userRole === 'kelompok') {
       // Kelompok sees own data
@@ -170,7 +170,7 @@ async function getSummary(req, res) {
     let whereCondition = '';
     const params = [];
 
-    if (userRole === 'admin') {
+    if (userRole === 'admin' || userRole === 'viewer') {
       whereCondition = '';
     } else if (userRole === 'kelompok') {
       whereCondition = 'WHERE l.kelompok_id = $1';
@@ -257,8 +257,8 @@ async function getLaporanById(req, res) {
 
     // STEP 2: Check access permissions
     let hasAccess = false;
-    if (userRole === 'admin') {
-      hasAccess = true; // Admin can access everything
+    if (userRole === 'admin' || userRole === 'viewer') {
+      hasAccess = true; // Admin and Viewer can access everything
     } else if (userRole === 'kelompok') {
       // Kelompok can access if laporan belongs to their kelompok
       hasAccess = laporanOwnership.kelompok_id === userKelompokId;
@@ -517,6 +517,7 @@ async function createLaporan(req, res) {
     
     // AUTO-CREATE HEWAN TERNAK IF KELAHIRAN
     if (jenis.toLowerCase() === 'kelahiran' && finalKelompokId) {
+      console.log(`[laporanController] 🐑 Kelahiran detected, attempting to create hewan with kelompok_id=${finalKelompokId}`);
       try {
         // Determine gender configuration - now only single animal per kelahiran
         const jenisCacheKelamin = (data.jenis_kelamin_anak || data.jenis_kelamin || '').toLowerCase();
@@ -556,6 +557,37 @@ async function createLaporan(req, res) {
         }
 
         try {
+          // STEP 1: Lookup induk_id (convert id_hewan string to id integer)
+          let indukIdInteger = null;
+          if (data.induk_id) {
+            const indukLookup = await db.query(
+              'SELECT id FROM hewan_ternak WHERE kelompok_id = $1 AND id_hewan = $2 LIMIT 1',
+              [finalKelompokId, data.induk_id]
+            );
+            if (indukLookup.rows.length > 0) {
+              indukIdInteger = indukLookup.rows[0].id;
+              console.log(`[laporanController] ✓ Found induk: id_hewan="${data.induk_id}" → database id=${indukIdInteger}`);
+            } else {
+              console.warn(`[laporanController] ⚠️ Induk dengan id_hewan="${data.induk_id}" tidak ditemukan`);
+            }
+          }
+
+          // STEP 2: Lookup pejantan_id (convert id_hewan string to id integer)
+          let pejantanIdInteger = null;
+          if (data.pejantan_id) {
+            const pejantanLookup = await db.query(
+              'SELECT id FROM hewan_ternak WHERE kelompok_id = $1 AND id_hewan = $2 LIMIT 1',
+              [finalKelompokId, data.pejantan_id]
+            );
+            if (pejantanLookup.rows.length > 0) {
+              pejantanIdInteger = pejantanLookup.rows[0].id;
+              console.log(`[laporanController] ✓ Found pejantan: id_hewan="${data.pejantan_id}" → database id=${pejantanIdInteger}`);
+            } else {
+              console.warn(`[laporanController] ⚠️ Pejantan dengan id_hewan="${data.pejantan_id}" tidak ditemukan`);
+            }
+          }
+
+          // STEP 3: Create hewan with integer foreign keys
           const createHewanQuery = `
             INSERT INTO hewan_ternak (
               kelompok_id,
@@ -585,14 +617,14 @@ async function createLaporan(req, res) {
             data.tanggal_kelahiran || laporan.tanggal || new Date(),
             data.catatan || null,
             'Kelahiran',
-            data.induk_id || null,
-            data.pejantan_id || null,
+            indukIdInteger,  // integer ID from lookup
+            pejantanIdInteger,  // integer ID from lookup
             'AKTIF'
           ]);
           
           if (hewanResult.rows.length > 0) {
             const createdHewan = hewanResult.rows[0];
-            console.log(`[laporanController] ✅ Auto-created hewan ternak: ID database ${createdHewan.id} (id_hewan: ${createdHewan.id_hewan}, ${genderForHewan}, ${createdHewan.ras}) dari kelahiran laporan ${laporan.id}`);
+            console.log(`[laporanController] ✅ SUCCESS: Auto-created hewan ternak: ID database ${createdHewan.id} (id_hewan: "${createdHewan.id_hewan}", ${genderForHewan}, ${createdHewan.ras}) dari kelahiran laporan ${laporan.id}`);
           } else {
             console.warn(`[laporanController] ⚠️ Hewan failed to create`);
           }
@@ -719,13 +751,23 @@ async function createLaporanBulk(req, res) {
 
 /**
  * PUT /api/laporan/:id - Update laporan
+ * NOTE: Admin cannot edit laporan - this is restricted to kelompok users only
  */
 async function updateLaporan(req, res) {
   try {
     const { id } = req.params;
+    const userRole = req.user?.role;
+
+    // Neither admin nor kelompok can edit laporan - reports are read-only after creation
+    if (userRole === 'admin' || userRole === 'kelompok') {
+      return res.status(403).json({
+        success: false,
+        message: 'Laporan tidak dapat diedit setelah dibuat. Laporan bersifat read-only untuk semua pengguna.'
+      });
+    }
+
     const { jenis, data } = req.body;
     const userId = req.user?.id;
-    const userRole = req.user?.role;
 
     if (!jenis || !data) {
       return res.status(400).json({
@@ -734,24 +776,15 @@ async function updateLaporan(req, res) {
       });
     }
 
-    // Check ownership
-    let accessControl = '';
-    const params = [parseInt(id), jenis, JSON.stringify(data)];
-    let paramIndex = 4;
-
-    if (userRole !== 'admin') {
-      accessControl = ` AND user_id = $${paramIndex++}`;
-      params.push(userId);
-    }
-
+    // Check ownership - only kelompok user can edit their own laporan
     const query = `
       UPDATE laporan 
       SET jenis = $2, data = $3, updated_at = NOW()
-      WHERE id = $1 ${accessControl}
+      WHERE id = $1 AND user_id = $4
       RETURNING id, jenis, data, tanggal, updated_at
     `;
 
-    const result = await db.query(query, params);
+    const result = await db.query(query, [parseInt(id), jenis, JSON.stringify(data), userId]);
 
     if (result.rows.length === 0) {
       return res.status(403).json({
@@ -786,36 +819,12 @@ async function updateLaporan(req, res) {
 async function deleteLaporan(req, res) {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
     const userRole = req.user?.role;
 
-    let whereCondition = 'WHERE id = $1';
-    const params = [parseInt(id)];
-
-    if (userRole !== 'admin') {
-      whereCondition += ' AND user_id = $2';
-      params.push(userId);
-    }
-
-    const query = `DELETE FROM laporan ${whereCondition}`;
-    const result = await db.query(query, params);
-
-    if (result.rowCount === 0) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied or laporan not found'
-      });
-    }
-
-    // Invalidate cache
-    const { dashboardCache } = require('../middleware/cache');
-    if (dashboardCache) {
-      dashboardCache.del(`dashboard_${userId}`);
-    }
-
-    return res.json({
-      success: true,
-      message: 'Laporan deleted successfully'
+    // No user can delete laporan - reports cannot be deleted after creation
+    return res.status(403).json({
+      success: false,
+      message: 'Laporan tidak dapat dihapus. Laporan bersifat immutable dan tidak bisa dihapus oleh siapapun.'
     });
 
   } catch (error) {

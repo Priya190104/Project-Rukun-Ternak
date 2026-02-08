@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import client from '../api/client';
@@ -105,8 +105,8 @@ export default function FormUpdateTernakPage() {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center">
-          <Loader className="w-12 h-12 text-emerald-600 mx-auto mb-3 animate-spin" />
-          <p className="text-gray-600">Memuat form...</p>
+          <Loader className="w-12 h-12 text-primary-600 mx-auto mb-3 animate-spin" />
+          <p className="text-gray-700">Memuat form...</p>
         </div>
       </div>
     );
@@ -116,11 +116,11 @@ export default function FormUpdateTernakPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <div className="bg-green-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <Check className="w-8 h-8 text-green-600" />
+          <div className="bg-primary-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            <Check className="w-8 h-8 text-primary-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Berhasil!</h2>
-          <p className="text-gray-600 mb-6">Update ternak berhasil disimpan</p>
+          <p className="text-gray-700 mb-6">Update ternak berhasil disimpan</p>
           <p className="text-sm text-gray-500">Mengalihkan ke halaman laporan...</p>
         </div>
       </div>
@@ -130,9 +130,9 @@ export default function FormUpdateTernakPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-6 px-4 sm:px-6">
-        <div className="max-w-2xl mx-auto">
-          <Link to="/pilih-jenis" className="inline-flex items-center gap-2 text-emerald-50 hover:text-white mb-4 font-semibold transition">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-600 text-white py-6 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto">
+          <Link to="/pilih-jenis" className="inline-flex items-center gap-2 text-primary-50 hover:text-white mb-4 font-semibold transition">
             <ArrowLeft className="w-4 h-4" />
             Kembali
           </Link>
@@ -140,7 +140,7 @@ export default function FormUpdateTernakPage() {
             <Heart className="w-7 h-7" />
             Update Ternak
           </h1>
-          <p className="text-emerald-50 mt-1">Perbarui bobot badan hewan ternak Anda</p>
+          <p className="text-primary-50 mt-1">Perbarui bobot badan hewan ternak Anda</p>
         </div>
       </div>
 
@@ -148,8 +148,8 @@ export default function FormUpdateTernakPage() {
       <div className="max-w-2xl mx-auto py-6 px-4 sm:px-6">
         
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="mb-6 bg-danger-50 border border-danger-100 rounded-lg p-4 flex gap-3">
+            <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-red-900 font-semibold">Error</p>
               <p className="text-red-800 text-sm">{error}</p>
@@ -160,7 +160,7 @@ export default function FormUpdateTernakPage() {
         {hewan.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
             <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 font-semibold mb-2">Belum ada hewan aktif</p>
+            <p className="text-gray-700 font-semibold mb-2">Belum ada hewan aktif</p>
             <p className="text-gray-500 text-sm">
               Tidak ada hewan ternak dengan status AKTIF di kelompok Anda
             </p>
@@ -176,7 +176,7 @@ export default function FormUpdateTernakPage() {
               <select
                 value={formData.hewan_id}
                 onChange={handleHewanChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                 required
               >
                 <option value="">-- Pilih Hewan --</option>
@@ -218,7 +218,7 @@ export default function FormUpdateTernakPage() {
                 placeholder="Contoh: 45.5"
                 step="0.1"
                 min="0"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                 required
               />
               <p className="text-xs text-gray-500 mt-1">Masukkan bobot dalam kilogram</p>
@@ -234,7 +234,7 @@ export default function FormUpdateTernakPage() {
                 name="tanggal_update"
                 value={formData.tanggal_update}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               />
               <p className="text-xs text-gray-500 mt-1">Default: hari ini</p>
             </div>
@@ -250,15 +250,15 @@ export default function FormUpdateTernakPage() {
                 onChange={handleInputChange}
                 placeholder="Contoh: Hewan terlihat sehat dan aktif"
                 rows="3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900 placeholder-gray-500 resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500 resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">Catatan tambahan (tidak wajib)</p>
             </div>
 
             {/* Info Box */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-900 font-semibold mb-2">ℹ️ Informasi Penting</p>
-              <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside">
+            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+              <p className="text-sm text-primary-900 font-semibold mb-2">â„¹ï¸ Informasi Penting</p>
+              <ul className="text-xs text-primary-800 space-y-1 list-disc list-inside">
                 <li>Update bobot hanya boleh 1 kali per bulan per hewan</li>
                 <li>Data bobot akan disimpan sebagai riwayat</li>
                 <li>Hewan dengan status MATI atau TERJUAL tidak dapat diupdate</li>
@@ -276,7 +276,7 @@ export default function FormUpdateTernakPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
@@ -297,3 +297,5 @@ export default function FormUpdateTernakPage() {
     </div>
   );
 }
+
+

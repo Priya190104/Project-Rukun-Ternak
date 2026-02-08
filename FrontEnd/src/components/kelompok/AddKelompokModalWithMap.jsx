@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import client from '../../api/client';
 import MapPickerKelompok from './MapPickerKelompok';
@@ -150,7 +150,7 @@ export default function AddKelompokModalWithMap({
     }
   }, [isOpen, mode, initialData]);
 
-  const showNotification = (type, message) => {
+  const _showNotification = (type, message) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
   };
@@ -453,7 +453,7 @@ export default function AddKelompokModalWithMap({
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition disabled:opacity-50"
+            className="text-gray-400 hover:text-gray-700 transition disabled:opacity-50"
             disabled={loading}
           >
             <X size={24} />
@@ -464,8 +464,8 @@ export default function AddKelompokModalWithMap({
           <div
             className={`p-3 border-l-4 flex items-start gap-2 text-sm ${
               notification.type === 'success'
-                ? 'bg-green-50 border-green-400 text-green-800'
-                : 'bg-red-50 border-red-400 text-red-800'
+                ? 'bg-success-50 border-green-400 text-green-800'
+                : 'bg-danger-50 border-red-400 text-red-800'
             }`}
           >
             <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
@@ -492,7 +492,7 @@ export default function AddKelompokModalWithMap({
                     errors.namaKelompok ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
-                {errors.namaKelompok && <p className="text-red-600 text-xs mt-1">{errors.namaKelompok}</p>}
+                {errors.namaKelompok && <p className="text-danger text-xs mt-1">{errors.namaKelompok}</p>}
               </div>
 
               <div>
@@ -509,7 +509,7 @@ export default function AddKelompokModalWithMap({
                     errors.emailKelompok ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
-                {errors.emailKelompok && <p className="text-red-600 text-xs mt-1">{errors.emailKelompok}</p>}
+                {errors.emailKelompok && <p className="text-danger text-xs mt-1">{errors.emailKelompok}</p>}
               </div>
 
               <div>
@@ -535,8 +535,8 @@ export default function AddKelompokModalWithMap({
                           <div
                             key={opt.value}
                             onClick={() => handleKecamatanSelect(opt.value)}
-                            className={`px-3 py-2 cursor-pointer hover:bg-blue-50 ${
-                              form.kecamatan === opt.value ? 'bg-blue-100 font-semibold' : ''
+                            className={`px-3 py-2 cursor-pointer hover:bg-primary-50 ${
+                              form.kecamatan === opt.value ? 'bg-primary-100 font-semibold' : ''
                             }`}
                           >
                             {opt.label}
@@ -548,7 +548,7 @@ export default function AddKelompokModalWithMap({
                     </div>
                   )}
                 </div>
-                {errors.kecamatan && <p className="text-red-600 text-xs mt-1">{errors.kecamatan}</p>}
+                {errors.kecamatan && <p className="text-danger text-xs mt-1">{errors.kecamatan}</p>}
               </div>
 
               <div>
@@ -574,8 +574,8 @@ export default function AddKelompokModalWithMap({
                           <div
                             key={desa}
                             onClick={() => handleDesaSelect(desa)}
-                            className={`px-3 py-2 cursor-pointer hover:bg-blue-50 ${
-                              form.desa === desa ? 'bg-blue-100 font-semibold' : ''
+                            className={`px-3 py-2 cursor-pointer hover:bg-primary-50 ${
+                              form.desa === desa ? 'bg-primary-100 font-semibold' : ''
                             }`}
                           >
                             {desa}
@@ -587,7 +587,7 @@ export default function AddKelompokModalWithMap({
                     </div>
                   )}
                 </div>
-                {errors.desa && <p className="text-red-600 text-xs mt-1">{errors.desa}</p>}
+                {errors.desa && <p className="text-danger text-xs mt-1">{errors.desa}</p>}
               </div>
             </div>
           </div>
@@ -596,7 +596,7 @@ export default function AddKelompokModalWithMap({
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Pilih Lokasi di Peta</h3>
             {errors.location && (
-              <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm flex items-start gap-2">
+              <div className="mb-3 p-3 bg-danger-50 border border-danger-100 rounded-lg text-red-800 text-sm flex items-start gap-2">
                 <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
                 <p>{errors.location}</p>
               </div>
@@ -674,7 +674,7 @@ export default function AddKelompokModalWithMap({
                     errors.pic1_email ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
-                {errors.pic1_email && <p className="text-red-600 text-xs mt-1">{errors.pic1_email}</p>}
+                {errors.pic1_email && <p className="text-danger text-xs mt-1">{errors.pic1_email}</p>}
               </div>
             </div>
           </div>
@@ -714,12 +714,12 @@ export default function AddKelompokModalWithMap({
 
             {/* Hewan Ternak - Dynamic */}
             {parseInt(form.jumlahTernak) > 0 && (
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="mb-6 p-4 bg-primary-50 rounded-lg border border-primary-200">
                 <h4 className="text-sm font-semibold text-gray-800 mb-4">Detail Hewan Ternak</h4>
                 <div className="space-y-5">
                   {form.ternakDetails.map((ternak, index) => (
                     <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                      <h5 className="text-xs font-bold text-blue-600 uppercase mb-3">Hewan Ternak {index + 1}</h5>
+                      <h5 className="text-xs font-bold text-primary-600 uppercase mb-3">Hewan Ternak {index + 1}</h5>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {/* ID Ternak */}
@@ -819,7 +819,7 @@ export default function AddKelompokModalWithMap({
                   type="button"
                   onClick={addPeralatanRow}
                   disabled={loading}
-                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+                  className="px-3 py-1 text-xs bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition disabled:opacity-50"
                 >
                   + Tambah Peralatan
                 </button>
@@ -854,7 +854,7 @@ export default function AddKelompokModalWithMap({
                         type="button"
                         onClick={() => removePeralatanRow(index)}
                         disabled={loading}
-                        className="px-3 py-2 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+                        className="px-3 py-2 text-xs bg-danger-500 text-white rounded-lg hover:bg-danger transition disabled:opacity-50"
                       >
                         Hapus
                       </button>
@@ -872,7 +872,7 @@ export default function AddKelompokModalWithMap({
                   type="button"
                   onClick={addKesehatanRow}
                   disabled={loading}
-                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+                  className="px-3 py-1 text-xs bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition disabled:opacity-50"
                 >
                   + Tambah Program
                 </button>
@@ -906,7 +906,7 @@ export default function AddKelompokModalWithMap({
                         type="button"
                         onClick={() => removeKesehatanRow(index)}
                         disabled={loading}
-                        className="px-3 py-2 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+                        className="px-3 py-2 text-xs bg-danger-500 text-white rounded-lg hover:bg-danger transition disabled:opacity-50"
                       >
                         Hapus
                       </button>
@@ -930,7 +930,7 @@ export default function AddKelompokModalWithMap({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -959,3 +959,4 @@ export default function AddKelompokModalWithMap({
     </div>
   );
 }
+

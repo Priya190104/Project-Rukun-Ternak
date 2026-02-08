@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import AppLogo from '../components/branding/AppLogo';
@@ -52,19 +52,19 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 p-4">
       <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md border border-gray-100">
         <div className="text-center mb-8">
           <AppLogo size="3xl" variant="icon" className="mx-auto mb-2" />
           <div className="flex justify-center">
-            <SupportedByLogo mainLogoSize={100} />
+            <SupportedByLogo size="md" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mt-4">Rukun Ternak</h1>
-          <p className="text-gray-600 mt-2 text-sm">Kelola data ternak dengan mudah</p>
+          <p className="text-gray-700 mt-2 text-sm">Kelola data ternak dengan mudah</p>
         </div>
 
         {loginError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm font-medium flex items-start gap-3">
+          <div className="bg-danger-50 border border-danger-100 text-danger px-4 py-3 rounded-lg mb-6 text-sm font-medium flex items-start gap-3">
             <span className="text-lg mt-0.5">⚠️</span>
             <span>{loginError}</span>
           </div>
@@ -78,7 +78,7 @@ export default function Login() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Masukkan username"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               disabled={isLoggingIn}
               required
             />
@@ -92,7 +92,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Masukkan password"
-                className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 disabled={isLoggingIn}
                 required
               />
@@ -110,18 +110,19 @@ export default function Login() {
           <button
             type="submit"
             disabled={isLoggingIn}
-            className="w-full px-4 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md"
+            className="w-full px-4 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md"
           >
             {isLoggingIn ? '⏳ Sedang Login...' : '🔐 Login'}
           </button>
         </form>
 
-        {/* Demo accounts removed — use real credentials */}
+        {/* Demo accounts removed â€” use real credentials */}
 
         <div className="mt-6 text-center">
-          <Link to="/" className="text-emerald-600 font-medium hover:text-emerald-700 transition text-sm">← Kembali ke Beranda</Link>
+          <Link to="/" className="text-primary-600 font-medium hover:text-primary-700 transition text-sm">← Kembali ke Beranda</Link>
         </div>
       </div>
     </div>
   );
 }
+

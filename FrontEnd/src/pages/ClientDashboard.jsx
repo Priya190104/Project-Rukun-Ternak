@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import AppLogo from '../components/branding/AppLogo';
 import SupportedByLogo from '../components/branding/SupportedByLogo';
 import {AlertCircle } from 'lucide-react';
@@ -7,66 +7,72 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import KelompokDashboardCard from '../components/KelompokDashboardCard';
 import PenyaluranBantuanCard from '../components/PenyaluranBantuanCard';
+import { useCachedData } from '../hooks/useCachedData';
 
 export default function ClientDashboard() {
   const { user, appRole } = useAuth();
+  
+  // Fetch stats dengan caching (10 menit TTL)
+  const { data: cachedStats, loading: statsLoading } = useCachedData(
+    '/api/stats',
+    ['/api/stats'],
+    { ttl: 10 * 60 * 1000 }
+  );
+  
+  // Fetch dashboard kelompok dengan caching
+  const { data: cachedDashboardKelompok, loading: dashKelLoading } = useCachedData(
+    appRole === 'kelompok' ? '/api/stats/dashboard/kelompok' : null,
+    [appRole],
+    { ttl: 10 * 60 * 1000 }
+  );
+  
+  // Fetch kelahiran stats dengan caching
+  const { data: cachedKelahiranStats, loading: kelahiranLoading } = useCachedData(
+    appRole === 'kelompok' ? '/api/stats/kelahiran' : null,
+    [appRole],
+    { ttl: 10 * 60 * 1000 }
+  );
+  
+  // Fetch kelompok data dengan caching
+  const kelompokUrl = appRole === 'kelompok' && user?.kelompok_id ? `/api/kelompok/${user.kelompok_id}` : null;
+  const { data: cachedKelompok, loading: kelompokLoading } = useCachedData(
+    kelompokUrl,
+    [kelompokUrl],
+    { ttl: 10 * 60 * 1000 }
+  );
+  
   const [kelompok, setKelompok] = useState(null);
   const [dashboardKelompok, setDashboardKelompok] = useState(null);
   const [kelahiranStats, setKelahiranStats] = useState(null);
   const [stats, setStats] = useState({ totals: { laporan: 0 }, latest: [] });
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Sync cached data to state
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    if (cachedStats) {
+      setStats(cachedStats?.data || cachedStats || { totals: { laporan: 0 }, latest: [] });
+    }
+  }, [cachedStats]);
 
-        // Load stats
-        const statsRes = await client.get('/api/stats');
-        if (mounted) {
-          setStats(statsRes.data?.data || { totals: { laporan: 0 }, latest: [] });
-        }
+  useEffect(() => {
+    if (cachedDashboardKelompok) {
+      setDashboardKelompok(cachedDashboardKelompok?.data || cachedDashboardKelompok);
+    }
+  }, [cachedDashboardKelompok]);
 
-        // Load dashboard summary jika user adalah kelompok role
-        if (appRole === 'kelompok' && user?.kelompok_id) {
-          // Load dashboard kelompok (7 cards)
-          try {
-            const dashKelRes = await client.get('/api/stats/dashboard/kelompok');
-            if (mounted && dashKelRes.data?.data) {
-              setDashboardKelompok(dashKelRes.data.data);
-            }
-          } catch (err) {
-            console.warn('Dashboard kelompok fetch failed:', err);
-          }
+  useEffect(() => {
+    if (cachedKelahiranStats) {
+      setKelahiranStats(cachedKelahiranStats?.data || cachedKelahiranStats);
+    }
+  }, [cachedKelahiranStats]);
 
-          // Load kelahiran stats from hewan_ternak
-          try {
-            const kelahiranRes = await client.get('/api/stats/kelahiran');
-            if (mounted && kelahiranRes.data?.data) {
-              setKelahiranStats(kelahiranRes.data.data);
-            }
-          } catch (err) {
-            console.warn('Kelahiran stats fetch failed:', err);
-          }
+  useEffect(() => {
+    if (cachedKelompok) {
+      setKelompok(cachedKelompok?.data || cachedKelompok);
+    }
+  }, [cachedKelompok]);
 
-          // Load kelompok data
-          const kelompokRes = await client.get(`/api/kelompok/${user.kelompok_id}`);
-          if (mounted && kelompokRes.data?.data) {
-            setKelompok(kelompokRes.data.data);
-          }
-        }
-      } catch (err) {
-        console.error('Dashboard error:', err);
-        setError(err.response?.data?.message || err.message || 'Gagal memuat data');
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, [appRole, user?.kelompok_id]);
+  const loading = statsLoading || (appRole === 'kelompok' && (dashKelLoading || kelahiranLoading || kelompokLoading));
 
   const dashboardTitle = appRole === 'kelompok' 
     ? `Dashboard Kelompok` 
@@ -87,19 +93,19 @@ export default function ClientDashboard() {
   return (
     <div className="space-y-6 sm:space-y-8 pt-8 sm:pt-12">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-medium">
+        <div className="bg-danger-50 border border-danger-100 text-danger px-4 py-3 rounded-lg text-sm font-medium">
           ⚠️ {error}
         </div>
       )}
 
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-50 rounded-lg sm:rounded-2xl p-6 sm:p-8 text-gray-900 shadow-lg">
+      <div className="bg-gradient-to-r from-primary-400 to-primary-50 rounded-lg sm:rounded-2xl p-6 sm:p-8 text-gray-900 shadow-lg">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{dashboardTitle}</h1>
-            <p className="text-emerald-1000 text-sm sm:text-base lg:text-lg">{dashboardDesc}</p>
+            <p className="text-primary-1000 text-sm sm:text-base lg:text-lg">{dashboardDesc}</p>
             {user?.full_name && (
-              <p className="text-emerald-1000 text-sm sm:text-base lg:text-lg">Halo, {user.full_name}</p>
+              <p className="text-primary-1000 text-sm sm:text-base lg:text-lg">Halo, {user.full_name}</p>
             )}
           </div>
           <div className="flex flex-col items-center gap-3">
@@ -123,18 +129,18 @@ export default function ClientDashboard() {
       {appRole !== 'kelompok' && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <div className="text-gray-600 text-sm font-semibold mb-2">Total Laporan</div>
-            <div className="text-3xl font-bold text-emerald-600">{stats.totals?.laporan ?? 0}</div>
+            <div className="text-gray-700 text-sm font-semibold mb-2">Total Laporan</div>
+            <div className="text-3xl font-bold text-primary-600">{stats.totals?.laporan ?? 0}</div>
           </div>
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <div className="text-gray-600 text-sm font-semibold mb-2">Terakhir Dikirim</div>
+            <div className="text-gray-700 text-sm font-semibold mb-2">Terakhir Dikirim</div>
             <div className="text-lg font-semibold text-gray-900">
               {(stats.latest && stats.latest[0] && (new Date(stats.latest[0].tanggal).toLocaleDateString())) || '-'}
             </div>
           </div>
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <div className="text-gray-600 text-sm font-semibold mb-2">Status</div>
-            <div className="text-lg font-semibold text-emerald-600">Aktif</div>
+            <div className="text-gray-700 text-sm font-semibold mb-2">Status</div>
+            <div className="text-lg font-semibold text-primary-600">Aktif</div>
           </div>
         </div>
       )}
@@ -156,7 +162,7 @@ export default function ClientDashboard() {
               </div>
               <div className="p-6 space-y-4">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-1">
+                  <p className="text-xs uppercase tracking-wide text-gray-700 font-semibold mb-1">
                     Tanggal Input Terakhir
                   </p>
                   <p className="text-lg font-bold text-gray-900">
@@ -165,27 +171,27 @@ export default function ClientDashboard() {
                 </div>
                 <hr className="border-orange-100" />
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-1">Jenis Pakan</p>
+                  <p className="text-xs uppercase tracking-wide text-gray-700 font-semibold mb-1">Jenis Pakan</p>
                   <p className="text-sm font-semibold text-gray-800">{dashboardKelompok.pakan?.jenisPakan || '-'}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-1">Sumber</p>
+                  <p className="text-xs uppercase tracking-wide text-gray-700 font-semibold mb-1">Sumber</p>
                   <p className="text-sm font-semibold text-gray-800">{dashboardKelompok.pakan?.sumberPakan || '-'}</p>
                 </div>
               </div>
             </div>
 
             {/* Card 2: Kandang */}
-            <div className="bg-white rounded-xl shadow-md border border-amber-200 overflow-hidden hover:shadow-lg transition">
+            <div className="bg-white rounded-xl shadow-md border border-warning-100 overflow-hidden hover:shadow-lg transition">
               <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-4 flex items-center gap-3">
                 <h3 className="font-bold text-lg">Kandang</h3>
               </div>
               <div className="p-6 space-y-3">
-                <div className="bg-amber-50 p-3 rounded-lg">
+                <div className="bg-warning-50 p-3 rounded-lg">
                   <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold mb-1">Kandang Kelompok (Penyaluran)</p>
                   <p className="text-2xl font-bold text-amber-900">{dashboardKelompok.penyaluran?.jumlahKandang || 0}</p>
                 </div>
-                <div className="bg-amber-50 p-3 rounded-lg">
+                <div className="bg-warning-50 p-3 rounded-lg">
                   <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold mb-1">Kandang Anggota (Pengembangan)</p>
                   <p className="text-2xl font-bold text-amber-900">{dashboardKelompok.kandang?.pengembanganTotal || 0}</p>
                 </div>
@@ -218,24 +224,24 @@ export default function ClientDashboard() {
             </div>
 
             {/* Card 4: Populasi */}
-            <div className="bg-white rounded-xl shadow-md border border-green-200 overflow-hidden hover:shadow-lg transition">
-              <div className="bg-gradient-to-br from-green-600 to-emerald-600 text-white p-4 flex items-center gap-3">
+            <div className="bg-white rounded-xl shadow-md border border-success-100 overflow-hidden hover:shadow-lg transition">
+              <div className="bg-gradient-to-br from-primary-600 to-primary-600 text-white p-4 flex items-center gap-3">
                 <h3 className="font-bold text-lg">Populasi</h3>
               </div>
               <div className="p-6 space-y-3">
-                <div className="bg-green-50 p-4 rounded-lg text-center">
-                  <p className="text-xs uppercase tracking-wide text-green-700 font-semibold mb-1">Total Populasi</p>
+                <div className="bg-success-50 p-4 rounded-lg text-center">
+                  <p className="text-xs uppercase tracking-wide text-success font-semibold mb-1">Total Populasi</p>
                   <p className="text-3xl font-bold text-green-900">{dashboardKelompok.populasiHewan?.total || dashboardKelompok.populasi?.totalPopulasi || 0}</p>
-                  <p className="text-xs text-green-600 mt-1">ekor</p>
+                  <p className="text-xs text-success mt-1">ekor</p>
                 </div>
                 <hr className="border-green-100" />
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <p className="text-xs uppercase tracking-wide text-green-700 font-semibold mb-1">Jantan</p>
+                  <div className="bg-success-50 p-3 rounded-lg">
+                    <p className="text-xs uppercase tracking-wide text-success font-semibold mb-1">Jantan</p>
                     <p className="text-2xl font-bold text-green-900">{dashboardKelompok.populasiHewan?.jantan || 0}</p>
                   </div>
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <p className="text-xs uppercase tracking-wide text-green-700 font-semibold mb-1">Betina</p>
+                  <div className="bg-success-50 p-3 rounded-lg">
+                    <p className="text-xs uppercase tracking-wide text-success font-semibold mb-1">Betina</p>
                     <p className="text-2xl font-bold text-green-900">{dashboardKelompok.populasiHewan?.betina || 0}</p>
                   </div>
                 </div>
@@ -243,41 +249,41 @@ export default function ClientDashboard() {
             </div>
 
             {/* Card 5: Penjualan (30 hari) */}
-            <div className="bg-white rounded-xl shadow-md border border-blue-200 overflow-hidden hover:shadow-lg transition">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 flex items-center gap-3">
+            <div className="bg-white rounded-xl shadow-md border border-primary-200 overflow-hidden hover:shadow-lg transition">
+              <div className="bg-gradient-to-br from-primary-500 to-primary-600 text-white p-4 flex items-center gap-3">
                 <h3 className="font-bold text-lg">Penjualan</h3>
               </div>
               <div className="p-6 space-y-4">
-                <div className="bg-blue-50 p-4 rounded-lg text-center">
-                  <p className="text-xs uppercase tracking-wide text-blue-700 font-semibold mb-1">Total Terjual</p>
-                  <p className="text-4xl font-bold text-blue-900">{dashboardKelompok.penjualan?.totalTerjual || 0}</p>
-                  <p className="text-xs text-blue-600 mt-1">ekor</p>
+                <div className="bg-primary-50 p-4 rounded-lg text-center">
+                  <p className="text-xs uppercase tracking-wide text-primary-700 font-semibold mb-1">Total Terjual</p>
+                  <p className="text-4xl font-bold text-primary-900">{dashboardKelompok.penjualan?.totalTerjual || 0}</p>
+                  <p className="text-xs text-primary-600 mt-1">ekor</p>
                 </div>
-                <hr className="border-blue-100" />
+                <hr className="border-primary-100" />
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
+                  <div className="flex justify-between items-center bg-primary-50 p-2 rounded">
                     <span className="text-xs font-semibold text-gray-700">Pejantan</span>
-                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.pejantanTerjual || 0}</span>
+                    <span className="text-lg font-bold text-primary-900">{dashboardKelompok.penjualan?.pejantanTerjual || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
+                  <div className="flex justify-between items-center bg-primary-50 p-2 rounded">
                     <span className="text-xs font-semibold text-gray-700">Indukan</span>
-                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.indukanTerjual || 0}</span>
+                    <span className="text-lg font-bold text-primary-900">{dashboardKelompok.penjualan?.indukanTerjual || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
+                  <div className="flex justify-between items-center bg-primary-50 p-2 rounded">
                     <span className="text-xs font-semibold text-gray-700">Calon Indukan (8-11 bln)</span>
-                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.calonIndukanTerjual || 0}</span>
+                    <span className="text-lg font-bold text-primary-900">{dashboardKelompok.penjualan?.calonIndukanTerjual || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
+                  <div className="flex justify-between items-center bg-primary-50 p-2 rounded">
                     <span className="text-xs font-semibold text-gray-700">Calon Pejantan (8-11 bln)</span>
-                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.calonPejantanTerjual || 0}</span>
+                    <span className="text-lg font-bold text-primary-900">{dashboardKelompok.penjualan?.calonPejantanTerjual || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
+                  <div className="flex justify-between items-center bg-primary-50 p-2 rounded">
                     <span className="text-xs font-semibold text-gray-700">Jantan Potong</span>
-                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.jantanPotongTerjual || 0}</span>
+                    <span className="text-lg font-bold text-primary-900">{dashboardKelompok.penjualan?.jantanPotongTerjual || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center bg-blue-50 p-2 rounded">
+                  <div className="flex justify-between items-center bg-primary-50 p-2 rounded">
                     <span className="text-xs font-semibold text-gray-700">Betina Potong</span>
-                    <span className="text-lg font-bold text-blue-900">{dashboardKelompok.penjualan?.betinaPotongTerjual || 0}</span>
+                    <span className="text-lg font-bold text-primary-900">{dashboardKelompok.penjualan?.betinaPotongTerjual || 0}</span>
                   </div>
                 </div>
               </div>
@@ -290,33 +296,33 @@ export default function ClientDashboard() {
               </div>
               <div className="p-6 space-y-4">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Pupuk Organik Cair</p>
+                  <p className="text-xs uppercase tracking-wide text-gray-700 font-semibold mb-2">Pupuk Organik Cair</p>
                   <div className="flex items-baseline gap-2">
                     <p className="text-3xl font-bold text-lime-900">
                       {(dashboardKelompok.pengolahan?.pupukCair || 0).toFixed(1)}
                     </p>
-                    <p className="text-sm font-semibold text-gray-600">liter</p>
+                    <p className="text-sm font-semibold text-gray-700">liter</p>
                   </div>
                 </div>
                 <hr className="border-lime-100" />
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Pupuk Organik Padat</p>
+                  <p className="text-xs uppercase tracking-wide text-gray-700 font-semibold mb-2">Pupuk Organik Padat</p>
                   <div className="flex items-baseline gap-2">
                     <p className="text-3xl font-bold text-lime-900">
                       {(dashboardKelompok.pengolahan?.pupukPadat || 0).toFixed(1)}
                     </p>
-                    <p className="text-sm font-semibold text-gray-600">kg</p>
+                    <p className="text-sm font-semibold text-gray-700">kg</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Info Box */}
-            <div className="col-span-1 md:col-span-2 bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-900">
+            <div className="col-span-1 md:col-span-2 bg-primary-50 border border-primary-200 rounded-xl p-4 flex gap-3">
+              <AlertCircle className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-primary-900">
                 <p className="font-semibold mb-1">ℹ️ Informasi Dashboard</p>
-                <ul className="text-xs space-y-1 text-blue-800">
+                <ul className="text-xs space-y-1 text-primary-800">
                   <li>• Data pakan menampilkan laporan terakhir</li>
                   <li>• Data kelahiran dan penjualan adalah periode 30 hari terakhir</li>
                   <li>• Data populasi menampilkan laporan populasi terbaru</li>
@@ -336,3 +342,4 @@ export default function ClientDashboard() {
     </div>
   );
 }
+

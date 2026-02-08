@@ -1,8 +1,9 @@
 const db = require('../db');
 
 // Hitung umur hewan berdasarkan tanggal lahir
-const hitungUmur = (tanggalLahir) => {
-  const today = new Date();
+// Jika tanggalBerakhir diberikan, hitung umur sampai tanggal tersebut (untuk freeze age)
+const hitungUmur = (tanggalLahir, tanggalBerakhir = null) => {
+  const today = tanggalBerakhir ? new Date(tanggalBerakhir) : new Date();
   const lahir = new Date(tanggalLahir);
   
   // Hitung umur dalam hari
@@ -62,8 +63,8 @@ const getHewanTernak = async (req, res) => {
           CASE 
             WHEN status = 'TIDAK_AKTIF' AND tanggal_status_tidak_aktif IS NOT NULL
             THEN tanggal_status_tidak_aktif - tanggal_lahir
-            WHEN status = 'TERJUAL' AND umur_saat_terjual IS NOT NULL
-            THEN INTERVAL '1 day' * (umur_saat_terjual * 30)
+            WHEN status = 'TERJUAL' AND tanggal_terjual IS NOT NULL
+            THEN tanggal_terjual - tanggal_lahir
             ELSE NOW() - tanggal_lahir
           END
         ))) as umur_hari,
@@ -71,8 +72,8 @@ const getHewanTernak = async (req, res) => {
           CASE 
             WHEN status = 'TIDAK_AKTIF' AND tanggal_status_tidak_aktif IS NOT NULL
             THEN tanggal_status_tidak_aktif - tanggal_lahir
-            WHEN status = 'TERJUAL' AND umur_saat_terjual IS NOT NULL
-            THEN INTERVAL '1 day' * (umur_saat_terjual * 30)
+            WHEN status = 'TERJUAL' AND tanggal_terjual IS NOT NULL
+            THEN tanggal_terjual - tanggal_lahir
             ELSE NOW() - tanggal_lahir
           END
         )) / 30) as umur_bulan,
@@ -81,8 +82,8 @@ const getHewanTernak = async (req, res) => {
             CASE 
               WHEN status = 'TIDAK_AKTIF' AND tanggal_status_tidak_aktif IS NOT NULL
               THEN tanggal_status_tidak_aktif - tanggal_lahir
-              WHEN status = 'TERJUAL' AND umur_saat_terjual IS NOT NULL
-              THEN INTERVAL '1 day' * (umur_saat_terjual * 30)
+              WHEN status = 'TERJUAL' AND tanggal_terjual IS NOT NULL
+              THEN tanggal_terjual - tanggal_lahir
               ELSE NOW() - tanggal_lahir
             END
           )) < 30 
@@ -90,8 +91,8 @@ const getHewanTernak = async (req, res) => {
             CASE 
               WHEN status = 'TIDAK_AKTIF' AND tanggal_status_tidak_aktif IS NOT NULL
               THEN tanggal_status_tidak_aktif - tanggal_lahir
-              WHEN status = 'TERJUAL' AND umur_saat_terjual IS NOT NULL
-              THEN INTERVAL '1 day' * (umur_saat_terjual * 30)
+              WHEN status = 'TERJUAL' AND tanggal_terjual IS NOT NULL
+              THEN tanggal_terjual - tanggal_lahir
               ELSE NOW() - tanggal_lahir
             END
           ))) || ' hari'
@@ -99,8 +100,8 @@ const getHewanTernak = async (req, res) => {
             CASE 
               WHEN status = 'TIDAK_AKTIF' AND tanggal_status_tidak_aktif IS NOT NULL
               THEN tanggal_status_tidak_aktif - tanggal_lahir
-              WHEN status = 'TERJUAL' AND umur_saat_terjual IS NOT NULL
-              THEN INTERVAL '1 day' * (umur_saat_terjual * 30)
+              WHEN status = 'TERJUAL' AND tanggal_terjual IS NOT NULL
+              THEN tanggal_terjual - tanggal_lahir
               ELSE NOW() - tanggal_lahir
             END
           )) / 30) || ' bulan'
@@ -361,21 +362,19 @@ const getAllHewanAdmin = async (req, res) => {
     });
     console.log(`[getAllHewanAdmin] Status breakdown:`, statusBreakdown);
     
-    // Tambahkan umur untuk setiap hewan dengan logic yang sama seperti kelompok list
+    // Tambahkan umur untuk setiap hewan
     const hewanDenganUmur = result.rows.map(hewan => {
       let umurData;
       
       // Freeze age calculation sesuai status
       if (hewan.status === 'TIDAK_AKTIF' && hewan.tanggal_status_tidak_aktif) {
+        // Gunakan tanggal_status_tidak_aktif sebagai freeze point
         umurData = hitungUmur(hewan.tanggal_lahir, hewan.tanggal_status_tidak_aktif);
-      } else if (hewan.status === 'TERJUAL' && hewan.umur_saat_terjual) {
-        // Gunakan umur_saat_terjual jika tersedia
-        umurData = {
-          hari: hewan.umur_saat_terjual * 30,
-          bulan: hewan.umur_saat_terjual,
-          display: `${hewan.umur_saat_terjual} bulan`
-        };
+      } else if (hewan.status === 'TERJUAL' && hewan.tanggal_terjual) {
+        // Gunakan tanggal_terjual untuk freeze age saat dijual
+        umurData = hitungUmur(hewan.tanggal_lahir, hewan.tanggal_terjual);
       } else {
+        // Hitung umur normal untuk status AKTIF
         umurData = hitungUmur(hewan.tanggal_lahir);
       }
       

@@ -23,8 +23,8 @@ export const SUPPORTED_BY_CONFIG = {
   enabled: true,
 
   // Logo path - MUDAH diganti
-  // Default: FrontEnd/public/partner-logo.png
-  logoPath: process.env.PUBLIC_URL + '/partner-logo.png',
+  // Default: FrontEnd/public/partner-logo.webp
+  logoPath: '/partner-logo.webp',
 
   // Teks label - generic (NOT institution-specific)
   label: 'Supported by',

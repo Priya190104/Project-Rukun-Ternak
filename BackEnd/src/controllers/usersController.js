@@ -2,9 +2,41 @@ const db = require('../db');
 
 async function getUsers(req, res) {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ success: false, message: 'Forbidden' });
-    const { rows } = await db.query('SELECT u.id, u.username, u.full_name, u.role, u.kelompok_id, k.name AS kelompok FROM users u LEFT JOIN kelompok k ON u.kelompok_id = k.id ORDER BY u.id');
-    return res.json({ success: true, data: rows });
+    // Allow admin and viewer (viewer in read-only mode)
+    if (req.user.role !== 'admin' && req.user.role !== 'viewer') return res.status(403).json({ success: false, message: 'Forbidden' });
+    
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const offset = (page - 1) * limit;
+    
+    // Get paginated users with count
+    const { rows } = await db.query(
+      `SELECT u.id, u.username, u.full_name, u.role, u.kelompok_id, k.name AS kelompok,
+              COUNT(*) OVER () as total
+       FROM users u 
+       LEFT JOIN kelompok k ON u.kelompok_id = k.id 
+       ORDER BY u.id
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+    
+    const total = rows.length > 0 ? rows[0].total : 0;
+    const data = rows.map(row => {
+      const { total, ...userData } = row;
+      return userData;
+    });
+    
+    return res.json({ 
+      success: true, 
+      data: data,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ success: false, message: 'Server error' });

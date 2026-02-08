@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { MapPin } from 'lucide-react';
 
 export default function ListKelompokMap({ kelompokList = [], onSelectKelompok = null, selectedKelompokId = null }) {
@@ -61,7 +61,7 @@ export default function ListKelompokMap({ kelompokList = [], onSelectKelompok = 
                 onClick={() => handleSelectKelompok(kelompok)}
                 className={`p-4 cursor-pointer transition-colors ${
                   selectedKelompokId === kelompok.id
-                    ? 'bg-blue-100 border-l-4 border-l-blue-600'
+                    ? 'bg-primary-100 border-l-4 border-l-blue-600'
                     : 'hover:bg-gray-50'
                 }`}
               >
@@ -71,7 +71,7 @@ export default function ListKelompokMap({ kelompokList = [], onSelectKelompok = 
                     <p className="font-medium text-gray-800 text-sm">
                       {kelompok.name || 'Nama Kelompok'}
                     </p>
-                    <div className="text-xs text-gray-600 mt-1 space-y-0.5">
+                    <div className="text-xs text-gray-700 mt-1 space-y-0.5">
                       <p>
                         <span className="text-gray-500">Desa:</span>{' '}
                         <span>{kelompok.desa || '-'}</span>
@@ -96,10 +96,11 @@ export default function ListKelompokMap({ kelompokList = [], onSelectKelompok = 
 
       {/* Footer info */}
       {kelompokWithLocation.length > 0 && (
-        <div className="p-3 bg-blue-50 border-t border-gray-200 text-xs text-blue-700">
-          📌 Menampilkan {kelompokWithLocation.length} kelompok dengan lokasi
+        <div className="p-3 bg-primary-50 border-t border-gray-200 text-xs text-primary-700">
+          ℹ️ Menampilkan {kelompokWithLocation.length} kelompok dengan lokasi
         </div>
       )}
     </div>
   );
 }
+

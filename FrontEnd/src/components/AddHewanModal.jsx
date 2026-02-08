@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
 export default function AddHewanModal({ isOpen, onClose, onSubmit, isLoading }) {
@@ -11,6 +11,7 @@ export default function AddHewanModal({ isOpen, onClose, onSubmit, isLoading }) 
     catatan: ''
   });
   const [error, setError] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,6 +44,12 @@ export default function AddHewanModal({ isOpen, onClose, onSubmit, isLoading }) 
       return;
     }
 
+    // Show confirmation dialog
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmAdd = async () => {
+    setShowConfirmation(false);
     // Submit
     await onSubmit(form);
     
@@ -63,7 +70,7 @@ export default function AddHewanModal({ isOpen, onClose, onSubmit, isLoading }) 
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6 flex items-center justify-between border-b border-gray-200">
+        <div className="sticky top-0 bg-gradient-to-r from-primary-600 to-primary-100 text-white p-6 flex items-center justify-between border-b border-gray-200">
           <h2 className="text-2xl font-bold">Tambah Hewan Ternak</h2>
           <button
             onClick={onClose}
@@ -77,7 +84,7 @@ export default function AddHewanModal({ isOpen, onClose, onSubmit, isLoading }) 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-danger-50 border border-danger-100 text-danger px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
@@ -197,13 +204,52 @@ export default function AddHewanModal({ isOpen, onClose, onSubmit, isLoading }) 
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Menyimpan...' : 'Simpan Hewan Ternak'}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Confirmation Dialog */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+            <div className="bg-gradient-to-r from-primary-500 to-primary-100 text-white p-6 flex items-center justify-between border-b border-gray-200">
+              <h3 className="text-lg font-bold">Konfirmasi Penambahan</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-gray-700 font-medium">Apakah Anda yakin untuk menambahkan hewan ternak ini?</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2 text-sm">
+                <p><span className="font-semibold text-gray-700">ID Hewan:</span> <span className="text-gray-900">{form.id_hewan}</span></p>
+                <p><span className="font-semibold text-gray-700">Ras:</span> <span className="text-gray-900">{form.ras}</span></p>
+                <p><span className="font-semibold text-gray-700">Jenis Kelamin:</span> <span className="text-gray-900">{form.jenis_kelamin === 'JANTAN' ? '♂️ Pejantan' : '♀️ Betina'}</span></p>
+                <p><span className="font-semibold text-gray-700">Bobot:</span> <span className="text-gray-900">{form.bobot} kg</span></p>
+                <p><span className="font-semibold text-gray-700">Umur:</span> <span className="text-gray-900">{form.umur} bulan</span></p>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowConfirmation(false)}
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleConfirmAdd}
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? 'Menyimpan...' : 'Ya, Tambahkan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+

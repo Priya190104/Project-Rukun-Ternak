@@ -70,8 +70,7 @@ try {
   app.use('/api/notifikasi', require('./src/routes/notifikasi'));
   app.use('/api/stats', require('./src/routes/stats'));
   app.use('/api/public', require('./src/routes/public'));
-  app.use('/api/berita', require('./src/routes/berita'));
-  app.use('/api/banners', require('./src/routes/banners'));
+  app.use('/api/cache', requireAuth, require('./src/routes/cacheRoutes'));
   app.use('/api', require('./src/routes/hewan'));
 } catch (err) {
   console.error('Error loading routes:', err.message);

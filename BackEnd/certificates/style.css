@@ -32,8 +32,9 @@ body {
 
 .certificate-wrapper {
     position: relative;
-    width: 297mm;
-    height: 210mm;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-width: 1600px;
     margin: 0;
     padding: 0;
     background: white;
@@ -61,6 +62,12 @@ body {
     display: block;
 }
 
+/* Full template background - ensure it covers entire certificate */
+.bg-image.full-template {
+    object-fit: cover;
+    object-position: center;
+}
+
 /* ==========================================
    CONTENT LAYER (All content on top of background)
 =========================================== */
@@ -75,72 +82,54 @@ body {
     flex-direction: column;
 }
 
-/* ==========================================
-   HEADER SECTION - CENTERED
-=========================================== */
-
-.header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding-bottom: 15px;
-    margin-bottom: 10px;
-    flex-shrink: 0;
+/* Data overlay - positioned on top of full template background */
+.certificate-content.data-overlay {
+    padding: 30px 40px 120px 40px;
 }
 
-.header-center {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.header-left {
-    flex: 1;
-    text-align: left;
-}
-
-.program-title {
-    font-size: 18px;
-    font-weight: bold;
-    color: #1a1a1a;
-    line-height: 1.2;
-    margin-bottom: 0;
-    letter-spacing: 0.3px;
-}
-
-.program-subtitle {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1a1a1a;
-    line-height: 1.2;
-}
-
-.header-right {
-    flex-shrink: 0;
-    text-align: right;
-}
-
-.logo {
-    width: 80px;
+/* Logo Header - Top Right */
+.logo-header {
+    position: absolute;
+    top: 50px;
+    right: 50px;
+    width: 150px;
     height: auto;
-    display: block;
+    z-index: 15;
+    pointer-events: none;
 }
 
 /* ==========================================
-   SECTION TITLE (CATATAN KELAHIRAN TERNAK)
+   CERTIFICATE TITLE (CATATAN KELAHIRAN TERNAK)
 =========================================== */
 
-.section-title {
+.certificate-title1 {
     text-align: center;
-    font-size: 24px;
+    width: 100%;
+    margin-bottom: 20px;
+    margin-top: 40px;
+    position: relative;
+    z-index: 20;
+    line-height: 5px;
+}
+
+.certificate-title2 {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 20px;
+    margin-top: 10px;
+    position: relative;
+    z-index: 20;
+}
+
+.title-text {
+    font-size: 33px;
     font-weight: bold;
     color: #1a1a1a;
-    margin: 10px 0 15px 0;
-    letter-spacing: 0.5px;
+    margin: 0;
+    letter-spacing: 1px;
+    font-family: 'Times New Roman', Times, serif;
     text-transform: capitalize;
-    flex-shrink: 0;
+    line-height: 1.3;
 }
 
 /* ==========================================
@@ -158,7 +147,7 @@ body {
 
 .header-column {
     display: grid;
-    grid-template-columns: 140px auto 1fr;
+    grid-template-columns: 180px auto 1fr;
     gap: 0;
     row-gap: 5px;
     width: fit-content;
@@ -177,7 +166,7 @@ body {
     gap: 0;
     margin-bottom: 20px;
     margin-top: 5px;
-    padding-left: 40px;
+    padding-left: 70px;
     flex: 1;
     flex-direction: column;
     min-height: 0;
@@ -188,7 +177,7 @@ body {
 
 .column {
     display: grid;
-    grid-template-columns: 140px auto 1fr;
+    grid-template-columns: 180px auto 1fr;
     gap: 0;
     width: 100%;
     row-gap: 5px;
@@ -198,41 +187,25 @@ body {
     display: contents;
 }
 
-.data-item.top-items {
-    display: grid;
-    grid-column: 1 / -1;
-    grid-template-columns: 140px auto 1fr;
-    gap: 0;
-    margin-bottom: 8px;
-    margin-left: auto;
-    margin-right: auto;
-    width: fit-content;
-    justify-self: center;
-}
-
 .data-item.left-items {
     margin-bottom: 0;
 }
 
 .label {
-    width: 140px;
+    width: auto;
     font-weight: 600;
     color: #333;
     text-align: left;
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 20px;
     line-height: 1.6;
     word-break: break-word;
-}
-
-.label::after {
-    content: "";
 }
 
 .colon {
     font-weight: 600;
     color: #333;
-    font-size: 19px;
+    font-size: 20px;
     line-height: 1.6;
     text-align: center;
     width: auto;
@@ -242,85 +215,10 @@ body {
 .value {
     color: #1a1a1a;
     word-break: break-word;
-    font-size: 15px;
+    font-size: 20px;
     line-height: 1.6;
     min-height: 1.6em;
     padding-left: 8px;
-}
-
-/* ==========================================
-   FOOTER SECTION
-=========================================== */
-
-.footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding-top: 10px;
-    border-top: 1px solid #ccc;
-    min-height: 65px;
-    flex-shrink: 0;
-    margin-top: auto;
-}
-
-.footer-left {
-    text-align: left;
-}
-
-.tanggal-text {
-    font-size: 15px;
-    color: #333;
-    font-weight: 1000;
-}
-
-.footer-right {
-    display: flex;
-    gap: 45px;
-    align-items: flex-end;
-}
-
-.stamp-box,
-.signature-box {
-    text-align: center;
-    min-width: 60px;
-    height: 55px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-/* ==========================================
-   FOOTER BACKGROUND (Full width at bottom)
-=========================================== */
-
-.footer-background {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: auto;
-    z-index: 2;
-    overflow: hidden;
-}
-
-.footer-bg-img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-
-.stempel {
-    width: 55px;
-    height: auto;
-    display: block;
-}
-
-.signature {
-    width: 65px;
-    height: auto;
-    display: block;
 }
 
 /* ==========================================
@@ -329,38 +227,121 @@ body {
 
 .ternak-left {
     position: absolute;
-    left: 35px;
-    bottom: 20px;
-    width: 200px;
+    left: 20px;
+    bottom: 10px;
+    width: 240px;
     height: auto;
-    z-index: 3;
+    z-index: 8;
     pointer-events: none;
-}
-.ternak-left.mirror {
     transform: scaleX(-1);
     transform-origin: center;
 }
+
 .ternak-right {
     position: absolute;
-    right: 35px;
+    right: 20px;
     bottom: 0px;
-    width: 200px;
+    width: 260px;
     height: auto;
-    z-index: 3;
+    z-index: 8;
     pointer-events: none;
-}
-.ternak-right.mirror {
     transform: scaleX(-1);
     transform-origin: center;
 }
-.lamb {
+
+/* Rumput dekoratif - di bagian bawah dengan z-index tertinggi */
+.grass-decoration {
     position: absolute;
-    right: 35px;
-    bottom: 35px;
-    width: 100px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
     height: auto;
-    z-index: 3;
+    z-index: 20;
     pointer-events: none;
+    display: block;
+}
+
+/* ==========================================
+   SIGNATURE DATE SECTION
+=========================================== */
+
+.signature-date-section {
+    position: absolute;
+    bottom: 150px;
+    right: 270px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    z-index: 30;
+}
+
+.signature-date-line {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    text-align: center;
+    font-size: 9px;
+    white-space: nowrap;
+    justify-content: flex-end;
+    margin-bottom: 50px;
+}
+
+.date-dots {
+    font-family: monospace;
+    letter-spacing: 1px;
+    color: #333;
+}
+
+.date-label-inline {
+    font-size: 10px;
+    color: #666;
+    font-weight: 600;
+    display: none;
+}
+
+.signature-name-line {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    text-align: center;
+    font-size: 9px;
+    justify-content: flex-end;
+    margin-top: 30px;
+}
+
+.name-dots {
+    font-family: monospace;
+    letter-spacing: 1px;
+    color: #333;
+    flex: 0 0 auto;
+}
+
+.name-label-inline {
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+    display: none;
+}
+
+/* ==========================================
+   OLD SIGNATURE STYLES (kept for reference)
+=========================================== */
+
+.signature-date-group {
+    display: none;
+}
+
+.date-field {
+    display: none;
+}
+
+.date-label {
+    display: none;
+}
+
+.date-input {
+    display: none;
 }
 
 /* ==========================================

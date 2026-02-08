@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { APP_LOGO } from '../../config/branding';
 
 /**
@@ -49,7 +49,7 @@ export default function AppLogo({
         ${sizeClass}
         flex items-center justify-center
         rounded-lg font-bold
-        bg-gradient-to-br from-emerald-600 to-teal-600
+        bg-gradient-to-br from-emerald-600 to-success-600
         text-white
         flex-shrink-0
         ${className}
@@ -75,8 +75,7 @@ export default function AppLogo({
         src={APP_LOGO}
         alt={alt}
         className={`${sizeClass} object-contain rounded-lg flex-shrink-0 ${className}`}
-        style={style}
-        loading="lazy"
+        loading="eager"
         onError={() => setImageLoadError(true)}
       />
     );
@@ -114,9 +113,9 @@ export default function AppLogo({
       src={APP_LOGO}
       alt={alt}
       className={`${sizeClass} object-contain ${className}`}
-      style={style}
-      loading="lazy"
+      loading="eager"
       onError={() => setImageLoadError(true)}
     />
   );
 }
+

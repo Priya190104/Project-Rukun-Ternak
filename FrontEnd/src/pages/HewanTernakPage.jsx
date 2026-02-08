@@ -1,15 +1,24 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
 import client from '../api/client';
-import { AlertCircle, Loader, Heart, Plus } from 'lucide-react';
+import { AlertCircle, Loader, Plus } from 'lucide-react';
 import AddHewanModal from '../components/AddHewanModal';
+import { useCachedData, useInvalidateCache } from '../hooks/useCachedData';
 
 export default function HewanTernakPage() {
   const { appRole } = useAuth();
+  const invalidate = useInvalidateCache();
+  
+  // Fetch hewan dengan caching (5 menit TTL)
+  const { data: cachedHewan, loading: hewanLoading, refetch } = useCachedData(
+    '/api/hewan',
+    ['/api/hewan'],
+    { ttl: 5 * 60 * 1000 }
+  );
+  
   const [hewan, setHewan] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAddingHewan, setIsAddingHewan] = useState(false);
@@ -21,42 +30,36 @@ export default function HewanTernakPage() {
     if (appRole !== 'kelompok') {
       console.error('[HewanTernakPage] Access denied - user role is not kelompok:', appRole);
       setError('Akses ditolak. Halaman ini hanya untuk user kelompok.');
-      setLoading(false);
       return;
     }
+  }, [appRole]);
 
-    const fetchHewan = async () => {
-      try {
-        console.log('[HewanTernakPage] Fetching hewan data...');
-        setLoading(true);
-        setError(null);
-        const res = await client.get('/api/hewan');
-        console.log('[HewanTernakPage] API Response:', res.data);
-        if (res.data?.success) {
-          const dataSources = {
-            penyaluran: res.data.data.filter(h => h.source === 'Penyaluran').length,
-            kelahiran: res.data.data.filter(h => h.source === 'Kelahiran').length
-          };
-          console.log('[HewanTernakPage] Data sources:', dataSources, 'Total:', res.data.data.length);
-          setHewan(res.data.data);
-        }
-      } catch (err) {
-        console.error('[HewanTernakPage] Error fetching hewan:', err);
-        setError(err.response?.data?.message || 'Gagal mengambil data hewan');
-      } finally {
-        setLoading(false);
+  // Sync cached hewan data
+  useEffect(() => {
+    if (cachedHewan) {
+      console.log('[HewanTernakPage] API Response:', cachedHewan);
+      const data = cachedHewan?.data || cachedHewan || [];
+      const hewanData = Array.isArray(data) ? data : [];
+      if (hewanData.length > 0) {
+        const dataSources = {
+          penyaluran: hewanData.filter(h => h.source === 'Penyaluran').length,
+          kelahiran: hewanData.filter(h => h.source === 'Kelahiran').length
+        };
+        console.log('[HewanTernakPage] Data sources:', dataSources, 'Total:', hewanData.length);
       }
-    };
+      setHewan(hewanData);
+    }
+  }, [cachedHewan]);
 
-    fetchHewan();
-
+  useEffect(() => {
     // Listen for refetch trigger from other pages (e.g., ClientTambahLaporan)
     const handleRefetchTrigger = (_e) => {
       console.log('[HewanTernakPage] Received refetch trigger from localStorage event');
       const triggerData = JSON.parse(localStorage.getItem('hewanDataRefetchTrigger'));
       if (triggerData) {
         console.log('[HewanTernakPage] Refetch triggered by:', triggerData.message);
-        fetchHewan();
+        invalidate('/api/hewan');
+        refetch();
       }
     };
 
@@ -65,7 +68,7 @@ export default function HewanTernakPage() {
     return () => {
       window.removeEventListener('storage', handleRefetchTrigger);
     };
-  }, [appRole]);
+  }, [invalidate, refetch]);
 
   const handleAddHewan = async (formData) => {
     try {
@@ -81,11 +84,9 @@ export default function HewanTernakPage() {
       });
 
       if (res.data?.success) {
-        // Refresh data
-        const hewanRes = await client.get('/api/hewan');
-        if (hewanRes.data?.success) {
-          setHewan(hewanRes.data.data);
-        }
+        // Invalidate cache dan refresh data
+        invalidate('/api/hewan');
+        refetch();
         
         setIsAddModalOpen(false);
         alert('✅ Hewan ternak berhasil ditambahkan!');
@@ -115,23 +116,41 @@ export default function HewanTernakPage() {
 
   const getStatusBadge = (status) => {
     const statusColors = {
-      'AKTIF': 'bg-green-100 text-green-800',
-      'MATI': 'bg-red-100 text-red-800',
-      'TERJUAL': 'bg-blue-100 text-blue-800'
+      'AKTIF': 'bg-primary-100 text-primary-800',
+      'MATI': 'bg-danger-100 text-red-800',
+      'TERJUAL': 'bg-primary-100 text-primary-800'
     };
     return statusColors[status] || 'bg-gray-100 text-gray-800';
   };
 
   const getJenisKelaminDisplay = (jk) => {
-    return jk === 'JANTAN' ? '♂️ Jantan' : '♀️ Betina';
+    return jk === 'JANTAN' ? 'Jantan' : 'Betina';
   };
 
-  if (loading) {
+  const getSourceDisplay = (source) => {
+    const sourceMap = {
+      'Kelahiran': 'Kelahiran',
+      'Penyaluran': 'Penyaluran',
+      'Penambahan': 'Penambahan'
+    };
+    return sourceMap[source] || source || 'Tidak Diketahui';
+  };
+
+  const getSourceColor = (source) => {
+    const colorMap = {
+      'Kelahiran': 'bg-primary-100 text-primary-800',
+      'Penyaluran': 'bg-info-100 text-purple-800',
+      'Penambahan': 'bg-orange-100 text-orange-800'
+    };
+    return colorMap[source] || 'bg-gray-100 text-gray-800';
+  };
+
+  if (hewanLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center">
-          <Loader className="w-12 h-12 text-emerald-600 mx-auto mb-3 animate-spin" />
-          <p className="text-gray-600">Memuat data hewan ternak...</p>
+          <Loader className="w-12 h-12 text-primary-600 mx-auto mb-3 animate-spin" />
+          <p className="text-gray-700">Memuat data hewan ternak...</p>
         </div>
       </div>
     );
@@ -148,8 +167,8 @@ export default function HewanTernakPage() {
       <div className="space-y-6">
         
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="mb-6 bg-danger-50 border border-danger-100 rounded-lg p-4 flex gap-3">
+            <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-red-900 font-semibold">Error</p>
               <p className="text-red-800 text-sm">{error}</p>
@@ -162,12 +181,12 @@ export default function HewanTernakPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h2 className="font-semibold text-gray-900">Total Hewan Ternak</h2>
-              <p className="text-2xl font-bold text-emerald-600 mt-1">{hewan.length} Ekor</p>
+              <p className="text-2xl font-bold text-primary-600 mt-1">{hewan.length} Ekor</p>
             </div>
             <div className="flex flex-col items-end gap-2">
               <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
                 <Plus size={18} />
                 Tambah Ternak
@@ -184,7 +203,7 @@ export default function HewanTernakPage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="bg-emerald-50 border-b border-gray-200">
+                <tr className="bg-primary-50 border-b border-gray-200">
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">ID</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Sumber</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Ras</th>
@@ -197,21 +216,17 @@ export default function HewanTernakPage() {
               </thead>
               <tbody>
                 {hewan.map((h) => (
-                  <tr key={h.id} className="border-b border-gray-100 hover:bg-emerald-50 transition">
+                  <tr key={h.id} className="border-b border-gray-100 hover:bg-primary-50 transition">
                     <td className="px-6 py-4 text-sm text-gray-900 font-semibold">{h.id_hewan || `#${h.id}`}</td>
                     <td className="px-6 py-4 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        h.source === 'Kelahiran' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-purple-100 text-purple-800'
-                      }`}>
-                        {h.source || 'Tidak Diketahui'}
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getSourceColor(h.source)}`}>
+                        {getSourceDisplay(h.source)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 font-semibold">{h.ras}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{getJenisKelaminDisplay(h.jenis_kelamin)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{h.umur?.display || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{h.bobot || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">{getJenisKelaminDisplay(h.jenis_kelamin)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">{h.umur?.display || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">{h.bobot || '-'}</td>
                     <td className="px-6 py-4">
                       <span className={`text-xs font-bold px-3 py-1 rounded-full ${getStatusBadge(h.status)}`}>
                         {h.status}
@@ -220,7 +235,7 @@ export default function HewanTernakPage() {
                     <td className="px-6 py-4">
                       <Link
                         to={`/hewan-ternak/${h.id}`}
-                        className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm"
+                        className="text-primary-600 hover:text-primary-700 font-semibold text-sm"
                       >
                         Lihat →
                       </Link>
@@ -232,8 +247,8 @@ export default function HewanTernakPage() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-            <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 font-semibold mb-2">Belum ada data hewan ternak</p>
+            <div className="text-5xl mb-4">🐑</div>
+            <p className="text-gray-700 font-semibold mb-2">Belum ada data hewan ternak</p>
             <p className="text-gray-500 text-sm">
               Data hewan akan muncul ketika ada laporan kelahiran baru
             </p>
@@ -285,3 +300,4 @@ export default function HewanTernakPage() {
     </div>
   );
 }
+

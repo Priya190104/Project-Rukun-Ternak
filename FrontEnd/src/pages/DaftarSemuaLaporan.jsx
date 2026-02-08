@@ -1,16 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import client from '../api/client';
-import { useAuth } from '../hooks/useAuth';
+﻿import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
-import { Filter, Eye, Edit2, Trash2, Download, FileText } from 'lucide-react';
+import { Filter, Eye, Download } from 'lucide-react';
 import { exportToCSV, exportToPDF } from '../utils/exportUtils';
+import { useCachedData } from '../hooks/useCachedData';
 
 const jenisLaporan = ['Budidaya', 'Kelahiran', 'Kematian', 'Penjualan'];
 
 export default function DaftarSemuaLaporan() {
-  const { user, appRole } = useAuth();
-  const navigate = useNavigate();
+  
+  // Fetch laporan dengan caching (5 menit TTL)
+  const { data: cachedLaporan } = useCachedData(
+    '/api/laporan',
+    ['/api/laporan'],
+    { ttl: 5 * 60 * 1000 }
+  );
+  
+  // Fetch kelompok dengan caching (15 menit TTL)
+  const { data: cachedKelompok } = useCachedData(
+    '/api/kelompok',
+    ['/api/kelompok'],
+    { ttl: 15 * 60 * 1000 }
+  );
+  
   const [reports, setReports] = useState([]);
   const [filteredReports, setFilteredReports] = useState([]);
   const [filterKelompok, setFilterKelompok] = useState('Semua Kelompok');
@@ -20,39 +32,26 @@ export default function DaftarSemuaLaporan() {
   const [kelompokOptions, setKelompokOptions] = useState(['Semua Kelompok']);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
+  // Sync laporan data
   useEffect(() => {
-    let mounted = true;
-    async function load() {
-      try {
-        const res = await client.get('/api/laporan');
-        const data = (res.data?.data || []).map(item => ({
-          ...item,
-          // Normalize kelompok field (backend returns kelompok or kelompok_name)
-          kelompok: item.kelompok || item.kelompok_name || '-'
-        }));
-        if (mounted) {
-          setReports(data);
-          setFilteredReports(data);
-        }
-      } catch (err) {
-        console.warn('Failed to load laporan', err);
-      }
+    if (cachedLaporan) {
+      const data = (Array.isArray(cachedLaporan) ? cachedLaporan : (cachedLaporan?.data || [])).map(item => ({
+        ...item,
+        // Normalize kelompok field (backend returns kelompok or kelompok_name)
+        kelompok: item.kelompok || item.kelompok_name || '-'
+      }));
+      setReports(data);
+      setFilteredReports(data);
     }
-    load();
-    return () => { mounted = false; };
-  }, [user, appRole]);
+  }, [cachedLaporan]);
 
+  // Sync kelompok options
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await client.get('/api/kelompok');
-        const list = res.data?.data?.map(k => k.name) || [];
-        setKelompokOptions(['Semua Kelompok', ...list]);
-      } catch (err) {
-        // ignore
-      }
-    })();
-  }, []);
+    if (cachedKelompok) {
+      const list = (Array.isArray(cachedKelompok) ? cachedKelompok : (cachedKelompok?.data || [])).map(k => k.name) || [];
+      setKelompokOptions(['Semua Kelompok', ...list]);
+    }
+  }, [cachedKelompok]);
 
   useEffect(() => {
     let filtered = reports;
@@ -92,25 +91,6 @@ export default function DaftarSemuaLaporan() {
     setFilteredReports(filtered);
   }, [filterKelompok, filterJenis, filterBulan, filterSubJenis, reports]);
 
-  const handleEditLaporan = (id) => {
-    // Navigate to detail page where edit can be done
-    navigate(`/laporan/${id}`);
-  };
-
-  const handleDeleteLaporan = async (id) => {
-    const confirmDelete = window.confirm('Yakin ingin menghapus laporan ini?');
-    if (!confirmDelete) return;
-
-    try {
-      await client.delete(`/api/laporan/${id}`);
-      // Remove from state
-      setReports(reports.filter(r => r.id !== id));
-    } catch (err) {
-      console.error('Failed to delete laporan:', err);
-      alert('Gagal menghapus laporan');
-    }
-  };
-
   const handleExportCSV = () => {
     exportToCSV(filteredReports, `laporan_${new Date().toISOString().split('T')[0]}.csv`);
     setShowExportMenu(false);
@@ -133,7 +113,7 @@ export default function DaftarSemuaLaporan() {
       {/* Filter Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Filter size={20} className="text-emerald-600" />
+          <Filter size={20} className="text-primary-600" />
           <h2 className="text-lg font-semibold text-gray-900">Filter Laporan</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -216,7 +196,7 @@ export default function DaftarSemuaLaporan() {
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
             <Download size={20} />
             Export
@@ -269,7 +249,7 @@ export default function DaftarSemuaLaporan() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 font-medium">{report.jenis}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{report.kelompok || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-gray-700">
                       {report.data && typeof report.data === 'object' 
                         ? Object.entries(report.data)
                             .slice(0, 2)
@@ -283,28 +263,10 @@ export default function DaftarSemuaLaporan() {
                         <Link
                           to={`/laporan/${report.id}`}
                           title="Lihat detail"
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded transition"
+                          className="p-2 text-primary-600 hover:bg-primary-50 rounded transition"
                         >
                           <Eye size={16} />
                         </Link>
-                        {appRole !== 'viewer' && (
-                          <>
-                            <button 
-                              title="Edit laporan"
-                              onClick={() => handleEditLaporan(report.id)}
-                              className="p-2 text-amber-600 hover:bg-amber-50 rounded transition"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button 
-                              title="Hapus laporan"
-                              onClick={() => handleDeleteLaporan(report.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded transition"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -317,3 +279,4 @@ export default function DaftarSemuaLaporan() {
     </div>
   );
 }
+

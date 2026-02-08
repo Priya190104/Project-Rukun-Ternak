@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin } from 'lucide-react';
@@ -98,13 +98,13 @@ export default function MapPickerKelompok({ latitude, longitude, onLocationChang
           type="button"
           onClick={handleUseCurrentLocation}
           disabled={isLocating}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           <MapPin size={18} />
           {isLocating ? 'Mengambil lokasi...' : 'Gunakan Lokasi Saat Ini (GPS)'}
         </button>
         <p className="text-xs text-gray-500 mt-2">
-          💡 Klik pada peta untuk memilih lokasi, atau gunakan tombol GPS di atas. Marker dapat digeser untuk koreksi.
+          ðŸ’¡ Klik pada peta untuk memilih lokasi, atau gunakan tombol GPS di atas. Marker dapat digeser untuk koreksi.
         </p>
       </div>
 
@@ -115,10 +115,11 @@ export default function MapPickerKelompok({ latitude, longitude, onLocationChang
       />
 
       {latitude && longitude && (
-        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
-          ✓ Lokasi dipilih: <strong>Lat {latitude.toFixed(6)}, Lng {longitude.toFixed(6)}</strong>
+        <div className="mt-3 p-3 bg-success-50 border border-success-100 rounded-lg text-sm text-green-800">
+          âœ“ Lokasi dipilih: <strong>Lat {latitude.toFixed(6)}, Lng {longitude.toFixed(6)}</strong>
         </div>
       )}
     </div>
   );
 }
+

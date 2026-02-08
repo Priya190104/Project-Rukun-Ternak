@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, User, FileText, AlertCircle, Download } from 'lucide-react';
 import client from '../api/client';
@@ -81,7 +81,7 @@ export default function DetailLaporan() {
             Kembali
           </button>
           <div className="text-center py-12">
-            <p className="text-gray-600">Loading detail laporan...</p>
+            <p className="text-gray-700">Loading detail laporan...</p>
           </div>
         </div>
       </div>
@@ -99,11 +99,11 @@ export default function DetailLaporan() {
             <ArrowLeft size={20} />
             Kembali
           </button>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex items-start gap-4">
-            <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
+          <div className="bg-danger-50 border border-danger-100 rounded-lg p-6 flex items-start gap-4">
+            <AlertCircle className="text-danger flex-shrink-0 mt-1" size={24} />
             <div>
               <h3 className="text-red-900 font-bold text-lg mb-1">Error</h3>
-              <p className="text-red-700">{error}</p>
+              <p className="text-danger">{error}</p>
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function DetailLaporan() {
             <ArrowLeft size={20} />
             Kembali
           </button>
-          <p className="text-gray-600">Laporan tidak ditemukan</p>
+          <p className="text-gray-700">Laporan tidak ditemukan</p>
         </div>
       </div>
     );
@@ -142,7 +142,8 @@ export default function DetailLaporan() {
   };
 
   const handleDownloadSertifikat = async () => {
-    if (laporan.jenis !== 'Kelahiran') {
+    // Case-insensitive check for Kelahiran type
+    if (!laporan.jenis || laporan.jenis.toLowerCase() !== 'kelahiran') {
       alert('Download sertifikat hanya tersedia untuk laporan Kelahiran');
       return;
     }
@@ -173,13 +174,13 @@ export default function DetailLaporan() {
   const getJenisColor = (jenis) => {
     switch (jenis) {
       case 'Kelahiran':
-        return 'bg-green-100 text-green-800 border-green-300';
+        return 'bg-primary-100 text-primary-800 border-primary-300';
       case 'Kematian':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-danger-100 text-red-800 border-danger-200';
       case 'Penjualan':
         return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       case 'Budidaya':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
+        return 'bg-primary-100 text-primary-800 border-primary-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300';
     }
@@ -190,7 +191,7 @@ export default function DetailLaporan() {
       case 'Kelahiran':
         return 'Laporan Kelahiran';
       case 'Kematian':
-        return '💔 Laporan Kematian';
+        return '👶 Laporan Kematian';
       case 'Penjualan':
         return '💰 Penjualan';
       case 'Budidaya':
@@ -208,15 +209,15 @@ export default function DetailLaporan() {
         {/* Kandang & Ternak Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {data.jumlahKandang !== undefined && (
-            <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-              <p className="text-xs font-semibold text-indigo-700 uppercase mb-1">Kandang Disalurkan</p>
+            <div className="bg-info-50 rounded-lg p-4 border border-info-200">
+              <p className="text-xs font-semibold text-info-700 uppercase mb-1">Kandang Disalurkan</p>
               <p className="text-3xl font-bold text-indigo-900">{data.jumlahKandang || 0}</p>
             </div>
           )}
           {data.jumlahTernak !== undefined && (
-            <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
-              <p className="text-xs font-semibold text-emerald-700 uppercase mb-1">Hewan Ternak</p>
-              <p className="text-3xl font-bold text-emerald-900">{data.jumlahTernak || 0}</p>
+            <div className="bg-primary-50 rounded-lg p-4 border border-primary-200">
+              <p className="text-xs font-semibold text-primary-700 uppercase mb-1">Hewan Ternak</p>
+              <p className="text-3xl font-bold text-primary-900">{data.jumlahTernak || 0}</p>
             </div>
           )}
         </div>
@@ -227,9 +228,9 @@ export default function DetailLaporan() {
             <h4 className="font-semibold text-gray-900 mb-3">Peralatan Pendukung</h4>
             <div className="space-y-2">
               {data.pakanList.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-blue-50 rounded-lg p-3 border border-blue-200">
+                <div key={idx} className="flex items-center justify-between bg-primary-50 rounded-lg p-3 border border-primary-200">
                   <span className="text-sm font-medium text-gray-800">{item.jenisPeralatan || item.jenisPakan || '-'}</span>
-                  <span className="text-sm font-bold text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+                  <span className="text-sm font-bold text-primary-700 bg-primary-100 px-3 py-1 rounded-full">
                     {item.jumlahPeralatan || item.jumlahPakan || 0} unit
                   </span>
                 </div>
@@ -244,9 +245,9 @@ export default function DetailLaporan() {
             <h4 className="font-semibold text-gray-900 mb-3">Program Kesehatan</h4>
             <div className="space-y-2">
               {data.kesehatanList.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-red-50 rounded-lg p-3 border border-red-200">
+                <div key={idx} className="flex items-center justify-between bg-danger-50 rounded-lg p-3 border border-danger-100">
                   <span className="text-sm font-medium text-gray-800">{item.jenisKesehatan || '-'}</span>
-                  <span className="text-sm font-bold text-red-700 bg-red-100 px-3 py-1 rounded-full">
+                  <span className="text-sm font-bold text-danger bg-danger-100 px-3 py-1 rounded-full">
                     {item.jumlah || 0}
                   </span>
                 </div>
@@ -287,7 +288,7 @@ export default function DetailLaporan() {
           {/* Jumlah Hewan yang Dijual */}
           {data.jumlah_hewan !== undefined && (
             <div className="border-b border-gray-200 pb-3">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Jumlah Hewan yang Dijual</p>
+              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">Jumlah Hewan yang Dijual</p>
               <p className="text-base text-gray-900 font-bold">{data.jumlah_hewan}</p>
             </div>
           )}
@@ -295,16 +296,16 @@ export default function DetailLaporan() {
           {/* Penjualan List */}
           {data.penjualan_list && Array.isArray(data.penjualan_list) && data.penjualan_list.length > 0 && (
             <div className="border-b border-gray-200 pb-3">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-3">Detail Hewan Terjual</p>
+              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-3">Detail Hewan Terjual</p>
               <div className="space-y-4">
                 {data.penjualan_list.map((item, idx) => (
-                  <div key={idx} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div key={idx} className="bg-primary-50 rounded-lg p-4 border border-primary-200">
                     <h4 className="font-semibold text-gray-900 mb-3">Hewan #{idx + 1}</h4>
                     
                     {/* Jenis Penjualan */}
                     {item.jenis_penjualan && (
                       <div className="mb-2">
-                        <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Jenis Penjualan</p>
+                        <p className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">Jenis Penjualan</p>
                         <p className="text-sm text-gray-900">{item.jenis_penjualan}</p>
                       </div>
                     )}
@@ -312,7 +313,7 @@ export default function DetailLaporan() {
                     {/* Jenis Hewan */}
                     {item.jenis_hewan && (
                       <div className="mb-2">
-                        <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Jenis Hewan</p>
+                        <p className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">Jenis Hewan</p>
                         <p className="text-sm text-gray-900">{item.jenis_hewan}</p>
                       </div>
                     )}
@@ -320,7 +321,7 @@ export default function DetailLaporan() {
                     {/* ID Hewan (ID Bisnis) */}
                     {item.id_hewan && (
                       <div className="mb-2">
-                        <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">ID Hewan (ID Bisnis)</p>
+                        <p className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">ID Hewan (ID Bisnis)</p>
                         <p className="text-sm text-gray-900 font-bold">{item.id_hewan}</p>
                       </div>
                     )}
@@ -328,7 +329,7 @@ export default function DetailLaporan() {
                     {/* Catatan Penjualan */}
                     {item.catatan && (
                       <div>
-                        <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Catatan Penjualan</p>
+                        <p className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">Catatan Penjualan</p>
                         <p className="text-sm text-gray-900 break-words whitespace-pre-wrap">{item.catatan || '-'}</p>
                       </div>
                     )}
@@ -341,7 +342,7 @@ export default function DetailLaporan() {
           {/* Catatan Umum */}
           {data.catatan && (
             <div className="border-b border-gray-200 pb-3 last:border-0">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Catatan Umum</p>
+              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">Catatan Umum</p>
               <p className="text-base text-gray-900 break-words whitespace-pre-wrap">{data.catatan}</p>
             </div>
           )}
@@ -359,7 +360,7 @@ export default function DetailLaporan() {
           {/* ID Anak (ID Bisnis) */}
           {data.id && (
             <div className="border-b border-gray-200 pb-3">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">ID Anak (ID Bisnis)</p>
+              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">ID Anak (ID Bisnis)</p>
               <p className="text-base text-gray-900 font-bold">{data.id}</p>
             </div>
           )}
@@ -367,7 +368,7 @@ export default function DetailLaporan() {
           {/* ID Induk (ID Bisnis) */}
           {data.induk_id && (
             <div className="border-b border-gray-200 pb-3">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">ID Induk (ID Bisnis)</p>
+              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">ID Induk (ID Bisnis)</p>
               <p className="text-base text-gray-900 font-bold">
                 {data.induk_id_bisnis || data.induk_id || '-'}
               </p>
@@ -377,7 +378,7 @@ export default function DetailLaporan() {
           {/* ID Pejantan (ID Bisnis) */}
           {data.pejantan_id && (
             <div className="border-b border-gray-200 pb-3">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">ID Pejantan (ID Bisnis)</p>
+              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">ID Pejantan (ID Bisnis)</p>
               <p className="text-base text-gray-900 font-bold">
                 {data.pejantan_id_bisnis || data.pejantan_id || '-'}
               </p>
@@ -411,7 +412,7 @@ export default function DetailLaporan() {
             })
             .map(([key, value]) => (
               <div key={key} className="border-b border-gray-200 pb-3">
-                <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">
+                <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">
                   {key.replace(/_/g, ' ')}
                 </p>
                 <p className="text-base text-gray-900 break-words">
@@ -423,7 +424,7 @@ export default function DetailLaporan() {
           {/* Catatan - displayed last */}
           {data.catatan && (
             <div className="border-b border-gray-200 pb-3 last:border-0">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Catatan</p>
+              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">Catatan</p>
               <p className="text-base text-gray-900 break-words whitespace-pre-wrap">{data.catatan}</p>
             </div>
           )}
@@ -436,7 +437,7 @@ export default function DetailLaporan() {
         {/* First: Render pengembangan_kandang if it exists */}
         {data.pengembangan_kandang !== undefined && (
           <div className="border-b border-gray-200 pb-3">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">
+            <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">
               Pengembangan Kandang
             </p>
             <p className="text-base text-gray-900 break-words">
@@ -469,7 +470,7 @@ export default function DetailLaporan() {
           })
           .map(([key, value]) => (
             <div key={key} className="border-b border-gray-200 pb-3">
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">
+              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">
                 {key.replace(/_/g, ' ')}
               </p>
               <p className="text-base text-gray-900 break-words">
@@ -481,28 +482,28 @@ export default function DetailLaporan() {
         {/* Render dynamic fields for kesehatan form - hide if status = mati */}
         {data.status_kesehatan_ternak !== 'mati' && data.jenis_pencegahan && (
           <div className="border-b border-gray-200 pb-3">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Jenis Pencegahan</p>
+            <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">Jenis Pencegahan</p>
             <p className="text-base text-gray-900 break-words">{data.jenis_pencegahan}</p>
           </div>
         )}
         
         {data.status_kesehatan_ternak !== 'mati' && data.jenis_pengobatan && (
           <div className="border-b border-gray-200 pb-3">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Jenis Pengobatan</p>
+            <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">Jenis Pengobatan</p>
             <p className="text-base text-gray-900 break-words">{data.jenis_pengobatan}</p>
           </div>
         )}
         
         {data.status_kesehatan_ternak !== 'mati' && data.jenis_perawatan && (
           <div className="border-b border-gray-200 pb-3">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Jenis Perawatan</p>
+            <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">Jenis Perawatan</p>
             <p className="text-base text-gray-900 break-words">{data.jenis_perawatan}</p>
           </div>
         )}
         
         {data.status_kesehatan_ternak !== 'mati' && data.jenis_tindakan && (
           <div className="border-b border-gray-200 pb-3">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Jenis Tindakan</p>
+            <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">Jenis Tindakan</p>
             <p className="text-base text-gray-900 break-words">{data.jenis_tindakan}</p>
           </div>
         )}
@@ -510,11 +511,11 @@ export default function DetailLaporan() {
         {/* Third: Render luas_kandang_list array */}
         {data.luas_kandang_list && Array.isArray(data.luas_kandang_list) && (
           <div className="border-b border-gray-200 pb-3">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-2">Luas Kandang (m²)</p>
+            <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-2">Luas Kandang (mÂ²)</p>
             <div className="space-y-2 pl-2">
               {data.luas_kandang_list.map((luas, index) => (
                 <p key={index} className="text-base text-gray-900">
-                  • Kandang {index + 1}: {luas} m²
+                  â€¢ Kandang {index + 1}: {luas} mÂ²
                 </p>
               ))}
             </div>
@@ -524,7 +525,7 @@ export default function DetailLaporan() {
         {/* Keterangan - displayed at bottom */}
         {data.keterangan && (
           <div className="border-b border-gray-200 pb-3">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Keterangan</p>
+            <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">Keterangan</p>
             <p className="text-base text-gray-900 break-words whitespace-pre-wrap">{data.keterangan}</p>
           </div>
         )}
@@ -532,7 +533,7 @@ export default function DetailLaporan() {
         {/* Catatan - displayed last */}
         {data.catatan && (
           <div className="border-b border-gray-200 pb-3 last:border-0">
-            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">Catatan</p>
+            <p className="text-sm font-medium text-gray-700 uppercase tracking-wide mb-1">Catatan</p>
             <p className="text-base text-gray-900 break-words whitespace-pre-wrap">{data.catatan}</p>
           </div>
         )}
@@ -570,16 +571,17 @@ export default function DetailLaporan() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            {laporan.jenis === 'Kelahiran' && (
-              <div className="flex gap-3">
+            {/* Action Buttons - Show for Kelahiran reports */}
+            {(laporan.jenis === 'Kelahiran' || laporan.jenis?.toLowerCase() === 'kelahiran') && (
+              <div className="flex flex-wrap gap-3 mt-4">
                 <button
                   onClick={handleDownloadSertifikat}
                   disabled={downloading}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-semibold rounded-lg transition"
+                  title="Unduh sertifikat dalam format PDF"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition"
                 >
                   <Download size={18} />
-                  {downloading ? 'Mengunduh...' : 'Download Sertifikat'}
+                  {downloading ? 'Memproses...' : 'Download Sertifikat'}
                 </button>
               </div>
             )}
@@ -591,11 +593,11 @@ export default function DetailLaporan() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {/* Tanggal */}
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                  <Calendar className="text-emerald-600" size={24} />
+                <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+                  <Calendar className="text-primary-600" size={24} />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Tanggal Laporan</p>
+                  <p className="text-xs font-medium text-gray-700 uppercase tracking-wide">Tanggal Laporan</p>
                   <p className="text-lg font-bold text-gray-900 mt-1">
                     {formatDate(laporan.tanggal)}
                   </p>
@@ -605,11 +607,11 @@ export default function DetailLaporan() {
               {/* Kelompok (if exists) */}
               {laporan.kelompok && (
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center flex-shrink-0">
-                    <User className="text-teal-600" size={24} />
+                  <div className="w-12 h-12 rounded-lg bg-success-100 flex items-center justify-center flex-shrink-0">
+                    <User className="text-success-600" size={24} />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Kelompok</p>
+                    <p className="text-xs font-medium text-gray-700 uppercase tracking-wide">Kelompok</p>
                     <p className="text-lg font-bold text-gray-900 mt-1">
                       {laporan.kelompok}
                     </p>
@@ -620,16 +622,16 @@ export default function DetailLaporan() {
               {/* User (if exists) */}
               {laporan.full_name && (
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <User className="text-blue-600" size={24} />
+                  <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+                    <User className="text-primary-600" size={24} />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Pembuat Laporan</p>
+                    <p className="text-xs font-medium text-gray-700 uppercase tracking-wide">Pembuat Laporan</p>
                     <p className="text-lg font-bold text-gray-900 mt-1">
                       {laporan.full_name}
                     </p>
                     {laporan.username && (
-                      <p className="text-sm text-gray-600 mt-1">@{laporan.username}</p>
+                      <p className="text-sm text-gray-700 mt-1">@{laporan.username}</p>
                     )}
                   </div>
                 </div>
@@ -639,20 +641,20 @@ export default function DetailLaporan() {
             {/* Data Details */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <FileText className="text-emerald-600" size={20} />
+                <FileText className="text-primary-600" size={20} />
                 <h2 className="text-2xl font-bold text-gray-900">Detail Data</h2>
               </div>
               <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                 {renderDataDetails()}
                 {Object.keys(laporan.data || {}).filter(k => k !== 'kategori').length === 0 && (
-                  <p className="text-gray-600 italic">Tidak ada data tambahan</p>
+                  <p className="text-gray-700 italic">Tidak ada data tambahan</p>
                 )}
               </div>
             </div>
 
             {/* Created At */}
             <div className="pt-4 border-t border-gray-200">
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-gray-700">
                 Dibuat pada: {new Date(laporan.created_at || laporan.createdAt).toLocaleString('id-ID')}
               </p>
             </div>
@@ -662,3 +664,5 @@ export default function DetailLaporan() {
     </div>
   );
 }
+
+

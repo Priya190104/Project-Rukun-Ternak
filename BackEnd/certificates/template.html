@@ -4,31 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sertifikat Kelahiran Ternak</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="certificate-wrapper">
-        <!-- BACKGROUND FULL PAGE -->
+        <!-- BACKGROUND TEMPLATE LENGKAP -->
         <div class="certificate-background">
-            <img src="assets/background.png" alt="Background" class="bg-image">
+            <img src="assets/image1.png" alt="Certificate Background" class="bg-image full-template">
         </div>
 
-        <!-- CONTENT OVERLAY -->
-        <div class="certificate-content">
-            <!-- Header Section - Centered -->
-            <div class="header">
-                <div class="header-center">
-                    <img src="assets/logo-baznas.png" alt="Logo BAZNAS" class="logo">
-                    <div class="program-title">Program Cilacap Makmur</div>
-                    <div class="program-subtitle">Rukun Ternak</div>
-                </div>
-            </div>
+        <!-- DECORATIVE ASSETS -->
+        <!-- Logo di kanan atas -->
+        <img src="assets/logo.png" alt="BAZNAS Logo" class="logo-header">
+        
+        <!-- Gambar hewan di bawah -->
+        <img src="assets/Picture1.png" alt="Ternak Kiri" class="ternak-left">
+        <img src="assets/Picture2.png" alt="Ternak Kanan" class="ternak-right">
+        
+        <!-- Rumput dekoratif di bawah -->
+        <img src="assets/Picture3.png" alt="Rumput Dekoratif" class="grass-decoration">
 
-            <!-- Main Title -->
-            <div class="section-title">
-                CATATAN KELAHIRAN TERNAK
+        <!-- DATA OVERLAY - Text yang akan di-inject -->
+        <div class="certificate-content data-overlay">
+            <!-- JUDUL SERTIFIKAT -->
+            <div class="certificate-title1">
+                <h1 class="title-text">Program Cilacap Makmur</h1>
+                <br>
+                <h1 class="title-text">Rukun Ternak</h1>
             </div>
-
+            <div class="certificate-title2">
+                <h1 class="title-text">Catatan Kelahiran Ternak</h1>
+            </div>
             <!-- Header Info Section - Kelompok & Peternak -->
             <div class="header-info">
                 <div class="header-column">
@@ -36,11 +43,6 @@
                         <span class="label">Nama Kelompok</span>
                         <span class="colon">:</span>
                         <span class="value">{{namaKelompok}}</span>
-                    </div>
-                    <div class="data-item header-item">
-                        <span class="label">Peternak</span>
-                        <span class="colon">:</span>
-                        <span class="value">{{peternak}}</span>
                     </div>
                 </div>
             </div>
@@ -69,11 +71,6 @@
                         <span class="value">{{jenisKelamin}}</span>
                     </div>
                     <div class="data-item left-items">
-                        <span class="label">Warna</span>
-                        <span class="colon">:</span>
-                        <span class="value">{{warna}}</span>
-                    </div>
-                    <div class="data-item left-items">
                         <span class="label">Ras</span>
                         <span class="colon">:</span>
                         <span class="value">{{ras}}</span>
@@ -96,15 +93,16 @@
                 </div>
             </div>
 
-            <!-- Footer Background -->
-            <div class="footer-background">
-                <img src="assets/background-footer.png" alt="Footer" class="footer-bg-img">
+            <!-- Signature Date Section -->
+            <div class="signature-date-section">
+                <div class="signature-date-line">
+                    <span class="date-dots">...........,......................,...........</span>
+                </div>
+                <div class="signature-name-line">
+                    <span class="name-dots">..............................................</span>
+                </div>
             </div>
         </div>
-
-        <!-- TERNAK IMAGES - DECORATIVE OVERLAY (Direct child of wrapper) -->
-        <img src="assets/ternak1.png" alt="Ternak 1" class="ternak-left mirror">
-        <img src="assets/ternak2.png" alt="Ternak 2" class="ternak-right mirror">
     </div>
 </body>
 </html>

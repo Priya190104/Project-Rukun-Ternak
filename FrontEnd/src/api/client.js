@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getFromCache, setInCache } from '../hooks/useApiCache';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
@@ -27,10 +28,18 @@ client.interceptors.request.use(
   }
 );
 
-// Add response interceptor to handle errors
+// Add response interceptor to handle errors and implement caching
 client.interceptors.response.use(
   (response) => {
     console.log(`[API] Response ${response.status} from ${response.config.url}`);
+    
+    // Cache GET requests for 5 minutes
+    if (response.config.method === 'get') {
+      const cacheKey = `${response.config.url}`;
+      setInCache(cacheKey, response.data, 5 * 60 * 1000); // 5 minutes TTL
+      console.log(`[Cache] Stored response for ${cacheKey}`);
+    }
+    
     return response;
   },
   (error) => {

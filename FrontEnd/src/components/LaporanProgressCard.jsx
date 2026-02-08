@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import client from '../api/client';
 
 export default function LaporanProgressCard({ loading: parentLoading }) {
@@ -52,10 +52,10 @@ export default function LaporanProgressCard({ loading: parentLoading }) {
 
   // Extract data from laporan
   const penyaluranItems = [
-    { label: 'Tanggal Penyaluran', value: data.tanggal_penyaluran || '-', icon: '📅' },
-    { label: 'Indukan', value: data.indukan || 'Belum', icon: '�' },
-    { label: 'Pejantan', value: data.pejantan || 'Belum', icon: '👨' },
-    { label: 'Kandang', value: data.kandang || 'Belum', icon: '🏠' },
+    { label: 'Tanggal Penyaluran', value: data.tanggal_penyaluran || '-', icon: 'ðŸ“…' },
+    { label: 'Indukan', value: data.indukan || 'Belum', icon: 'ï¿½' },
+    { label: 'Pejantan', value: data.pejantan || 'Belum', icon: 'ðŸ‘¨' },
+    { label: 'Kandang', value: data.kandang || 'Belum', icon: 'ðŸ ' },
   ];
 
 
@@ -75,7 +75,7 @@ export default function LaporanProgressCard({ loading: parentLoading }) {
             {penyaluranItems.map((item, i) => (
               <div key={i} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-50 rounded-lg border border-gray-200 hover:border-amber-300 transition">
                 <div>
-                  <p className="text-xs font-semibold text-gray-600 uppercase">{item.label}</p>
+                  <p className="text-xs font-semibold text-gray-700 uppercase">{item.label}</p>
                   <p className="text-lg font-bold text-gray-900 mt-1">{item.value}</p>
                 </div>
                 <span className="text-3xl">{item.icon}</span>
@@ -88,3 +88,4 @@ export default function LaporanProgressCard({ loading: parentLoading }) {
     </div>
   );
 }
+

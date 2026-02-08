@@ -7,6 +7,7 @@ const updateTernakController = require('../controllers/updateTernakController');
 // Middleware untuk user kelompok
 const kelompokOnly = RoleGuard(['kelompok']);
 const adminOnly = RoleGuard(['admin']);
+const adminOrViewer = RoleGuard(['admin', 'viewer']);
 
 // Attach user dan apply viewer read-only guard
 router.use(attachUser);
@@ -23,11 +24,11 @@ router.get('/hewan', requireAuth, kelompokOnly, hewanController.getHewanTernak);
 // Get detail hewan (KELOMPOK)
 router.get('/hewan/:id', requireAuth, kelompokOnly, hewanController.getDetailHewan);
 
-// Get list semua hewan ternak (ADMIN)
-router.get('/admin/hewan', requireAuth, adminOnly, hewanController.getAllHewanAdmin);
+// Get list semua hewan ternak (ADMIN & VIEWER - read-only)
+router.get('/admin/hewan', requireAuth, adminOrViewer, hewanController.getAllHewanAdmin);
 
-// Get detail hewan (ADMIN)
-router.get('/admin/hewan/:id', requireAuth, adminOnly, hewanController.getDetailHewanAdmin);
+// Get detail hewan (ADMIN & VIEWER - read-only)
+router.get('/admin/hewan/:id', requireAuth, adminOrViewer, hewanController.getDetailHewanAdmin);
 
 // Get dropdown hewan aktif (untuk form)
 router.get('/hewan-aktif', requireAuth, kelompokOnly, hewanController.getHewanAktif);

@@ -9,11 +9,8 @@
  */
 
 // Logo dapat di-import dari assets, atau gunakan URL publik
-// Opsi 1: Import dari file (jika sudah ada)
-// import LogoAsset from '../assets/logo/logo.png';
-
-// Opsi 2: Gunakan file dari public folder (recommended)
-const LOGO_PATH = process.env.PUBLIC_URL + '/logo.png';
+// Gunakan file dari public folder
+const LOGO_PATH = '/logo.webp';
 
 // Jika logo belum tersedia, gunakan placeholder
 const LogoAsset = LOGO_PATH;
@@ -33,14 +30,14 @@ export const BRANDING_CONFIG = {
   // Logo - Pastikan file ada di: FrontEnd/public/logo.png
   APP_LOGO: LogoAsset,
   
-  // Warna Brand (Emerald theme)
+  // Warna Brand (Blue theme)
   COLORS: {
-    primary: '#059669',      // emerald-600
-    primaryLight: '#d1fae5', // emerald-100
-    primaryDark: '#047857',  // emerald-700
-    secondary: '#14b8a6',    // teal-500
+    primary: '#2563eb',      // blue-600
+    primaryLight: '#dbeafe', // blue-100
+    primaryDark: '#1d4ed8',  // blue-700
+    secondary: '#0284c7',    // sky-600
     accent: '#0ea5e9',       // sky-500
-    success: '#10b981',      // green-600
+    success: '#3b82f6',      // blue-500
     error: '#ef4444',        // red-500
     warning: '#f59e0b',      // amber-500
     gray: '#6b7280',         // gray-500

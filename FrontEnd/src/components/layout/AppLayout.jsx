@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AppLogo from '../branding/AppLogo';
 import SupportedByLogo from '../branding/SupportedByLogo';
 import NotificationBell from '../notification/NotificationBell';
 import KelompokBadge from '../kelompok/KelompokBadge';
 import { useAuth } from '../../hooks/useAuth';
-import { Menu, X, LogOut, Home, FileText, Users, BarChart3, User, Image as ImageIcon, Heart } from 'lucide-react';
+import { Menu, X, LogOut, Home, FileText, Users, BarChart3, User, Heart } from 'lucide-react';
 
 export default function AppLayout({ children }) {
   const { user, appRole, logout, isAdmin } = useAuth();
@@ -34,8 +34,6 @@ export default function AppLayout({ children }) {
     { key: 'kelompok', label: 'Kelompok', to: '/kelompok', icon: Users },
     { key: 'analisis', label: 'Analisis', to: '/analisis', icon: BarChart3 },
     { key: 'pengguna', label: 'Pengguna', to: '/kelola-user', icon: User },
-    { key: 'berita', label: 'Kelola Berita', to: '/kelola-berita', icon: FileText },
-    { key: 'banner', label: 'Manajemen Banner', to: '/admin/banner', icon: ImageIcon },
   ];
 
   // Viewer menu is same as admin but with viewer-specific dashboard link
@@ -46,8 +44,6 @@ export default function AppLayout({ children }) {
     { key: 'kelompok', label: 'Kelompok', to: '/kelompok', icon: Users },
     { key: 'analisis', label: 'Analisis', to: '/analisis', icon: BarChart3 },
     { key: 'pengguna', label: 'Pengguna', to: '/kelola-user', icon: User },
-    { key: 'berita', label: 'Kelola Berita', to: '/kelola-berita', icon: FileText },
-    { key: 'banner', label: 'Manajemen Banner', to: '/admin/banner', icon: ImageIcon },
   ];
 
   const kelompokMenu = [
@@ -69,11 +65,11 @@ export default function AppLayout({ children }) {
       {/* Sidebar - Fixed positioning */}
       <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed left-0 top-0 w-64 h-screen bg-white border-r border-gray-200 z-40 transition-transform duration-300 flex flex-col`}>
         {/* Logo Section */}
-        <div className="bg-gradient-to-b from-emerald-700 to-emerald-100 py-4 px-6 text-white flex flex-col items-center justify-center gap-2 flex-shrink-0">
+        <div className="bg-gradient-to-b from-primary-400 to-primary-100 py-4 px-6 text-white flex flex-col items-center justify-center gap-2 flex-shrink-0">
           <Link to="/" className="hover:opacity-90 transition">
-            <AppLogo size="3xl" variant="icon" />
+            <AppLogo size="2xl" variant="icon" />
           </Link>
-          <SupportedByLogo mainLogoSize={100} />
+          <SupportedByLogo size="sm" />
         </div>
 
         {/* Navigation - Independent scroll */}
@@ -90,7 +86,7 @@ export default function AppLayout({ children }) {
                 onClick={(e) => handleMenuClick(e, m.key)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
                   active
-                    ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                    ? 'bg-primary-100 text-primary-600 shadow-sm'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -105,7 +101,7 @@ export default function AppLayout({ children }) {
         <div className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition font-medium text-sm"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-danger-50 text-danger hover:bg-danger-100 hover:text-danger transition font-medium text-sm"
           >
             <LogOut size={18} />
             Logout
@@ -144,7 +140,7 @@ export default function AppLayout({ children }) {
                   <div className="text-right">
                     <div className="text-sm font-semibold text-gray-900">{user.full_name || user.username}</div>
                     <div className="text-xs text-gray-500">
-                      {user.username} • {appRole === 'admin' ? 'Admin' : appRole === 'viewer' ? '🔒 Viewer' : 'Kelompok'}
+                      {user.username} • {appRole === 'admin' ? 'Admin' : appRole === 'viewer' ? '👁 Viewer' : 'Kelompok'}
                     </div>
                   </div>
                 </div>
@@ -177,10 +173,10 @@ export default function AppLayout({ children }) {
             <div className="p-6 text-center">
               <div className="text-5xl mb-4">🔧</div>
               <h2 className="text-xl font-bold text-gray-900 mb-2">Fitur akan segera hadir</h2>
-              <p className="text-gray-600 mb-6">Menu Analisis sedang dalam pengembangan. Kami akan menghadirkan fitur ini segera.</p>
+              <p className="text-gray-700 mb-6">Menu Analisis sedang dalam pengembangan. Kami akan menghadirkan fitur ini segera.</p>
               <button
                 onClick={() => setShowAnalisisAlert(false)}
-                className="w-full px-4 py-2.5 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition"
+                className="w-full px-4 py-2.5 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition"
               >
                 Mengerti
               </button>
@@ -191,3 +187,4 @@ export default function AppLayout({ children }) {
     </div>
   );
 }
+

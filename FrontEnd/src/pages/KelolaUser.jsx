@@ -1,42 +1,51 @@
-import React, { useEffect, useState } from 'react';
-import { Search, UserPlus, Eye, Edit2, Trash2, Users } from 'lucide-react';
+﻿import React, { useEffect, useState } from 'react';
+import { Search, UserPlus, Trash2 } from 'lucide-react';
 import client from '../api/client';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
 import AddUserModal from '../components/user/AddUserModal';
+import { useCachedData, useInvalidateCache } from '../hooks/useCachedData';
+import { useAuth } from '../hooks/useAuth';
 
 export default function KelolaUser() {
+  const { appRole } = useAuth();
+  const invalidate = useInvalidateCache();
+  
+  // Fetch users dengan caching (5 menit TTL)
+  const { data: cachedUsers, refetch: refetchUsers } = useCachedData(
+    '/api/users',
+    ['/api/users'],
+    { ttl: 5 * 60 * 1000 }
+  );
+  
+  // Fetch kelompok dengan caching (15 menit TTL)
+  const { data: cachedKelompok } = useCachedData(
+    '/api/kelompok',
+    ['/api/kelompok'],
+    { ttl: 15 * 60 * 1000 }
+  );
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [kelompokList, setKelompokList] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Sync users data
   useEffect(() => {
-    fetchData();
-    fetchKelompok();
-  }, []);
-
-  const fetchKelompok = async () => {
-    try {
-      const res = await client.get('/api/kelompok');
-      setKelompokList(res.data?.data || []);
-    } catch (err) {
-      console.warn('Failed to load kelompok', err.message || err);
-      setKelompokList([]);
+    if (cachedUsers) {
+      const data = Array.isArray(cachedUsers) ? cachedUsers : (cachedUsers?.data || []);
+      setUsers(data);
+      setFiltered(data);
     }
-  };
+  }, [cachedUsers]);
 
-  const fetchData = async () => {
-    try {
-      const res = await client.get('/api/users');
-      setUsers(res.data?.data || []);
-      setFiltered(res.data?.data || []);
-    } catch (err) {
-      console.warn('Failed to load users', err.message || err);
-      setUsers([]);
-      setFiltered([]);
+  // Sync kelompok data
+  useEffect(() => {
+    if (cachedKelompok) {
+      const data = Array.isArray(cachedKelompok) ? cachedKelompok : (cachedKelompok?.data || []);
+      setKelompokList(data);
     }
-  };
+  }, [cachedKelompok]);
 
 
 
@@ -59,7 +68,8 @@ export default function KelolaUser() {
   const changeRole = async (userId, role) => {
     try {
       await client.put(`/api/users/${userId}/role`, { role });
-      fetchData();
+      invalidate('/api/users');
+      refetchUsers();
     } catch (err) {
       console.warn('Failed to update role', err.message || err);
     }
@@ -68,7 +78,8 @@ export default function KelolaUser() {
   const changeKelompok = async (userId, kelompok) => {
     try {
       await client.put(`/api/users/${userId}/kelompok`, { kelompok });
-      fetchData();
+      invalidate('/api/users');
+      refetchUsers();
     } catch (err) {
       console.warn('Failed to update kelompok', err.message || err);
     }
@@ -78,7 +89,8 @@ export default function KelolaUser() {
     if (!window.confirm('Hapus pengguna ini?')) return;
     try {
       await client.delete(`/api/users/${userId}`);
-      fetchData();
+      invalidate('/api/users');
+      refetchUsers();
     } catch (err) {
       console.warn('Failed to delete user', err.message || err);
     }
@@ -99,23 +111,23 @@ export default function KelolaUser() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="text-4xl font-bold text-gray-900">{users.length}</div>
-          <div className="text-sm font-medium text-gray-600 mt-2">Total</div>
+          <div className="text-sm font-medium text-gray-700 mt-2">Total</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="text-4xl font-bold text-purple-600">{adminCount}</div>
-          <div className="text-sm font-medium text-gray-600 mt-2">Admin</div>
+          <div className="text-4xl font-bold text-info">{adminCount}</div>
+          <div className="text-sm font-medium text-gray-700 mt-2">Admin</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="text-4xl font-bold text-emerald-600">{kelompokCount}</div>
-          <div className="text-sm font-medium text-gray-600 mt-2">Kelompok</div>
+          <div className="text-4xl font-bold text-primary-600">{kelompokCount}</div>
+          <div className="text-sm font-medium text-gray-700 mt-2">Kelompok</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="text-4xl font-bold text-blue-600">{viewerCount}</div>
-          <div className="text-sm font-medium text-gray-600 mt-2">Viewer</div>
+          <div className="text-4xl font-bold text-primary-600">{viewerCount}</div>
+          <div className="text-sm font-medium text-gray-700 mt-2">Viewer</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="text-4xl font-bold text-yellow-600">{pendingCount}</div>
-          <div className="text-sm font-medium text-gray-600 mt-2">Belum Diatur</div>
+          <div className="text-sm font-medium text-gray-700 mt-2">Belum Diatur</div>
         </div>
       </div>
 
@@ -129,13 +141,18 @@ export default function KelolaUser() {
               placeholder="Cari nama, email, atau kelompok..."
               value={searchTerm}
               onChange={handleSearch}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium flex items-center justify-center gap-2 whitespace-nowrap"
-            title="Tambah pengguna baru"
+            disabled={appRole === 'viewer'}
+            className={`px-4 py-2 rounded-lg transition font-medium flex items-center justify-center gap-2 whitespace-nowrap ${
+              appRole === 'viewer'
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-primary-600 text-white hover:bg-primary-700'
+            }`}
+            title={appRole === 'viewer' ? 'Viewer tidak dapat menambah pengguna' : 'Tambah pengguna baru'}
           >
             <UserPlus size={18} />
             Tambah Pengguna
@@ -169,8 +186,8 @@ export default function KelolaUser() {
                 {filtered.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{user.full_name || user.username}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{user.username}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-gray-700">{user.username}</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">
                       <select
                         value={user.kelompok_id || ''}
                         onChange={(e) => changeKelompok(user.id, e.target.value || null)}
@@ -198,23 +215,14 @@ export default function KelolaUser() {
                     <td className="px-6 py-4 text-sm">
                       <div className="flex gap-2 items-center">
                         <button 
-                          title="Fitur detail pengguna sedang dalam pengembangan"
-                          disabled
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button 
-                          title="Fitur edit pengguna sedang dalam pengembangan"
-                          disabled
-                          className="p-2 text-amber-600 hover:bg-amber-50 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button 
-                          title="Hapus"
+                          title={appRole === 'viewer' ? 'Viewer tidak dapat menghapus pengguna' : 'Hapus'}
                           onClick={() => removeUser(user.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded transition"
+                          disabled={appRole === 'viewer'}
+                          className={`p-2 rounded transition ${
+                            appRole === 'viewer'
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : 'text-danger hover:bg-danger-50'
+                          }`}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -232,9 +240,10 @@ export default function KelolaUser() {
       <AddUserModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onUserAdded={fetchData}
+        onUserAdded={refetchUsers}
         kelompokList={kelompokList}
       />
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { AlertCircle } from 'lucide-react';
 
 export default class ErrorBoundary extends React.Component {
@@ -19,9 +19,9 @@ export default class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 p-6 rounded-lg">
-          <AlertCircle className="w-12 h-12 text-red-600 mb-3" />
+          <AlertCircle className="w-12 h-12 text-danger mb-3" />
           <h3 className="text-lg font-bold text-red-800 mb-2">Peta tidak dapat dimuat</h3>
-          <p className="text-sm text-red-700 text-center max-w-xs">
+          <p className="text-sm text-danger text-center max-w-xs">
             Terjadi kesalahan saat memuat peta. Coba refresh halaman atau kembali lagi nanti.
           </p>
         </div>
@@ -31,3 +31,4 @@ export default class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+

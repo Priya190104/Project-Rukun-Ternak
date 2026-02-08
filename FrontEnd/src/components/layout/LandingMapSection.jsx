@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Loader } from 'lucide-react';
 import client from '../../api/client';
 import MapSebaranKelompok from '../kelompok/MapSebaranKelompok';
@@ -41,17 +41,17 @@ export default function LandingMapSection() {
 
   if (loading) {
     return (
-      <section className="mt-16 bg-white/80 border border-emerald-100 rounded-3xl shadow-lg p-8">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold">
+      <section className="mt-16 bg-white/80 border border-primary-100 rounded-3xl shadow-lg p-8">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-primary-600 text-white flex items-center justify-center text-xl font-bold">
             📍
           </div>
           <h2 className="text-3xl font-bold">Peta Sebaran Kelompok Rukun Ternak</h2>
         </div>
         <div className="flex items-center justify-center py-16">
           <div className="text-center">
-            <Loader size={40} className="animate-spin text-emerald-600 mx-auto mb-3" />
-            <p className="text-gray-600">Memuat data kelompok...</p>
+            <Loader size={40} className="animate-spin text-primary-600 mx-auto mb-3" />
+            <p className="text-gray-700">Memuat data kelompok...</p>
           </div>
         </div>
       </section>
@@ -60,16 +60,16 @@ export default function LandingMapSection() {
 
   if (error) {
     return (
-      <section className="mt-16 bg-white/80 border border-emerald-100 rounded-3xl shadow-lg p-8">
+      <section className="mt-16 bg-white/80 border border-primary-100 rounded-3xl shadow-lg p-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold">
+          <div className="w-12 h-12 rounded-2xl bg-primary-600 text-white flex items-center justify-center text-xl font-bold">
             📍
           </div>
           <h2 className="text-3xl font-bold">Peta Sebaran Kelompok Rukun Ternak</h2>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-danger-50 border border-danger-100 rounded-lg p-4">
           <p className="text-red-800 font-medium">⚠️ Terjadi kesalahan</p>
-          <p className="text-red-700 text-sm mt-1">{error}</p>
+          <p className="text-danger text-sm mt-1">{error}</p>
         </div>
       </section>
     );
@@ -77,17 +77,17 @@ export default function LandingMapSection() {
 
   if (kelompokWithLocation.length === 0) {
     return (
-      <section className="mt-16 bg-white/80 border border-emerald-100 rounded-3xl shadow-lg p-8">
+      <section className="mt-16 bg-white/80 border border-primary-100 rounded-3xl shadow-lg p-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold">
+          <div className="w-12 h-12 rounded-2xl bg-primary-300 text-white flex items-center justify-center text-xl font-bold">
             📍
           </div>
           <h2 className="text-3xl font-bold">Peta Sebaran Kelompok Rukun Ternak</h2>
         </div>
-        <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-12 text-center">
+        <div className="bg-primary-50 border border-primary-100 rounded-lg p-12 text-center">
           <div className="text-5xl mb-4">📍</div>
           <h3 className="text-xl font-bold text-gray-800 mb-2">Belum Ada Data Lokasi Kelompok</h3>
-          <p className="text-gray-600">
+          <p className="text-gray-700">
             Data lokasi kelompok akan ditampilkan setelah kelompok menentukan posisi mereka.
           </p>
         </div>
@@ -96,9 +96,9 @@ export default function LandingMapSection() {
   }
 
   return (
-    <section className="mt-16 bg-white/80 border border-emerald-100 rounded-3xl shadow-lg p-8">
+    <section className="mt-16 bg-white/80 border border-primary-100 rounded-3xl shadow-lg p-8">
       <div className="flex items-center gap-3 mb-8">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl font-bold">
+        <div className="w-12 h-12 rounded-2xl bg-primary-600 text-white flex items-center justify-center text-xl font-bold">
           📍
         </div>
         <h2 className="text-3xl font-bold">Peta Sebaran Kelompok Rukun Ternak</h2>
@@ -117,8 +117,8 @@ export default function LandingMapSection() {
           </div>
 
           {/* Map info */}
-          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-sm text-emerald-800">
-            <p className="font-medium mb-1">📌 Informasi Peta</p>
+          <div className="mt-4 bg-primary-50 border border-primary-200 rounded-lg p-4 text-sm text-primary-800">
+            <p className="font-medium mb-1">ℹ️ Informasi Peta</p>
             <ul className="text-xs space-y-1">
               <li>• Klik marker untuk melihat informasi kelompok</li>
               <li>• Gunakan scroll untuk zoom in/out</li>
@@ -140,3 +140,4 @@ export default function LandingMapSection() {
     </section>
   );
 }
+

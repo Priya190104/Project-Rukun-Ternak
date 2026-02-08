@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Users, Search, Phone, MapPin, User, Mail, MapPinIcon, Plus, Map, Eye, Edit2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
@@ -6,10 +6,16 @@ import AdminPageHeader from '../components/admin/AdminPageHeader';
 import AddKelompokModalWithMap from '../components/kelompok/AddKelompokModalWithMap';
 import AlertModal from '../components/common/AlertModal';
 import { useAuth } from '../hooks/useAuth';
+import { useCachedData, useInvalidateCache } from '../hooks/useCachedData';
 
 export default function ListKelompok() {
   const navigate = useNavigate();
   const { appRole } = useAuth();
+  const invalidate = useInvalidateCache();
+  
+  // Fetch data dengan automatic caching
+  const { data: cachedKelompok, loading, refetch } = useCachedData('/api/kelompok');
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [kelompok, setKelompok] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -17,32 +23,20 @@ export default function ListKelompok() {
   const [modalMode, setModalMode] = useState('add');
   const [editingKelompok, setEditingKelompok] = useState(null);
   const [notif, setNotif] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [filterDesa, setFilterDesa] = useState('');
   const [filterKecamatan, setFilterKecamatan] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [alert, setAlert] = useState({ isOpen: false, type: 'success', title: '', message: '' });
 
+  // Update kelompok ketika cached data berubah
   useEffect(() => {
-    fetchKelompok();
-  }, []);
-
-  const fetchKelompok = async () => {
-    try {
-      setLoading(true);
-      const res = await client.get('/api/kelompok');
-      const list = res.data?.data || [];
+    if (cachedKelompok) {
+      const list = cachedKelompok?.data || cachedKelompok || [];
       setKelompok(list);
       setFiltered(list);
-    } catch (err) {
-      console.warn('Failed to load kelompok', err.message || err);
-      setKelompok([]);
-      setFiltered([]);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [cachedKelompok]);
 
   const handleSearch = (e) => {
     const value = e.target.value.toLowerCase();
@@ -81,7 +75,7 @@ export default function ListKelompok() {
     setFiltered(result);
   };
 
-  const showNotif = (type, message) => {
+  const _showNotif = (type, message) => {
     setNotif({ type, message });
     setTimeout(() => setNotif(null), 3000);
   };
@@ -117,8 +111,11 @@ export default function ListKelompok() {
       });
       
       setDeleteConfirmation(null);
+      
+      // Invalidate cache dan refresh data
+      invalidate('/api/kelompok');
       setTimeout(() => {
-        fetchKelompok();
+        refetch();
       }, 2000);
     } catch (err) {
       console.error('Delete kelompok failed', err);
@@ -157,7 +154,7 @@ export default function ListKelompok() {
                   setEditingKelompok(null);
                   setIsModalOpen(true);
                 }}
-                className="px-6 py-3 bg-white text-emerald-600 rounded-lg hover:bg-gray-50 transition font-semibold flex items-center gap-2 justify-center"
+                className="px-6 py-3 bg-white text-primary-600 rounded-lg hover:bg-gray-50 transition font-semibold flex items-center gap-2 justify-center"
               >
                 <Plus size={18} />
                 Tambah Kelompok
@@ -177,27 +174,27 @@ export default function ListKelompok() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="text-2xl sm:text-3xl font-bold text-emerald-600">{kelompok.length}</div>
-          <div className="text-xs sm:text-sm font-medium text-gray-600 mt-1 sm:mt-2">Total Kelompok</div>
+          <div className="text-2xl sm:text-3xl font-bold text-primary-600">{kelompok.length}</div>
+          <div className="text-xs sm:text-sm font-medium text-gray-700 mt-1 sm:mt-2">Total Kelompok</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="text-2xl sm:text-3xl font-bold text-blue-600">{kecamatanList.length}</div>
-          <div className="text-xs sm:text-sm font-medium text-gray-600 mt-1 sm:mt-2">Kecamatan</div>
+          <div className="text-2xl sm:text-3xl font-bold text-primary-600">{kecamatanList.length}</div>
+          <div className="text-xs sm:text-sm font-medium text-gray-700 mt-1 sm:mt-2">Kecamatan</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <div className="text-2xl sm:text-3xl font-bold text-purple-600">{desaList.length}</div>
-          <div className="text-xs sm:text-sm font-medium text-gray-600 mt-1 sm:mt-2">Desa</div>
+          <div className="text-2xl sm:text-3xl font-bold text-info">{desaList.length}</div>
+          <div className="text-xs sm:text-sm font-medium text-gray-700 mt-1 sm:mt-2">Desa</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <div className="text-2xl sm:text-3xl font-bold text-orange-600">{filtered.length}</div>
-          <div className="text-xs sm:text-sm font-medium text-gray-600 mt-1 sm:mt-2">Tampil</div>
+          <div className="text-xs sm:text-sm font-medium text-gray-700 mt-1 sm:mt-2">Tampil</div>
         </div>
       </div>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 space-y-4">
         <div className="flex items-center gap-2 mb-4">
-          <Search size={18} className="text-gray-600" />
+          <Search size={18} className="text-gray-700" />
           <h3 className="font-semibold text-gray-900">Filter & Cari</h3>
         </div>
 
@@ -253,9 +250,9 @@ export default function ListKelompok() {
               setFilterDesa('');
               setFiltered(kelompok);
             }}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
           >
-            ✕ Hapus Semua Filter
+            âœ• Hapus Semua Filter
           </button>
         )}
       </div>
@@ -263,12 +260,12 @@ export default function ListKelompok() {
       {/* Kelompok Cards */}
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="text-gray-600">Loading...</div>
+          <div className="text-gray-700">Loading...</div>
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 sm:p-12 text-center">
           <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-600">
+          <p className="text-gray-700">
             {kelompok.length === 0
               ? 'Belum ada kelompok terdaftar'
               : 'Tidak ada kelompok sesuai filter yang dipilih'}
@@ -282,16 +279,16 @@ export default function ListKelompok() {
               className="bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden"
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-gray-200">
+              <div className="bg-gradient-to-r from-primary-50 to-primary-100 px-6 py-4 border-b border-gray-200">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3 flex-1">
-                    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-blue-600 text-white">
+                    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-primary-600 text-white">
                       <Users size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-gray-900 truncate">{kelompokItem.name || '-'}</h3>
                       {kelompokItem.email && (
-                        <div className="flex items-center gap-1 text-xs text-gray-600 mt-1">
+                        <div className="flex items-center gap-1 text-xs text-gray-700 mt-1">
                           <Mail size={12} />
                           <span className="truncate">{kelompokItem.email}</span>
                         </div>
@@ -305,18 +302,18 @@ export default function ListKelompok() {
               <div className="px-6 py-4 space-y-2 border-b border-gray-200">
                 {kelompokItem.kecamatan && (
                   <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <MapPin size={16} className="text-blue-600 flex-shrink-0" />
+                    <MapPin size={16} className="text-primary-600 flex-shrink-0" />
                     <span className="font-medium">{kelompokItem.kecamatan}</span>
                   </div>
                 )}
                 {kelompokItem.desa && (
                   <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <MapPinIcon size={16} className="text-emerald-600 flex-shrink-0" />
+                    <MapPinIcon size={16} className="text-primary-600 flex-shrink-0" />
                     <span>{kelompokItem.desa}</span>
                   </div>
                 )}
                 {kelompokItem.catatan && (
-                  <div className="text-xs text-gray-600 italic mt-2 p-2 bg-gray-50 rounded">
+                  <div className="text-xs text-gray-700 italic mt-2 p-2 bg-gray-50 rounded">
                     {`"${kelompokItem.catatan}"`}
                   </div>
                 )}
@@ -326,16 +323,16 @@ export default function ListKelompok() {
               <div className="px-6 py-4 space-y-3">
                 {/* PIC 1 */}
                 {(kelompokItem.pic1Nama || kelompokItem.pic1NoHp) && (
-                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <div className="bg-primary-50 rounded-lg p-3 border border-primary-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <User size={14} className="text-blue-600" />
-                      <span className="text-xs font-semibold text-blue-600">PENANGGUNG JAWAB 1</span>
+                      <User size={14} className="text-primary-600" />
+                      <span className="text-xs font-semibold text-primary-600">PENANGGUNG JAWAB 1</span>
                     </div>
                     {kelompokItem.pic1Nama && (
                       <div className="text-sm font-semibold text-gray-900">{kelompokItem.pic1Nama}</div>
                     )}
                     {kelompokItem.pic1NoHp && (
-                      <div className="flex items-center gap-1 text-xs text-gray-600 mt-1">
+                      <div className="flex items-center gap-1 text-xs text-gray-700 mt-1">
                         <Phone size={12} />
                         {kelompokItem.pic1NoHp}
                       </div>
@@ -349,7 +346,7 @@ export default function ListKelompok() {
                 <button
                   onClick={() => navigate(`/kelompok/${kelompokItem.id}`)}
                   title="Lihat detail"
-                  className="p-2 text-blue-600 hover:bg-blue-100 rounded transition"
+                  className="p-2 text-primary-600 hover:bg-primary-100 rounded transition"
                 >
                   <Eye size={18} />
                 </button>
@@ -358,14 +355,14 @@ export default function ListKelompok() {
                     <button
                       onClick={() => openEditModal(kelompokItem)}
                       title="Edit kelompok"
-                      className="p-2 text-amber-600 hover:bg-amber-100 rounded transition"
+                      className="p-2 text-warning hover:bg-warning-100 rounded transition"
                     >
                       <Edit2 size={18} />
                     </button>
                     <button
                       onClick={() => handleDelete(kelompokItem.id)}
                       title="Hapus kelompok"
-                      className="p-2 text-red-600 hover:bg-red-100 rounded transition"
+                      className="p-2 text-danger hover:bg-danger-100 rounded transition"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -380,7 +377,7 @@ export default function ListKelompok() {
       {/* Notifications */}
       {notif && (
         <div className={`fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg text-white z-50 animate-pulse ${
-          notif.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+          notif.type === 'success' ? 'bg-primary-600' : 'bg-danger'
         }`}>
           {notif.message}
         </div>
@@ -390,7 +387,7 @@ export default function ListKelompok() {
       {deleteConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="bg-red-50 border-b border-red-200 px-6 py-4">
+            <div className="bg-danger-50 border-b border-danger-100 px-6 py-4">
               <h3 className="text-lg font-bold text-red-900">
                 Hapus Kelompok "{deleteConfirmation.name}"?
               </h3>
@@ -407,7 +404,7 @@ export default function ListKelompok() {
                 Jika kelompok ini dihapus, data berikut akan ikut terhapus:
               </p>
               
-              <ul className="text-sm text-gray-600 space-y-1 ml-4 list-disc">
+              <ul className="text-sm text-gray-700 space-y-1 ml-4 list-disc">
                 <li>Semua data hewan ternak kelompok ini</li>
                 <li>Semua laporan kelahiran dan kematian</li>
                 <li>Semua data penyaluran & bantuan</li>
@@ -415,7 +412,7 @@ export default function ListKelompok() {
                 <li>Semua riwayat dan data terkait lainnya</li>
               </ul>
 
-              <p className="text-sm text-red-700 font-semibold">
+              <p className="text-sm text-danger font-semibold">
                 Pastikan Anda benar-benar ingin menghapus kelompok ini beserta semua datanya.
               </p>
             </div>
@@ -431,7 +428,7 @@ export default function ListKelompok() {
               <button
                 onClick={() => handleDelete(deleteConfirmation.id)}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 bg-danger text-white rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isDeleting ? (
                   <>
@@ -451,7 +448,11 @@ export default function ListKelompok() {
       <AddKelompokModalWithMap
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onKelompokAdded={fetchKelompok}
+        onKelompokAdded={() => {
+          // Invalidate cache dan refresh
+          invalidate('/api/kelompok');
+          refetch();
+        }}
         mode={modalMode}
         initialData={editingKelompok}
       />
@@ -468,4 +469,5 @@ export default function ListKelompok() {
     </div>
   );
 }
+
 

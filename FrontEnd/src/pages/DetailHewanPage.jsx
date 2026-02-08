@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import client from '../api/client';
@@ -13,8 +13,8 @@ export default function DetailHewanPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Support both admin and kelompok roles
-    if (appRole !== 'kelompok' && appRole !== 'admin') {
+    // Support admin, kelompok, and viewer roles
+    if (appRole !== 'kelompok' && appRole !== 'admin' && appRole !== 'viewer') {
       setError('Akses ditolak. Halaman ini hanya untuk user kelompok atau admin.');
       setLoading(false);
       return;
@@ -79,8 +79,8 @@ export default function DetailHewanPage() {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center">
-          <Loader className="w-12 h-12 text-emerald-600 mx-auto mb-3 animate-spin" />
-          <p className="text-gray-600">Memuat detail hewan...</p>
+          <Loader className="w-12 h-12 text-primary-600 mx-auto mb-3 animate-spin" />
+          <p className="text-gray-700">Memuat detail hewan...</p>
         </div>
       </div>
     );
@@ -90,12 +90,12 @@ export default function DetailHewanPage() {
     return (
       <div className="min-h-screen bg-gray-50 py-6 px-4">
         <div className="max-w-2xl mx-auto">
-          <Link to={appRole === 'admin' ? "/admin/hewan-ternak" : "/hewan-ternak"} className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 mb-6 font-semibold">
+          <Link to={appRole === 'admin' ? "/admin/hewan-ternak" : "/hewan-ternak"} className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 mb-6 font-semibold">
             <ArrowLeft className="w-4 h-4" />
             Kembali
           </Link>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex gap-3">
-            <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
+          <div className="bg-danger-50 border border-danger-100 rounded-lg p-6 flex gap-3">
+            <AlertCircle className="w-6 h-6 text-danger flex-shrink-0" />
             <div>
               <p className="text-red-900 font-semibold">{error || 'Hewan tidak ditemukan'}</p>
             </div>
@@ -107,9 +107,9 @@ export default function DetailHewanPage() {
 
   const getStatusColor = (status) => {
     const colors = {
-      'AKTIF': 'text-green-700 bg-green-50',
-      'MATI': 'text-red-700 bg-red-50',
-      'TERJUAL': 'text-blue-700 bg-blue-50'
+      'AKTIF': 'text-primary-700 bg-primary-50',
+      'MATI': 'text-danger bg-danger-50',
+      'TERJUAL': 'text-primary-700 bg-primary-50'
     };
     return colors[status] || 'text-gray-700 bg-gray-50';
   };
@@ -117,9 +117,9 @@ export default function DetailHewanPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-6 px-4 sm:px-6">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-600 text-white py-6 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
-          <Link to={appRole === 'admin' ? "/admin/hewan-ternak" : "/hewan-ternak"} className="inline-flex items-center gap-2 text-emerald-50 hover:text-white mb-4 font-semibold transition">
+          <Link to={appRole === 'admin' ? "/admin/hewan-ternak" : "/hewan-ternak"} className="inline-flex items-center gap-2 text-primary-50 hover:text-white mb-4 font-semibold transition">
             <ArrowLeft className="w-4 h-4" />
             Kembali
           </Link>
@@ -137,7 +137,7 @@ export default function DetailHewanPage() {
             <div>
               <p className="text-sm text-gray-500 uppercase tracking-wider font-semibold">ID {hewan.id_hewan || `#${hewan.id}`}</p>
               <h2 className="text-3xl font-bold text-gray-900 mt-2">{hewan.ras}</h2>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-700 mt-2">
                 {hewan.jenis_kelamin === 'JANTAN' ? '♂️ Pejantan' : '♀️ Betina'}
               </p>
             </div>
@@ -153,24 +153,24 @@ export default function DetailHewanPage() {
               <h3 className="font-bold text-gray-900">Informasi Dasar</h3>
               
               <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-xs text-gray-600 uppercase tracking-wider font-semibold mb-1">Tanggal Lahir</p>
+                <p className="text-xs text-gray-700 uppercase tracking-wider font-semibold mb-1">Tanggal Lahir</p>
                 <p className="text-lg font-semibold text-gray-900">{formatTanggal(hewan.tanggal_lahir)}</p>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-gray-700 mt-1">
                   <Calendar className="w-4 h-4 inline mr-1" />
                   Umur: {hewan.umur.display} ({hewan.umur.hari} hari)
                 </p>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-xs text-gray-600 uppercase tracking-wider font-semibold mb-1">Ras</p>
+                <p className="text-xs text-gray-700 uppercase tracking-wider font-semibold mb-1">Ras</p>
                 <p className="text-lg font-semibold text-gray-900">{hewan.ras}</p>
               </div>
 
               {hewan.bobot && (
-                <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
-                  <p className="text-xs text-emerald-700 uppercase tracking-wider font-semibold mb-1">Bobot Terakhir</p>
-                  <p className="text-2xl font-bold text-emerald-900">{hewan.bobot} kg</p>
-                  <p className="text-xs text-emerald-700 mt-1">
+                <div className="bg-primary-50 p-4 rounded-lg border border-primary-200">
+                  <p className="text-xs text-primary-700 uppercase tracking-wider font-semibold mb-1">Bobot Terakhir</p>
+                  <p className="text-2xl font-bold text-primary-900">{hewan.bobot} kg</p>
+                  <p className="text-xs text-primary-700 mt-1">
                     <Weight className="w-4 h-4 inline mr-1" />
                     Berat badan saat ini
                   </p>
@@ -194,26 +194,26 @@ export default function DetailHewanPage() {
                 </div>
               ) : (
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-600 uppercase tracking-wider font-semibold mb-1">Induk (Ibu)</p>
-                  <p className="text-gray-600">Tidak ada data</p>
+                  <p className="text-xs text-gray-700 uppercase tracking-wider font-semibold mb-1">Induk (Ibu)</p>
+                  <p className="text-gray-700">Tidak ada data</p>
                 </div>
               )}
 
               {hewan.pejantan ? (
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-xs text-blue-700 uppercase tracking-wider font-semibold mb-1">Pejantan (Ayah)</p>
+                <div className="bg-primary-50 p-4 rounded-lg border border-primary-200">
+                  <p className="text-xs text-primary-700 uppercase tracking-wider font-semibold mb-1">Pejantan (Ayah)</p>
                   <div>
-                    <p className="text-lg font-semibold text-blue-900">ID {hewan.pejantan.id_hewan || `#${hewan.pejantan.id}`}</p>
-                    <p className="text-sm text-blue-700 mt-1">Ras: {hewan.pejantan.ras}</p>
-                    <p className="text-xs text-blue-600 mt-0.5">
+                    <p className="text-lg font-semibold text-primary-900">ID {hewan.pejantan.id_hewan || `#${hewan.pejantan.id}`}</p>
+                    <p className="text-sm text-primary-700 mt-1">Ras: {hewan.pejantan.ras}</p>
+                    <p className="text-xs text-primary-600 mt-0.5">
                       {hewan.pejantan.jenis_kelamin === 'JANTAN' ? '♂️ Jantan' : '♀️ Betina'}
                     </p>
                   </div>
                 </div>
               ) : (
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-600 uppercase tracking-wider font-semibold mb-1">Pejantan (Ayah)</p>
-                  <p className="text-gray-600">Tidak ada data</p>
+                  <p className="text-xs text-gray-700 uppercase tracking-wider font-semibold mb-1">Pejantan (Ayah)</p>
+                  <p className="text-gray-700">Tidak ada data</p>
                 </div>
               )}
             </div>
@@ -225,13 +225,13 @@ export default function DetailHewanPage() {
           <h3 className="font-bold text-gray-900 mb-4">Catatan Hewan</h3>
           
           {hewan.catatan ? (
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="p-4 bg-primary-50 rounded-lg border border-primary-200">
               <p className="text-gray-900 whitespace-pre-wrap">{hewan.catatan}</p>
               <p className="text-xs text-gray-500 mt-3">Catatan tersimpan untuk hewan ini</p>
             </div>
           ) : (
             <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-gray-600 italic">Tidak ada catatan</p>
+              <p className="text-gray-700 italic">Tidak ada catatan</p>
             </div>
           )}
         </div>
@@ -246,10 +246,10 @@ export default function DetailHewanPage() {
                 <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
                   <div>
                     <p className="font-semibold text-gray-900">
-                      <Weight className="w-4 h-4 inline mr-2 text-emerald-600" />
+                      <Weight className="w-4 h-4 inline mr-2 text-primary-600" />
                       {r.bobot} kg
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-gray-700 mt-1">
                       {new Date(r.tanggal_update).toLocaleDateString('id-ID')}
                     </p>
                     {r.keterangan && (
@@ -276,14 +276,14 @@ export default function DetailHewanPage() {
 
         {/* Data Kematian - Displayed at bottom if hewan status = TIDAK_AKTIF */}
         {hewan.status === 'TIDAK_AKTIF' && laporanKematian && (
-          <div className="bg-red-50 rounded-2xl shadow-sm border border-red-200 p-6">
+          <div className="bg-danger-50 rounded-2xl shadow-sm border border-danger-100 p-6">
             <h3 className="font-bold text-red-900 mb-4">Data Kematian</h3>
             
             <div className="space-y-4">
               <div className="flex items-start gap-4 p-4 bg-white rounded-lg border border-red-100">
-                <Calendar className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <Calendar className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Tanggal Laporan</p>
+                  <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Tanggal Laporan</p>
                   <p className="text-base text-gray-900 mt-1">
                     {laporanKematian.tanggal 
                       ? new Date(laporanKematian.tanggal).toLocaleDateString('id-ID', {
@@ -299,13 +299,13 @@ export default function DetailHewanPage() {
               </div>
 
               <div className="p-4 bg-white rounded-lg border border-red-100">
-                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Status</p>
-                <p className="text-base text-red-700 font-semibold mt-1">Mati</p>
+                <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Status</p>
+                <p className="text-base text-danger font-semibold mt-1">Mati</p>
               </div>
 
               {laporanKematian.data?.keterangan && (
                 <div className="p-4 bg-white rounded-lg border border-red-100">
-                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Keterangan</p>
+                  <p className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Keterangan</p>
                   <p className="text-base text-gray-900 mt-1 whitespace-pre-wrap break-words">
                     {laporanKematian.data.keterangan}
                   </p>
@@ -314,7 +314,7 @@ export default function DetailHewanPage() {
 
               {!laporanKematian.data?.keterangan && (
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-gray-600 italic">Tidak ada keterangan</p>
+                  <p className="text-gray-700 italic">Tidak ada keterangan</p>
                 </div>
               )}
             </div>
@@ -322,12 +322,14 @@ export default function DetailHewanPage() {
         )}
 
         {hewan.status === 'TIDAK_AKTIF' && !laporanKematian && (
-          <div className="bg-red-50 rounded-2xl shadow-sm border border-red-200 p-6">
+          <div className="bg-danger-50 rounded-2xl shadow-sm border border-danger-100 p-6">
             <h3 className="font-bold text-red-900 mb-4">Data Kematian</h3>
-            <p className="text-red-700">Tidak tersedia</p>
+            <p className="text-danger">Tidak tersedia</p>
           </div>
         )}
       </div>
     </div>
   );
 }
+
+

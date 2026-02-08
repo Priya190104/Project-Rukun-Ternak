@@ -70,59 +70,58 @@ async function renderCertificate(data) {
   const stylePath = path.resolve(__dirname, 'style.css');
   const assetsPath = path.resolve(__dirname, 'assets');
   
+  console.log('[RenderCertificate] Starting certificate generation...');
+  
   // ========================================
   // STEP 1: Baca template dan CSS
   // ========================================
   let html = fs.readFileSync(templatePath, 'utf8');
   const cssContent = fs.readFileSync(stylePath, 'utf8');
+  console.log(`[RenderCertificate] Template: ${html.length} bytes, CSS: ${cssContent.length} bytes`);
+  
+  // Validate HTML basic structure
+  if (!html.includes('<html') || !html.includes('</html>')) {
+    throw new Error('Invalid template HTML structure');
+  }
+  console.log('[RenderCertificate] HTML structure validated');
 
   // ========================================
-  // STEP 2: Resolve SEMUA asset ke absolute path dan convert ke data URL
-  // CRITICAL: Ini handle BAIK SVG maupun PNG/JPG/JPEG
-  // Data URL adalah solusi PALING RELIABLE untuk Puppeteer PDF rendering
-  // karena:
-  // 1. Tidak perlu resolve file:// path (yang sering gagal)
-  // 2. Semua resource ter-embed dalam HTML string
-  // 3. Puppeteer tidak perlu load dari disk saat rendering PDF
+  // STEP 2: Resolve asset baru ke absolute path dan convert ke data URL
+  // CRITICAL: Semua asset di-embed dalam HTML string sebagai data URL
   // ========================================
   
   const assetMap = {
-    // Logo - bisa SVG atau PNG/JPG
-    'assets/logo-baznas.svg': path.resolve(assetsPath, 'logo-baznas.png'),
-    'assets/logo-baznas.png': path.resolve(assetsPath, 'logo-baznas.png'),
-    // Background - bisa SVG atau PNG/JPG
-    'assets/background.svg': path.resolve(assetsPath, 'background.png'),
-    'assets/background.png': path.resolve(assetsPath, 'background.png'),
-    // Background Footer
-    'assets/background-footer.svg': path.resolve(assetsPath, 'background-footer.png'),
-    'assets/background-footer.png': path.resolve(assetsPath, 'background-footer.png'),
-    // Stempel - bisa SVG atau PNG/JPG
-    'assets/stempel.svg': path.resolve(assetsPath, 'stempel.svg'),
-    'assets/stempel.png': path.resolve(assetsPath, 'stempel.png'),
-    // Tanda tangan - bisa SVG atau PNG/JPG
-    'assets/tanda-tangan.svg': path.resolve(assetsPath, 'tanda-tangan.svg'),
-    'assets/tanda-tangan.png': path.resolve(assetsPath, 'tanda-tangan.png'),
-    // Lamb/Domba - bisa SVG atau PNG/JPG (ternak1.png)
-    'assets/lamb.svg': path.resolve(assetsPath, 'ternak1.png'),
-    'assets/lamb.png': path.resolve(assetsPath, 'ternak1.png'),
-    'assets/ternak1.png': path.resolve(assetsPath, 'ternak1.png'),
-    'assets/ternak1.svg': path.resolve(assetsPath, 'ternak1.png'),
-    // Ternak 2 - PNG baru
-    'assets/ternak2.png': path.resolve(assetsPath, 'ternak2.png'),
-    'assets/ternak2.svg': path.resolve(assetsPath, 'ternak2.png'),
+    // Background template lengkap
+    'assets/image1.png': path.resolve(assetsPath, 'image1.png'),
+    // Logo BAZNAS
+    'assets/logo.png': path.resolve(assetsPath, 'logo.png'),
+    // Gambar hewan dekoratif
+    'assets/Picture1.png': path.resolve(assetsPath, 'Picture1.png'),
+    'assets/Picture2.png': path.resolve(assetsPath, 'Picture2.png'),
+    // Rumput dekoratif
+    'assets/Picture3.png': path.resolve(assetsPath, 'Picture3.png'),
   };
 
   // Replace asset paths dengan data URL
-  // Try untuk find actual file dan convert, fallback ke original path jika file tidak ada
+  let assetsLoaded = 0;
+  let assetsFailed = 0;
   for (const [originalPath, actualFilePath] of Object.entries(assetMap)) {
     if (fs.existsSync(actualFilePath)) {
       const dataUrl = assetToDataUrl(actualFilePath);
-      if (dataUrl) {
+      if (dataUrl && dataUrl.length > 20) {  // Valid data URL harus punya length > 20
         html = html.replace(new RegExp(originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), dataUrl);
-        console.log(`✅ Loaded asset: ${originalPath} → ${path.basename(actualFilePath)}`);
+        assetsLoaded++;
+        console.log(`  [${assetsLoaded}] ${path.basename(actualFilePath)} → ${dataUrl.substring(0, 50)}...`);
+      } else {
+        assetsFailed++;
+        console.warn(`  ❌ Failed to convert ${path.basename(actualFilePath)}`);
       }
+    } else {
+      assetsFailed++;
+      console.warn(`  ❌ Asset not found: ${path.basename(actualFilePath)}`);
     }
   }
+  console.log(`[RenderCertificate] Assets loaded: ${assetsLoaded}/${Object.keys(assetMap).length}`);
 
   // ========================================
   // STEP 3: Inject CSS sebagai embedded <style> tag
@@ -131,6 +130,7 @@ async function renderCertificate(data) {
     /<link[^>]*href="style\.css"[^>]*>/gi,
     `<style>${cssContent}</style>`
   );
+  console.log(`[RenderCertificate] CSS injected, HTML now ${html.length} chars`);
 
   // ========================================
   // STEP 4: Replace template placeholders dengan data
@@ -150,13 +150,31 @@ async function renderCertificate(data) {
     tanggal: data.tanggal || new Date().toLocaleDateString('id-ID'),
   };
 
+  console.log('[RenderCertificate] Replacing placeholders:');
+  let unresolvedCount = 0;
   for (const [key, value] of Object.entries(replacements)) {
-    html = html.replace(new RegExp(`{{${key}}}`, 'g'), value);
+    const placeholder = `{{${key}}}`;
+    const countBefore = (html.match(new RegExp(`{{${key}}}`, 'g')) || []).length;
+    if (html.includes(placeholder)) {
+      html = html.replace(new RegExp(`{{${key}}}`, 'g'), value);
+      const countAfter = (html.match(new RegExp(`{{${key}}}`, 'g')) || []).length;
+      console.log(`  ✅ ${key}: "${value}" (found: ${countBefore})`);
+      if (countAfter > 0) {
+        console.warn(`    ⚠️  Some placeholders remain: ${countAfter}`);
+        unresolvedCount += countAfter;
+      }
+    } else {
+      console.warn(`  ⚠️  Placeholder not found: ${placeholder}`);
+    }
+  }
+  if (unresolvedCount > 0) {
+    console.warn(`[RenderCertificate] Warning: ${unresolvedCount} unresolved placeholders remain`);
   }
 
   // ========================================
   // STEP 5: Launch Puppeteer dengan config optimal
   // ========================================
+  console.log('[RenderCertificate] Launching Puppeteer...');
   const browser = await puppeteer.launch({
     headless: 'new',
     args: [
@@ -168,61 +186,91 @@ async function renderCertificate(data) {
 
   try {
     const page = await browser.newPage();
+    console.log('[RenderCertificate] Page created');
+
+    // Track page errors
+    page.on('error', err => console.error('[RenderCertificate] Page error:', err));
+    page.on('pageerror', err => console.error('[RenderCertificate] Uncaught exception:', err));
 
     // ========================================
-    // STEP 6: Emulate media type dan set viewport
+    // STEP 6: Emulate media type untuk PDF print
+    // 'print' media adalah yang seharusnya untuk PDF rendering
     // ========================================
-    await page.emulateMediaType('screen');
+    await page.emulateMediaType('print');
 
     await page.setViewport({
-      width: 1190,
-      height: 842,
+      width: 1600,
+      height: 900,
       deviceScaleFactor: 2,
     });
+    console.log('[RenderCertificate] Viewport set: 1600x900@2x, media: print');
 
     // ========================================
     // STEP 7: Set content dengan HTML yang sudah ter-process
-    // Tunggu network idle untuk memastikan semua resource loaded
+    // Semua assets sudah embedded sebagai data URL dan CSS sebagai <style>
     // ========================================
-    await page.setContent(html, {
-      waitUntil: 'networkidle0',
-      timeout: 30000,
-    });
-
-    // ========================================
-    // STEP 8: Tunggu semua image elements ter-render
-    // Penting untuk memastikan data URL images sudah di-load browser
-    // ========================================
+    console.log('[RenderCertificate] Setting HTML content...');
     try {
-      await page.waitForFunction(() => {
-        const images = document.querySelectorAll('img');
-        if (images.length === 0) return false;
-        
-        return Array.from(images).every(img => {
-          // Check apakah image fully loaded
-          return img.complete && img.naturalHeight !== 0;
-        });
-      }, { timeout: 5000 });
-    } catch (e) {
-      console.warn('⚠️  Image load wait timeout (continuing anyway)');
+      await page.setContent(html, {
+        waitUntil: 'domcontentloaded',  // Fast: DOM ready, tidak perlu wait untuk network
+        timeout: 30000,
+      });
+      console.log('[RenderCertificate] HTML content set successfully');
+    } catch (setContentErr) {
+      console.warn('[RenderCertificate] setContent warning:', setContentErr.message);
+      // Continue anyway
     }
 
     // ========================================
-    // STEP 9: Generate PDF dengan config TEPAT untuk image rendering
+    // STEP 8: Debug page content & Take screenshot for verification
     // ========================================
+    const pageContent = await page.evaluate(() => {
+      const titlesTxt = document.querySelectorAll('.title-text');
+      const dataItems = document.querySelectorAll('.data-item');
+      const images = document.querySelectorAll('img');
+      const wrapper = document.querySelector('.certificate-wrapper');
+      return {
+        hasTitle: titlesTxt.length > 0,
+        titleCount: titlesTxt.length,
+        dataItemCount: dataItems.length,
+        imageCount: images.length,
+        wrapperVisible: wrapper ? window.getComputedStyle(wrapper).display !== 'none' : false,
+        wrapperSize: wrapper ? {
+          width: wrapper.clientWidth,
+          height: wrapper.clientHeight,
+        } : null,
+        bodyHTML: document.body.innerHTML ? document.body.innerHTML.substring(0, 150) : 'empty',
+      };
+    });
+    console.log('[RenderCertificate] Page content debug:', JSON.stringify(pageContent));
+
+    // Optional: Save screenshot untuk debug (uncomment jika perlu)
+    // const screenshot = await page.screenshot({ path: '/tmp/cert-debug.png', fullPage: true });
+    // console.log('[RenderCertificate] Screenshot saved to /tmp/cert-debug.png');
+
+    // Wait untuk print media CSS fully applied
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    console.log('[RenderCertificate] Render delay completed');
+
+    // ========================================
+    // STEP 9: Generate PDF dengan custom size untuk 16:9 aspect ratio
+    // ========================================
+    console.log('[RenderCertificate] Generating PDF (size: 1600x900)...');
     const pdf = await page.pdf({
-      format: 'A4',
-      landscape: true,
-      margin: {
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-      },
-      printBackground: true,     // WAJIB: render background & image
+      width: '1600px',
+      height: '900px',
+      margin: '0px',
+      printBackground: true,
       preferCSSPageSize: false,
+      scale: 1,
+      displayHeaderFooter: false,
     });
 
+    if (!pdf || pdf.length === 0) {
+      throw new Error('PDF generation produced empty output');
+    }
+
+    console.log(`[RenderCertificate] ✅ PDF generated successfully: ${pdf.length} bytes`);
     return pdf;
   } finally {
     await browser.close();

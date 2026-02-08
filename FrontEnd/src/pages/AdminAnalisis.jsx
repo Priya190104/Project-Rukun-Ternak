@@ -1,18 +1,19 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { 
   BarChart3, TrendingUp, Users, AlertCircle, 
   Filter, Building2
 } from 'lucide-react';
 import client from '../api/client';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
+import { useCachedData } from '../hooks/useCachedData';
 
 const JENIS_COLORS = {
   pakan: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
-  kandang: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' },
-  kesehatan: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' },
-  populasi: { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200' },
+  kandang: { bg: 'bg-warning-50', text: 'text-warning', border: 'border-warning-100' },
+  kesehatan: { bg: 'bg-danger-50', text: 'text-danger', border: 'border-danger-100' },
+  populasi: { bg: 'bg-success-50', text: 'text-success', border: 'border-success-100' },
   kelahiran: { bg: 'bg-pink-50', text: 'text-pink-600', border: 'border-pink-200' },
-  penjualan: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
+  penjualan: { bg: 'bg-primary-50', text: 'text-primary-600', border: 'border-primary-200' },
   pengembangan: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' },
 };
 
@@ -27,6 +28,20 @@ const JENIS_LABELS = {
 };
 
 export default function AdminAnalisis() {
+  // Fetch stats dengan caching (15 menit TTL)
+  const { data: cachedStats, loading: statsLoading } = useCachedData(
+    '/api/stats',
+    ['/api/stats'],
+    { ttl: 15 * 60 * 1000 }
+  );
+  
+  // Fetch all laporan dengan caching (5 menit TTL)
+  const { data: cachedLaporan, loading: laporanLoading } = useCachedData(
+    '/api/laporan',
+    ['/api/laporan'],
+    { ttl: 5 * 60 * 1000 }
+  );
+  
   // State
   const [stats, setStats] = useState({
     totals: { laporan: 0, users: 0, kelompok: 0 },
@@ -35,7 +50,6 @@ export default function AdminAnalisis() {
     perKelompok: [],
   });
   const [allLaporan, setAllLaporan] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filterKecamatan, setFilterKecamatan] = useState('');
   const [filterDesa, setFilterDesa] = useState('');
   const [filterJenis, setFilterJenis] = useState('');
@@ -44,54 +58,41 @@ export default function AdminAnalisis() {
   const [desaList, setDesaList] = useState([]);
   const [kelompokList, setKelompokList] = useState([]);
 
-  // Load data
+  // Sync cached data to state
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setLoading(true);
-        
-        // Get admin stats
-        const statsRes = await client.get('/api/stats');
-        if (mounted) {
-          setStats(statsRes.data?.data || {});
-        }
+    if (cachedStats) {
+      setStats(cachedStats?.data || cachedStats || {});
+    }
+  }, [cachedStats]);
 
-        // Get all laporan
-        const laporanRes = await client.get('/api/laporan');
-        if (mounted) {
-          const laporan = laporanRes.data?.data || [];
-          setAllLaporan(laporan);
+  // Load laporan and extract filters
+  useEffect(() => {
+    if (cachedLaporan) {
+      const laporan = Array.isArray(cachedLaporan) ? cachedLaporan : (cachedLaporan?.data || []);
+      setAllLaporan(laporan);
 
-          // Extract unique kecamatan, desa, kelompok
-          const kecamatan = [...new Set(laporan
-            .map(l => l.kecamatan)
-            .filter(k => k)
-          )].sort();
-          setKecamatanList(kecamatan);
+      // Extract unique kecamatan, desa, kelompok
+      const kecamatan = [...new Set(laporan
+        .map(l => l.kecamatan)
+        .filter(k => k)
+      )].sort();
+      setKecamatanList(kecamatan);
 
-          const desa = [...new Set(laporan
-            .map(l => l.desa)
-            .filter(d => d)
-          )].sort();
-          setDesaList(desa);
+      const desa = [...new Set(laporan
+        .map(l => l.desa)
+        .filter(d => d)
+      )].sort();
+      setDesaList(desa);
 
-          const kelompok = [...new Set(laporan
-            .map(l => l.kelompok)
-            .filter(k => k)
-          )].sort();
-          setKelompokList(kelompok);
-        }
-      } catch (err) {
-        console.warn('Failed to load analytics data', err);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
+      const kelompok = [...new Set(laporan
+        .map(l => l.kelompok)
+        .filter(k => k)
+      )].sort();
+      setKelompokList(kelompok);
+    }
+  }, [cachedLaporan]);
+
+  const loading = statsLoading || laporanLoading;
 
   // Filter laporan based on selected filters
   const filteredLaporan = allLaporan.filter(lap => {
@@ -153,7 +154,7 @@ export default function AdminAnalisis() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="text-gray-600">Memuat data analisis...</div>
+        <div className="text-gray-700">Memuat data analisis...</div>
       </div>
     );
   }
@@ -178,13 +179,13 @@ export default function AdminAnalisis() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-sm font-medium text-gray-600">Total Laporan</div>
+              <div className="text-sm font-medium text-gray-700">Total Laporan</div>
               <div className="text-3xl font-bold text-gray-900 mt-2">{totalLaporan}</div>
               <p className="text-xs text-gray-500 mt-2">
                 {uniqueKelompok === 0 ? 'Tidak ada' : uniqueKelompok === 1 ? '1 kelompok' : `${uniqueKelompok} kelompok`}
               </p>
             </div>
-            <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-primary-50 text-primary-600">
               <BarChart3 size={24} />
             </div>
           </div>
@@ -194,11 +195,11 @@ export default function AdminAnalisis() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-sm font-medium text-gray-600">Total Kelompok</div>
-              <div className="text-3xl font-bold text-purple-600 mt-2">{totalKelompok}</div>
+              <div className="text-sm font-medium text-gray-700">Total Kelompok</div>
+              <div className="text-3xl font-bold text-info mt-2">{totalKelompok}</div>
               <p className="text-xs text-gray-500 mt-2">Kelompok ternak aktif</p>
             </div>
-            <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+            <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-info-50 text-info">
               <Building2 size={24} />
             </div>
           </div>
@@ -208,11 +209,11 @@ export default function AdminAnalisis() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-sm font-medium text-gray-600">Total Pengguna</div>
-              <div className="text-3xl font-bold text-green-600 mt-2">{totalUsers}</div>
+              <div className="text-sm font-medium text-gray-700">Total Pengguna</div>
+              <div className="text-3xl font-bold text-success mt-2">{totalUsers}</div>
               <p className="text-xs text-gray-500 mt-2">Admin & anggota</p>
             </div>
-            <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-green-50 text-green-600">
+            <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-success-50 text-success">
               <Users size={24} />
             </div>
           </div>
@@ -222,11 +223,11 @@ export default function AdminAnalisis() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-sm font-medium text-gray-600">Jenis Laporan</div>
-              <div className="text-3xl font-bold text-amber-600 mt-2">{Object.keys(statsByJenis).length}</div>
+              <div className="text-sm font-medium text-gray-700">Jenis Laporan</div>
+              <div className="text-3xl font-bold text-warning mt-2">{Object.keys(statsByJenis).length}</div>
               <p className="text-xs text-gray-500 mt-2">Dari 7 jenis</p>
             </div>
-            <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+            <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-warning-50 text-warning">
               <TrendingUp size={24} />
             </div>
           </div>
@@ -236,7 +237,7 @@ export default function AdminAnalisis() {
       {/* Filter Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Filter size={20} className="text-blue-600" />
+          <Filter size={20} className="text-primary-600" />
           <h2 className="text-lg font-semibold text-gray-900">Filter Data</h2>
         </div>
 
@@ -335,7 +336,7 @@ export default function AdminAnalisis() {
                 <div className={`text-2xl font-bold ${colors.text} mt-2`}>
                   {jenisStat ? jenisStat.count : 0}
                 </div>
-                <div className="text-xs text-gray-600 mt-1">
+                <div className="text-xs text-gray-700 mt-1">
                   {jenisStat && jenisStat.tanggalTerbaru ? (
                     <>
                       <div>Laporan terbaru:</div>
@@ -361,19 +362,19 @@ export default function AdminAnalisis() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                   Tanggal
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                   Jenis
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                   Kelompok
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                   Pengguna
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                   Aksi
                 </th>
               </tr>
@@ -397,11 +398,11 @@ export default function AdminAnalisis() {
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {lap.kelompok || '-'}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-sm text-gray-700">
                         {lap.full_name || lap.username || '-'}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <a href={`/laporan/${lap.id}`} className="text-blue-600 hover:text-blue-800 font-medium">
+                        <a href={`/laporan/${lap.id}`} className="text-primary-600 hover:text-primary-800 font-medium">
                           Lihat Detail
                         </a>
                       </td>
@@ -431,13 +432,13 @@ export default function AdminAnalisis() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Kelompok
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Total Laporan
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Progres
                   </th>
                 </tr>
@@ -452,18 +453,18 @@ export default function AdminAnalisis() {
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">
                         {k.name}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-sm text-gray-700">
                         {k.laporan_count} laporan
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <div className="flex items-center gap-2">
                           <div className="w-32 bg-gray-200 rounded-full h-2">
                             <div
-                              className="bg-blue-600 h-2 rounded-full transition-all"
+                              className="bg-primary-600 h-2 rounded-full transition-all"
                               style={{ width: `${percentage}%` }}
                             />
                           </div>
-                          <span className="text-gray-600 font-medium">{percentage}%</span>
+                          <span className="text-gray-700 font-medium">{percentage}%</span>
                         </div>
                       </td>
                     </tr>
@@ -485,12 +486,12 @@ export default function AdminAnalisis() {
               const percentage = (month.count / maxCount) * 100;
               return (
                 <div key={month.month} className="flex items-center gap-3">
-                  <div className="w-20 text-sm font-medium text-gray-600">
+                  <div className="w-20 text-sm font-medium text-gray-700">
                     {month.month}
                   </div>
                   <div className="flex-1 bg-gray-200 rounded-full h-8">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 h-8 rounded-full flex items-center justify-end pr-3 transition-all"
+                      className="bg-gradient-to-r from-primary-500 to-primary-600 h-8 rounded-full flex items-center justify-end pr-3 transition-all"
                       style={{ width: `${percentage}%` }}
                     >
                       {percentage > 10 && (
@@ -501,7 +502,7 @@ export default function AdminAnalisis() {
                     </div>
                   </div>
                   {percentage <= 10 && (
-                    <span className="w-10 text-sm font-medium text-gray-600">
+                    <span className="w-10 text-sm font-medium text-gray-700">
                       {month.count}
                     </span>
                   )}
@@ -514,3 +515,4 @@ export default function AdminAnalisis() {
     </div>
   );
 }
+

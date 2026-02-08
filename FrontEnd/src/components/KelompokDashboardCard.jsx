@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Users, MapPin, Phone, Mail } from 'lucide-react';
 
 export default function KelompokDashboardCard({ kelompok, loading }) {
@@ -25,10 +25,10 @@ export default function KelompokDashboardCard({ kelompok, loading }) {
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-5 border-b border-gray-200">
+      <div className="bg-gradient-to-r from-primary-50 to-primary-50 px-6 py-5 border-b border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900">{kelompok.name || '-'}</h2>
-        <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
-          <MapPin size={16} className="text-emerald-600" />
+        <p className="text-sm text-gray-700 mt-1 flex items-center gap-2">
+          <MapPin size={16} className="text-primary-600" />
           {kelompok.desa || '-'}, {kelompok.kecamatan || '-'}
         </p>
       </div>
@@ -38,7 +38,7 @@ export default function KelompokDashboardCard({ kelompok, loading }) {
         
         {/* Section A: Profil Kelompok */}
         <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-emerald-200">Profil Kelompok</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b-2 border-primary-200">Profil Kelompok</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Column 1 */}
@@ -63,16 +63,16 @@ export default function KelompokDashboardCard({ kelompok, loading }) {
 
             {/* Column 2 */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 bg-emerald-50 rounded-lg p-3">
+              <div className="flex items-center gap-2 bg-primary-50 rounded-lg p-3">
                 <Users size={20} className="text-emerald-600 flex-shrink-0" />
                 <div>
-                  <p className="text-xs text-gray-600">Total Anggota</p>
+                  <p className="text-xs text-gray-700">Total Anggota</p>
                   <p className="text-2xl font-bold text-emerald-600">{kelompok.anggota_count || 0}</p>
                 </div>
               </div>
               
-              <div className="bg-blue-50 rounded-lg p-3">
-                <p className="text-xs text-gray-600 mb-1">Catatan</p>
+              <div className="bg-primary-50 rounded-lg p-3">
+                <p className="text-xs text-gray-700 mb-1">Catatan</p>
                 <p className="text-sm text-gray-900 line-clamp-3">{kelompok.catatan || 'Tidak ada catatan'}</p>
               </div>
             </div>
@@ -86,8 +86,8 @@ export default function KelompokDashboardCard({ kelompok, loading }) {
             
             {/* PIC 1 */}
             {(kelompok.pic1_nama || kelompok.pic1_nik) && (
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-                <p className="text-sm font-bold text-blue-900 mb-3">Penanggung Jawab 1</p>
+              <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg p-4 border border-primary-200">
+                <p className="text-sm font-bold text-primary-900 mb-3">Penanggung Jawab 1</p>
                 <div className="space-y-2 text-sm">
                   <div className="flex">
                     <span className="w-24 text-gray-700 font-medium">Nama</span>
@@ -102,11 +102,11 @@ export default function KelompokDashboardCard({ kelompok, loading }) {
                     <span className="text-gray-900">{kelompok.pic1_alamat || '-'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Phone size={16} className="text-blue-600 flex-shrink-0" />
+                    <Phone size={16} className="text-primary-600 flex-shrink-0" />
                     <span className="text-gray-900 text-sm">{kelompok.pic1_no_hp || '-'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Mail size={16} className="text-blue-600 flex-shrink-0" />
+                    <Mail size={16} className="text-primary-600 flex-shrink-0" />
                     <span className="text-gray-900 text-sm break-all">{kelompok.pic1_email || '-'}</span>
                   </div>
                 </div>
@@ -119,3 +119,5 @@ export default function KelompokDashboardCard({ kelompok, loading }) {
     </div>
   );
 }
+
+

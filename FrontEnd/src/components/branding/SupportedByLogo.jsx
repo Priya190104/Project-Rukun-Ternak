@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { getPartnerLogoPath, calculatePartnerLogoSize, getPartnerLabel } from '../../config/supportedByLogo';
+﻿import React, { useState } from 'react';
+import { getPartnerLogoPath, getPartnerLabel } from '../../config/supportedByLogo';
 
 /**
  * SUPPORTED BY LOGO COMPONENT
@@ -8,17 +8,53 @@ import { getPartnerLogoPath, calculatePartnerLogoSize, getPartnerLabel } from '.
  * Fully dynamic - logo dari config, bukan hardcoded.
  * 
  * Usage:
- * <SupportedByLogo mainLogoSize={100} />
+ * <SupportedByLogo />
+ * <SupportedByLogo size="md" />
+ * <SupportedByLogo size="lg" />
+ * <SupportedByLogo size="xl" />
+ * <SupportedByLogo customLabel="Powered by" />
  */
 
+const SIZE_CONFIG = {
+  sm: {
+    container: 'h-5',
+    text: 'text-xs',
+    gap: 'gap-1',
+    width: 60,
+    height: 20,
+  },
+  md: {
+    container: 'h-8',
+    text: 'text-xs md:text-sm',
+    gap: 'gap-2 md:gap-3',
+    width: 80,
+    height: 32,
+  },
+  lg: {
+    container: 'h-10',
+    text: 'text-sm md:text-base',
+    gap: 'gap-2 md:gap-3',
+    width: 100,
+    height: 40,
+  },
+  xl: {
+    container: 'h-12',
+    text: 'text-base md:text-lg',
+    gap: 'gap-3',
+    width: 120,
+    height: 48,
+  },
+};
+
 export default function SupportedByLogo({
-  mainLogoSize = 100,
   customLogoPath = null,
   customLabel = null,
   className = '',
+  size = 'md',
 }) {
   const [imageError, setImageError] = useState(false);
 
+  const sizeConfig = SIZE_CONFIG[size] || SIZE_CONFIG.md;
   const logoPath = customLogoPath || getPartnerLogoPath();
   
   // Jika tidak ada logo path, jangan render apa-apa
@@ -26,7 +62,6 @@ export default function SupportedByLogo({
     return null;
   }
 
-  const partnerLogoSize = calculatePartnerLogoSize(mainLogoSize);
   const label = customLabel || getPartnerLabel();
 
   // Jika image error, show text fallback
@@ -40,9 +75,9 @@ export default function SupportedByLogo({
 
   // Normal render - dengan logo
   return (
-    <div className={`flex items-center gap-2 md:gap-3 ${className}`}>
+    <div className={`flex items-center ${sizeConfig.gap} ${className}`}>
       {/* Label text */}
-      <span className="text-xs md:text-sm text-gray-600 font-medium whitespace-nowrap">
+      <span className={`${sizeConfig.text} text-gray-700 font-medium whitespace-nowrap`}>
         {label}
       </span>
 
@@ -50,18 +85,13 @@ export default function SupportedByLogo({
       <img
         src={logoPath}
         alt={label}
-        title={label}
-        width={partnerLogoSize}
-        height={partnerLogoSize}
-        style={{
-          maxWidth: `${partnerLogoSize}px`,
-          height: 'auto',
-          maxHeight: '56px',
-        }}
+        className={`object-contain flex-shrink-0 ${sizeConfig.container} w-auto`}
+        width={sizeConfig.width}
+        height={sizeConfig.height}
+        loading="eager"
         onError={() => setImageError(true)}
-        className="object-contain flex-shrink-0"
-        loading="lazy"
       />
     </div>
   );
 }
+

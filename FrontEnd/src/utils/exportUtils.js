@@ -121,7 +121,7 @@ export const exportToPDF = (data) => {
           margin-top: 20px;
         }
         thead {
-          background-color: #059669;
+          background-color: #2563eb;
           color: white;
         }
         th, td {

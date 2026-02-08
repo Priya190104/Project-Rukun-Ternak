@@ -1,16 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import client from '../api/client';
-import { useAuth } from '../hooks/useAuth';
+﻿import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
-import { Filter, Eye, Edit2, Trash2, Download } from 'lucide-react';
+import { Filter, Eye, Download } from 'lucide-react';
 import { exportToCSV, exportToPDF } from '../utils/exportUtils';
+import { useCachedData } from '../hooks/useCachedData';
 
 const jenisLaporan = ['Budidaya', 'Kelahiran', 'Kematian', 'Penjualan'];
 
 export default function ClientDaftarLaporan() {
-  const { user, appRole } = useAuth();
-  const navigate = useNavigate();
+  // Fetch laporan dengan caching (5 menit TTL)
+  const { data: cachedLaporan } = useCachedData(
+    '/api/laporan',
+    ['/api/laporan'],
+    { ttl: 5 * 60 * 1000 }
+  );
+  
   const [reports, setReports] = useState([]);
   const [filteredReports, setFilteredReports] = useState([]);
   const [filterJenis, setFilterJenis] = useState('Semua Jenis');
@@ -18,27 +22,17 @@ export default function ClientDaftarLaporan() {
   const [filterSubJenis, setFilterSubJenis] = useState('Semua');
   const [showExportMenu, setShowExportMenu] = useState(false);
 
-
+  // Sync laporan data
   useEffect(() => {
-    let mounted = true;
-    async function load() {
-      try {
-        const res = await client.get('/api/laporan');
-        const data = (res.data?.data || []).map(item => ({
-          ...item,
-          kelompok: item.kelompok || item.kelompok_name || '-'
-        }));
-        if (mounted) {
-          setReports(data);
-          setFilteredReports(data);
-        }
-      } catch (err) {
-        console.warn('Failed to load laporan', err);
-      }
+    if (cachedLaporan) {
+      const data = (Array.isArray(cachedLaporan) ? cachedLaporan : (cachedLaporan?.data || [])).map(item => ({
+        ...item,
+        kelompok: item.kelompok || item.kelompok_name || '-'
+      }));
+      setReports(data);
+      setFilteredReports(data);
     }
-    load();
-    return () => { mounted = false; };
-  }, [user, appRole]);
+  }, [cachedLaporan]);
 
   useEffect(() => {
     let filtered = reports;
@@ -72,23 +66,6 @@ export default function ClientDaftarLaporan() {
 
     setFilteredReports(filtered);
   }, [filterJenis, filterBulan, filterSubJenis, reports]);
-
-  const handleEditLaporan = (id) => {
-    navigate(`/laporan/${id}`);
-  };
-
-  const handleDeleteLaporan = async (id) => {
-    const confirmDelete = window.confirm('Yakin ingin menghapus laporan ini?');
-    if (!confirmDelete) return;
-
-    try {
-      await client.delete(`/api/laporan/${id}`);
-      setReports(reports.filter(r => r.id !== id));
-    } catch (err) {
-      console.error('Failed to delete laporan:', err);
-      alert('Gagal menghapus laporan');
-    }
-  };
 
   const handleExportCSV = () => {
     exportToCSV(filteredReports, `laporan_${new Date().toISOString().split('T')[0]}.csv`);
@@ -181,7 +158,7 @@ export default function ClientDaftarLaporan() {
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
             <Download size={20} />
             Export
@@ -232,7 +209,7 @@ export default function ClientDaftarLaporan() {
                       {report.tanggal ? new Date(report.tanggal).toLocaleDateString('id-ID') : '-'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 font-medium">{report.jenis}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-gray-700">
                       {report.data && typeof report.data === 'object' 
                         ? Object.entries(report.data)
                             .slice(0, 2)
@@ -246,24 +223,10 @@ export default function ClientDaftarLaporan() {
                         <Link
                           to={`/laporan/${report.id}`}
                           title="Lihat detail"
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded transition"
+                          className="p-2 text-primary-600 hover:bg-primary-50 rounded transition"
                         >
                           <Eye size={16} />
                         </Link>
-                        <button 
-                          title="Edit laporan"
-                          onClick={() => handleEditLaporan(report.id)}
-                          className="p-2 text-amber-600 hover:bg-amber-50 rounded transition"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button 
-                          title="Hapus laporan"
-                          onClick={() => handleDeleteLaporan(report.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded transition"
-                        >
-                          <Trash2 size={16} />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -276,3 +239,4 @@ export default function ClientDaftarLaporan() {
     </div>
   );
 }
+

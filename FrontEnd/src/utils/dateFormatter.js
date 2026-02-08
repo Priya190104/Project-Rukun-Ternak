@@ -3,7 +3,7 @@
  * @param {string | Date} dateString - ISO datetime string or Date object
  * @returns {string} Formatted date like "17 Desember 2025, 14:30 WIB"
  */
-export const formatBeritaDate = (dateString) => {
+export const formatDate = (dateString) => {
   if (!dateString) return '';
   
   try {
@@ -33,18 +33,4 @@ export const formatBeritaDate = (dateString) => {
     console.error('Error formatting date:', error);
     return '';
   }
-};
-
-/**
- * Get the time to display for berita (publishedAt or fallback to createdAt)
- * @param {Object} berita - Berita object with publishedAt and createdAt
- * @returns {string} Formatted date string
- */
-export const getBeritaDisplayDate = (berita) => {
-  if (!berita) return '';
-  
-  // Use publishedAt if available, otherwise use createdAt
-  const dateToDisplay = berita.publishedAt || berita.createdAt;
-  
-  return formatBeritaDate(dateToDisplay);
 };

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
 import client from '../api/client';
+import { useCachedData, useInvalidateCache } from '../hooks/useCachedData';
 import { 
   ArrowRight, ArrowLeft
 } from 'lucide-react';
@@ -19,14 +20,14 @@ const JENIS_LAPORAN_LIST = [
     id: 'kandang', 
     label: 'Kandang', 
     color: 'from-amber-500 to-amber-600',
-    bgColor: 'bg-amber-50 border-amber-200',
+    bgColor: 'bg-warning-50 border-warning-100',
     description: 'Catat perkembangan kandang'
   },
   { 
     id: 'kesehatan', 
     label: 'Kesehatan', 
     color: 'from-red-500 to-red-600',
-    bgColor: 'bg-red-50 border-red-200',
+    bgColor: 'bg-danger-50 border-danger-100',
     description: 'Catat vaksinasi, obat, dan status kesehatan'
   },
   { 
@@ -39,15 +40,15 @@ const JENIS_LAPORAN_LIST = [
   { 
     id: 'penjualan', 
     label: 'Penjualan', 
-    color: 'from-blue-500 to-blue-600',
-    bgColor: 'bg-blue-50 border-blue-200',
+    color: 'from-primary-500 to-primary-600',
+    bgColor: 'bg-primary-50 border-primary-200',
     description: 'Catat penjualan ternak dan pembeli'
   },
   { 
     id: 'pengolahan_pupuk', 
     label: 'Pengolahan Pupuk', 
-    color: 'from-green-500 to-green-600',
-    bgColor: 'bg-green-50 border-green-200',
+    color: 'from-primary-500 to-primary-600',
+    bgColor: 'bg-primary-50 border-primary-200',
     description: 'Catat pengolahan dan penjualan pupuk',
     isPlaceholder: true
   },
@@ -56,6 +57,34 @@ const JENIS_LAPORAN_LIST = [
 export default function ClientPilihJenisLaporan() {
   const navigate = useNavigate();
   useAuth();
+  const invalidate = useInvalidateCache();
+  
+  // Fetch hewan candidates dengan caching (15 menit TTL)
+  const { data: cachedPejantanCandidates, loading: loadingPejantanCache } = useCachedData(
+    '/api/candidates/pejantan',
+    ['/api/candidates/pejantan'],
+    { ttl: 15 * 60 * 1000 }
+  );
+  
+  const { data: cachedIndukCandidates, loading: loadingIndukCache } = useCachedData(
+    '/api/candidates/induk',
+    ['/api/candidates/induk'],
+    { ttl: 15 * 60 * 1000 }
+  );
+  
+  // Fetch hewan ternak dengan caching (5 menit TTL)
+  const { data: cachedHewanTernak, loading: loadingHewanCache } = useCachedData(
+    '/api/hewan',
+    ['/api/hewan'],
+    { ttl: 5 * 60 * 1000 }
+  );
+  
+  const { data: cachedHewanAktif, loading: loadingHewanAktifCache } = useCachedData(
+    '/api/hewan-aktif',
+    ['/api/hewan-aktif'],
+    { ttl: 5 * 60 * 1000 }
+  );
+  
   const [step, setStep] = useState('select'); // 'select' or 'form'
   const [selectedJenis, setSelectedJenis] = useState(null);
   const [formData, setFormData] = useState({
@@ -88,72 +117,70 @@ export default function ClientPilihJenisLaporan() {
   // Get today's date as max
   const today = new Date().toISOString().split('T')[0];
 
-  const fetchCandidates = useCallback(async () => {
-    try {
-      setLoadingCandidates(true);
-      const [pejantanRes, indukRes] = await Promise.all([
-        client.get('/api/candidates/pejantan'),
-        client.get('/api/candidates/induk')
-      ]);
-
-      if (pejantanRes.data?.success) {
-        setPejantanCandidates(pejantanRes.data.data);
-      }
-      if (indukRes.data?.success) {
-        setIndukCandidates(indukRes.data.data);
-      }
-    } catch (err) {
-      console.error('Error fetching candidates:', err);
-      setError('Gagal mengambil data pejantan/induk');
-    } finally {
-      setLoadingCandidates(false);
+  // Sync cached candidates data
+  useEffect(() => {
+    if (cachedPejantanCandidates) {
+      const data = cachedPejantanCandidates?.data || cachedPejantanCandidates || [];
+      setPejantanCandidates(Array.isArray(data) ? data : []);
     }
+  }, [cachedPejantanCandidates]);
+
+  useEffect(() => {
+    if (cachedIndukCandidates) {
+      const data = cachedIndukCandidates?.data || cachedIndukCandidates || [];
+      setIndukCandidates(Array.isArray(data) ? data : []);
+    }
+  }, [cachedIndukCandidates]);
+
+  // Sync hewan ternak data
+  useEffect(() => {
+    if (selectedJenis === 'kesehatan' && cachedHewanAktif) {
+      const data = cachedHewanAktif?.data || cachedHewanAktif || [];
+      setHewanTernakList(Array.isArray(data) ? data : []);
+    } else if (selectedJenis === 'penjualan' && cachedHewanTernak) {
+      const data = cachedHewanTernak?.data || cachedHewanTernak || [];
+      const allHewan = Array.isArray(data) ? data : [];
+      
+      // Filter berdasarkan jenis hewan penjualan
+      const filtered = {
+        'Pejantan': allHewan.filter(h => h.jenis_kelamin === 'JANTAN' && (h.umur_bulan || 0) > 11 && h.status === 'AKTIF'),
+        'Indukan': allHewan.filter(h => h.jenis_kelamin === 'BETINA' && (h.umur_bulan || 0) > 11 && h.status === 'AKTIF'),
+        'Calon Indukan': allHewan.filter(h => h.jenis_kelamin === 'BETINA' && (h.umur_bulan || 0) >= 8 && (h.umur_bulan || 0) <= 11 && h.status === 'AKTIF'),
+        'Calon Pejantan': allHewan.filter(h => h.jenis_kelamin === 'JANTAN' && (h.umur_bulan || 0) >= 8 && (h.umur_bulan || 0) <= 11 && h.status === 'AKTIF'),
+        'Jantan Potong': allHewan.filter(h => h.jenis_kelamin === 'JANTAN' && h.status === 'AKTIF'),
+        'Betina Potong': allHewan.filter(h => h.jenis_kelamin === 'BETINA' && h.status === 'AKTIF')
+      };
+      setPenjualanCandidates(filtered);
+      setHewanTernakList(allHewan);
+    }
+  }, [selectedJenis, cachedHewanTernak, cachedHewanAktif]);
+
+  // Update loading states based on cached data
+  useEffect(() => {
+    setLoadingCandidates(loadingPejantanCache || loadingIndukCache);
+  }, [loadingPejantanCache, loadingIndukCache]);
+
+  useEffect(() => {
+    if (selectedJenis === 'kesehatan') {
+      setLoadingHewanTernak(loadingHewanAktifCache);
+    } else if (selectedJenis === 'penjualan') {
+      setLoadingHewanTernak(loadingHewanCache);
+    }
+  }, [selectedJenis, loadingHewanAktifCache, loadingHewanCache]);
+
+  const fetchCandidates = useCallback(async () => {
+    // Caching is now handled automatically by useCachedData hooks
+    console.log('[ClientPilihJenisLaporan] Candidates loaded from cache');
   }, []);
 
   const fetchHewanTernak = useCallback(async () => {
-    try {
-      setLoadingHewanTernak(true);
-      // For kesehatan form, use /api/hewan-aktif to get only active animals
-      // For penjualan form, use /api/hewan to get all animals for sale
-      const endpoint = selectedJenis === 'kesehatan' ? '/api/hewan-aktif' : '/api/hewan';
-      const res = await client.get(endpoint);
-      if (res.data?.success) {
-        setHewanTernakList(res.data.data || []);
-      }
-    } catch (err) {
-      console.error('Error fetching hewan ternak:', err);
-      setError('Gagal mengambil data hewan ternak');
-    } finally {
-      setLoadingHewanTernak(false);
-    }
-  }, [selectedJenis]);
+    // Caching is now handled automatically by useCachedData hooks
+    console.log('[ClientPilihJenisLaporan] Hewan ternak loaded from cache');
+  }, []);
 
   const fetchPenjualanCandidates = useCallback(async () => {
-    try {
-      setLoadingPenjualanCandidates(true);
-      const res = await client.get('/api/hewan');
-      if (res.data?.success && Array.isArray(res.data.data)) {
-        const allHewan = res.data.data;
-        
-        // Filter berdasarkan jenis hewan penjualan
-        // Updated: Umur boundary changed from 12 to 11 months
-        const filtered = {
-          'Pejantan': allHewan.filter(h => h.jenis_kelamin === 'JANTAN' && (h.umur_bulan || 0) > 11 && h.status === 'AKTIF'),
-          'Indukan': allHewan.filter(h => h.jenis_kelamin === 'BETINA' && (h.umur_bulan || 0) > 11 && h.status === 'AKTIF'),
-          'Calon Indukan': allHewan.filter(h => h.jenis_kelamin === 'BETINA' && (h.umur_bulan || 0) >= 8 && (h.umur_bulan || 0) <= 11 && h.status === 'AKTIF'),
-          'Calon Pejantan': allHewan.filter(h => h.jenis_kelamin === 'JANTAN' && (h.umur_bulan || 0) >= 8 && (h.umur_bulan || 0) <= 11 && h.status === 'AKTIF'),
-          'Jantan Potong': allHewan.filter(h => h.jenis_kelamin === 'JANTAN' && h.status === 'AKTIF'),
-          'Betina Potong': allHewan.filter(h => h.jenis_kelamin === 'BETINA' && h.status === 'AKTIF')
-        };
-        
-        setPenjualanCandidates(filtered);
-      }
-    } catch (err) {
-      console.error('Error fetching penjualan candidates:', err);
-      setError('Gagal mengambil data hewan untuk penjualan');
-    } finally {
-      setLoadingPenjualanCandidates(false);
-    }
+    // Caching is now handled automatically by useCachedData hooks
+    console.log('[ClientPilihJenisLaporan] Penjualan candidates loaded from cache');
   }, []);
 
   // Fetch candidates saat form kelahiran dibuka, dan fetch penjualan saat form penjualan dibuka
@@ -350,6 +377,9 @@ export default function ClientPilihJenisLaporan() {
       const res = await client.post('/api/laporan', payload);
 
       if (res.data?.success) {
+        // Invalidate cache for laporan
+        invalidate('/api/laporan');
+        
         // Trigger refetch for HewanTernakPage and other pages
         console.log('[ClientTambahLaporan] Laporan submitted successfully, triggering refetch event');
         localStorage.setItem('hewanDataRefetchTrigger', JSON.stringify({
@@ -401,14 +431,14 @@ export default function ClientPilihJenisLaporan() {
 
       {/* Error/Success Messages */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          ⚠️ {error}
+        <div className="bg-danger-50 border border-danger-100 text-danger px-4 py-3 rounded-lg">
+          âš ï¸ {error}
         </div>
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
-          <span className="text-lg">✓</span>
+        <div className="bg-primary-50 border border-primary-200 text-primary-700 px-4 py-3 rounded-lg flex items-center gap-2">
+          <span className="text-lg">âœ“</span>
           Laporan berhasil disimpan! Mengalihkan...
         </div>
       )}
@@ -521,14 +551,14 @@ export default function ClientPilihJenisLaporan() {
                 
                 {/* Render multiple luas_kandang inputs based on pengembangan_kandang */}
                 {formData.data.pengembangan_kandang && formData.data.pengembangan_kandang > 0 && (
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <p className="text-sm font-semibold text-blue-900 mb-3">
+                  <div className="bg-primary-50 p-4 rounded-lg border border-primary-200">
+                    <p className="text-sm font-semibold text-primary-900 mb-3">
                       Masukkan Luas Kandang untuk {formData.data.pengembangan_kandang} kandang yang ditambahkan
                     </p>
                     {Array.from({ length: formData.data.pengembangan_kandang }).map((_, index) => (
                       <div key={index} className="mb-3">
                         <label className="block text-sm font-semibold text-gray-900 mb-2">
-                          Luas Kandang {index + 1} (m²) <span className="text-red-500">*</span>
+                          Luas Kandang {index + 1} (mÂ²) <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="number"
@@ -859,7 +889,7 @@ export default function ClientPilihJenisLaporan() {
                     </select>
                     {pejantanCandidates.length === 0 && !loadingCandidates && (
                       <p className="text-xs text-yellow-600 mt-1">
-                        ⚠️ Tidak ada pejantan tersedia (jantan usia {'>'} 8 bulan)
+                        âš ï¸ Tidak ada pejantan tersedia (jantan usia {'>'} 8 bulan)
                       </p>
                     )}
                   </div>
@@ -885,7 +915,7 @@ export default function ClientPilihJenisLaporan() {
                     </select>
                     {indukCandidates.length === 0 && !loadingCandidates && (
                       <p className="text-xs text-yellow-600 mt-1">
-                        ⚠️ Tidak ada induk tersedia (betina usia {'>'} 8 bulan)
+                        âš ï¸ Tidak ada induk tersedia (betina usia {'>'} 8 bulan)
                       </p>
                     )}
                   </div>
@@ -896,12 +926,12 @@ export default function ClientPilihJenisLaporan() {
                   <div className="grid grid-cols-2 gap-4">
                     {/* Detail Pejantan */}
                     {formData.data.pejantan_id && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h4 className="font-semibold text-blue-900 mb-2">📊 Detail Pejantan</h4>
+                      <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-primary-900 mb-2">ðŸ“Š Detail Pejantan</h4>
                         {pejantanCandidates
                           .filter(h => h.id_hewan === formData.data.pejantan_id)
                           .map(h => (
-                            <div key={h.id} className="text-sm text-blue-800 space-y-1">
+                            <div key={h.id} className="text-sm text-primary-800 space-y-1">
                               <p><strong>ID Bisnis:</strong> {h.id_hewan || '-'}</p>
                               <p><strong>Jenis Kelamin:</strong> {h.jenis_kelamin}</p>
                               <p><strong>Ras:</strong> {h.ras}</p>
@@ -913,8 +943,8 @@ export default function ClientPilihJenisLaporan() {
 
                     {/* Detail Induk */}
                     {formData.data.induk_id && (
-                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                        <h4 className="font-semibold text-purple-900 mb-2">📊 Detail Induk</h4>
+                      <div className="bg-info-50 border border-info-100 rounded-lg p-4">
+                        <h4 className="font-semibold text-purple-900 mb-2">ðŸ“Š Detail Induk</h4>
                         {indukCandidates
                           .filter(h => h.id_hewan === formData.data.induk_id)
                           .map(h => (
@@ -979,8 +1009,8 @@ export default function ClientPilihJenisLaporan() {
 
                 {/* Dynamic Penjualan Items */}
                 {formData.data.jumlah_hewan && formData.data.jumlah_hewan > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-6">
-                    <p className="text-sm font-semibold text-blue-900">
+                  <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 space-y-6">
+                    <p className="text-sm font-semibold text-primary-900">
                       Masukkan detail penjualan untuk {formData.data.jumlah_hewan} hewan
                     </p>
 
@@ -988,7 +1018,7 @@ export default function ClientPilihJenisLaporan() {
                       const item = formData.data.penjualan_list?.[idx] || {};
                       
                       return (
-                        <div key={idx} className="bg-white rounded-lg p-4 border border-blue-100">
+                        <div key={idx} className="bg-white rounded-lg p-4 border border-primary-100">
                           <h4 className="font-semibold text-gray-900 mb-4">Hewan #{idx + 1}</h4>
 
                           {/* Jenis Penjualan */}
@@ -1064,10 +1094,10 @@ export default function ClientPilihJenisLaporan() {
                               ))}
                             </select>
                             {!item.jenis_hewan && (
-                              <p className="text-xs text-yellow-600 mt-1">⚠️ Pilih jenis hewan dulu</p>
+                              <p className="text-xs text-yellow-600 mt-1">âš ï¸ Pilih jenis hewan dulu</p>
                             )}
                             {item.jenis_hewan && penjualanCandidates[item.jenis_hewan]?.length === 0 && (
-                              <p className="text-xs text-yellow-600 mt-1">⚠️ Tidak ada hewan tersedia untuk jenis ini</p>
+                              <p className="text-xs text-yellow-600 mt-1">âš ï¸ Tidak ada hewan tersedia untuk jenis ini</p>
                             )}
                           </div>
 
@@ -1079,10 +1109,10 @@ export default function ClientPilihJenisLaporan() {
                                 <div className="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-3">
                                   <p className="text-sm font-semibold text-gray-900 mb-2">Data Hewan</p>
                                   <div className="text-sm text-gray-700 space-y-1">
-                                    <p><strong>Jenis Kelamin:</strong> <span className="text-gray-600">{selectedHewan.jenis_kelamin || '-'}</span></p>
-                                    <p><strong>Umur:</strong> <span className="text-gray-600">{selectedHewan.umur_display || `${selectedHewan.umur_bulan} bulan` || '-'}</span></p>
-                                    <p><strong>Ras:</strong> <span className="text-gray-600">{selectedHewan.ras || '-'}</span></p>
-                                    <p><strong>Bobot:</strong> <span className="text-gray-600">{selectedHewan.bobot || '-'} kg</span></p>
+                                    <p><strong>Jenis Kelamin:</strong> <span className="text-gray-700">{selectedHewan.jenis_kelamin || '-'}</span></p>
+                                    <p><strong>Umur:</strong> <span className="text-gray-700">{selectedHewan.umur_display || `${selectedHewan.umur_bulan} bulan` || '-'}</span></p>
+                                    <p><strong>Ras:</strong> <span className="text-gray-700">{selectedHewan.ras || '-'}</span></p>
+                                    <p><strong>Bobot:</strong> <span className="text-gray-700">{selectedHewan.bobot || '-'} kg</span></p>
                                   </div>
                                 </div>
                               ) : null;
@@ -1205,16 +1235,16 @@ export default function ClientPilihJenisLaporan() {
       {showPupukModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-8 text-center space-y-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100">
-              <span className="text-2xl">🌱</span>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-100">
+              <span className="text-2xl">ðŸŒ±</span>
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Pengolahan Pupuk</h2>
-              <p className="text-gray-600">Fitur akan segera hadir</p>
+              <p className="text-gray-700">Fitur akan segera hadir</p>
             </div>
             <button
               onClick={() => setShowPupukModal(false)}
-              className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition"
+              className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition"
             >
               Tutup
             </button>
@@ -1228,7 +1258,7 @@ export default function ClientPilihJenisLaporan() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="bg-orange-50 border-b border-orange-200 px-6 py-4">
               <h3 className="text-lg font-bold text-orange-900">
-                ⚠️ ID Bisnis Sudah Terdaftar
+                âš ï¸ ID Bisnis Sudah Terdaftar
               </h3>
             </div>
             

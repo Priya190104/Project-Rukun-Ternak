@@ -1,40 +1,62 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Landing from '../pages/Landing';
-import Login from '../pages/Login';
-import Profil from '../pages/Profil';
-import Dashboard from '../pages/Dashboard';
-import ViewerDashboard from '../pages/ViewerDashboard';
-import ClientDashboard from '../pages/ClientDashboard';
-import ClientDaftarLaporan from '../pages/ClientDaftarLaporan';
-import ClientPilihJenisLaporan from '../pages/ClientPilihJenisLaporan';
-import KelolaUser from '../pages/KelolaUser';
-import KelolaBerita from '../pages/KelolaBerita';
-import KelolaBanner from '../pages/KelolaBanner';
-import DaftarSemuaLaporan from '../pages/DaftarSemuaLaporan';
-import DetailLaporan from '../pages/DetailLaporan';
-import DetailBerita from '../pages/DetailBerita';
-import MenungguHakAkses from '../pages/MenungguHakAkses';
-import AdminAnalisis from '../pages/AdminAnalisis';
-import ListKelompok from '../pages/ListKelompok';
-import PetaSebaranKelompok from '../pages/PetaSebaranKelompok';
-import HewanTernakPage from '../pages/HewanTernakPage';
-import DetailHewanPage from '../pages/DetailHewanPage';
-import FormUpdateTernakPage from '../pages/FormUpdateTernakPage';
-import AdminHewanTernakPage from '../pages/AdminHewanTernakPage';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import RoleGuard from '../components/auth/RoleGuard';
 import AppLayout from '../components/layout/AppLayout';
+import { useAuth } from '../hooks/useAuth';
+
+// Lazy load all page components
+const Landing = lazy(() => import('../pages/Landing'));
+const Login = lazy(() => import('../pages/Login'));
+const Profil = lazy(() => import('../pages/Profil'));
+const Dashboard = lazy(() => import('../pages/Dashboard'));
+const ViewerDashboard = lazy(() => import('../pages/ViewerDashboard'));
+const ClientDashboard = lazy(() => import('../pages/ClientDashboard'));
+const ClientDaftarLaporan = lazy(() => import('../pages/ClientDaftarLaporan'));
+const ClientPilihJenisLaporan = lazy(() => import('../pages/ClientPilihJenisLaporan'));
+const KelolaUser = lazy(() => import('../pages/KelolaUser'));
+const DaftarSemuaLaporan = lazy(() => import('../pages/DaftarSemuaLaporan'));
+const DetailLaporan = lazy(() => import('../pages/DetailLaporan'));
+const MenungguHakAkses = lazy(() => import('../pages/MenungguHakAkses'));
+const AdminAnalisis = lazy(() => import('../pages/AdminAnalisis'));
+const ViewerAnalisis = lazy(() => import('../pages/ViewerAnalisis'));
+const ListKelompok = lazy(() => import('../pages/ListKelompok'));
+const PetaSebaranKelompok = lazy(() => import('../pages/PetaSebaranKelompok'));
+const HewanTernakPage = lazy(() => import('../pages/HewanTernakPage'));
+const DetailHewanPage = lazy(() => import('../pages/DetailHewanPage'));
+const FormUpdateTernakPage = lazy(() => import('../pages/FormUpdateTernakPage'));
+const AdminHewanTernakPage = lazy(() => import('../pages/AdminHewanTernakPage'));
+const DetailKelompok = lazy(() => import('../pages/DetailKelompok'));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading...</p>
+    </div>
+  </div>
+);
+
+// Wrapper component to conditionally render ViewerAnalisis or AdminAnalisis
+function ViewerAnalisisWrapper() {
+  const { appRole } = useAuth();
+  
+  if (appRole === 'viewer') {
+    return <ViewerAnalisis />;
+  }
+  return <AdminAnalisis />;
+}
 
 export default function AppRouter() {
   return (
     <main>
-      <Routes>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profil" element={<Profil />} />
           <Route path="/menunggu" element={<MenungguHakAkses />} />
-          <Route path="/berita/:slug" element={<DetailBerita />} />
 
           {/* ADMIN ROUTES */}
           <Route
@@ -68,35 +90,9 @@ export default function AppRouter() {
             path="/kelola-user"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin' ]}>
+                <RoleGuard allowedRoles={[ 'admin', 'viewer' ]}>
                   <AppLayout>
                     <KelolaUser />
-                  </AppLayout>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/kelola-berita"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin' ]}>
-                  <AppLayout>
-                    <KelolaBerita />
-                  </AppLayout>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin/banner"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin' ]}>
-                  <AppLayout>
-                    <KelolaBanner />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>
@@ -159,6 +155,19 @@ export default function AppRouter() {
           />
 
           <Route
+            path="/kelompok/:id"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'admin', 'viewer' ]}>
+                  <AppLayout>
+                    <DetailKelompok />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/peta-sebaran"
             element={
               <ProtectedRoute>
@@ -178,7 +187,8 @@ export default function AppRouter() {
               <ProtectedRoute>
                 <RoleGuard allowedRoles={[ 'admin', 'kelompok', 'viewer' ]}>
                   <AppLayout>
-                    <AdminAnalisis />
+                    {/* Use ViewerAnalisis component for viewer role to show development notice */}
+                    <ViewerAnalisisWrapper />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>
@@ -292,6 +302,7 @@ export default function AppRouter() {
             }
           />
         </Routes>
+      </Suspense>
     </main>
   );
 }

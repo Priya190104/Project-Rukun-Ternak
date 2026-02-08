@@ -20,8 +20,8 @@ const { dashboardCache, statsCache, invalidateKelompokStats } = require('../midd
  */
 async function getAdminDashboard(req, res) {
   try {
-    // Only admin can access this
-    if (req.user?.role !== 'admin') {
+    // Allow admin and viewer (viewer in read-only mode)
+    if (req.user?.role !== 'admin' && req.user?.role !== 'viewer') {
       return res.status(403).json({
         success: false,
         message: 'Admin access required'
@@ -48,10 +48,8 @@ async function getAdminDashboard(req, res) {
       kelahiranResult,
       kematianResult,
       penjualanResult,
-      latestResult,
       monthlyResult,
       kelompokStatsResult,
-      beritaResult,
       usersResult,
       kelompokResult
     ] = await Promise.all([
@@ -99,19 +97,9 @@ async function getAdminDashboard(req, res) {
       db.query(`
         SELECT 
           COUNT(*)::int as total_terjual,
-          COUNT(CASE WHEN DATE_TRUNC('month', tanggal_terjual) = DATE_TRUNC('month', NOW()) THEN 1 END)::int as terjual_this_month
+          COUNT(CASE WHEN DATE_TRUNC('month', COALESCE(tanggal_terjual, updated_at)) = DATE_TRUNC('month', NOW()) THEN 1 END)::int as terjual_this_month
         FROM hewan_ternak
         WHERE status = 'TERJUAL'
-      `),
-      
-      // LATEST REPORTS - Top 5 terbaru
-      db.query(`
-        SELECT 
-          id, jenis, kelompok_id, tanggal, 
-          (SELECT name FROM kelompok WHERE id = laporan.kelompok_id) as kelompok_name
-        FROM laporan
-        ORDER BY tanggal DESC
-        LIMIT 5
       `),
       
       // MONTHLY LAPORAN - Last 6 months
@@ -135,12 +123,6 @@ async function getAdminDashboard(req, res) {
         GROUP BY k.id, k.name
         ORDER BY laporan_count DESC
         LIMIT 10
-      `),
-      
-      // BERITA - Total news
-      db.query(`
-        SELECT COUNT(*)::int as total_berita
-        FROM berita
       `),
 
       // USERS COUNT
@@ -184,13 +166,6 @@ async function getAdminDashboard(req, res) {
         total_terjual: penjualanResult.rows[0].total_terjual || 0,
         this_month: penjualanResult.rows[0].terjual_this_month || 0
       },
-      latest: latestResult.rows.map(row => ({
-        id: row.id,
-        jenis: row.jenis,
-        kelompok_id: row.kelompok_id,
-        kelompok_name: row.kelompok_name,
-        tanggal: row.tanggal
-      })),
       perMonth: monthlyResult.rows.map(row => ({
         month: row.month,
         count: row.count
@@ -200,9 +175,6 @@ async function getAdminDashboard(req, res) {
         name: row.name,
         laporan_count: row.laporan_count
       })),
-      berita: {
-        total: beritaResult.rows[0].total_berita || 0
-      },
       generatedAt: new Date()
     };
 

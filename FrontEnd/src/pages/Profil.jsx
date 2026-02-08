@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { BookOpen, Leaf, BarChart3, Zap, Heart, TrendingUp } from 'lucide-react';
 
 export default function ProfilPage() {
@@ -17,7 +17,7 @@ export default function ProfilPage() {
 • Memperkuat ketahanan pangan lokal
 
 Melalui Rukun Ternak, peternak dapat mengelola berbagai jenis ternak dengan lebih efisien dan menguntungkan, karena satu jenis ternak dapat memanfaatkan limbah jenis lainnya.`,
-      color: 'from-green-500 to-emerald-600'
+      color: 'from-primary-500 to-primary-600'
     },
     {
       id: 2,
@@ -36,7 +36,7 @@ INTEGRASI DENGAN PERTANIAN:
 • Limbah ternak diproses menjadi kompos dan biogas
 • Ternak membantu pengendalian hama alami
 • Diversifikasi penggunaan lahan meningkat`,
-      color: 'from-emerald-500 to-teal-600'
+      color: 'from-primary-500 to-primary-600'
     },
     {
       id: 3,
@@ -55,7 +55,7 @@ KEAMANAN FINANSIAL:
 • Arus kas lebih stabil sepanjang tahun
 • Investasi awal diimbangi penghematan jangka panjang
 • Dukungan dari program Baznas untuk pengembangan`,
-      color: 'from-blue-500 to-cyan-600'
+      color: 'from-primary-500 to-primary-600'
     },
     {
       id: 4,
@@ -64,16 +64,16 @@ KEAMANAN FINANSIAL:
       content: `Dalam sistem Rukun Ternak, kesehatan ternak adalah prioritas utama:
 
 NUTRISI OPTIMAL:
-• Pakan berkualitas dari berbagai sumber
-• Pengendalian penyakit melalui sistem yang terukur
-• Program vaksinasi dan kesehatan preventif
-• Monitoring kesehatan hewan secara berkala
+â€¢ Pakan berkualitas dari berbagai sumber
+â€¢ Pengendalian penyakit melalui sistem yang terukur
+â€¢ Program vaksinasi dan kesehatan preventif
+â€¢ Monitoring kesehatan hewan secara berkala
 
 PRAKTIK MANAJEMEN:
-• Kandang yang higienis dan nyaman
-• Rotasi lahan untuk mencegah penyakit
-• Catat semua kegiatan kesehatan dan pakan
-• Laporan rutin untuk evaluasi kesejahteraan ternak`,
+â€¢ Kandang yang higienis dan nyaman
+â€¢ Rotasi lahan untuk mencegah penyakit
+â€¢ Catat semua kegiatan kesehatan dan pakan
+â€¢ Laporan rutin untuk evaluasi kesejahteraan ternak`,
       color: 'from-red-500 to-pink-600'
     },
     {
@@ -83,16 +83,16 @@ PRAKTIK MANAJEMEN:
       content: `Rukun Ternak adalah gerakan komunitas yang kuat:
 
 NILAI BUDAYA:
-• Memperkuat gotong royong antar peternak
-• Berbagi pengetahuan dan pengalaman
-• Menciptakan solidaritas kelompok ternak
-• Pemberdayaan ekonomi lokal
+â€¢ Memperkuat gotong royong antar peternak
+â€¢ Berbagi pengetahuan dan pengalaman
+â€¢ Menciptakan solidaritas kelompok ternak
+â€¢ Pemberdayaan ekonomi lokal
 
 JARINGAN DUKUNGAN:
-• Pelatihan dan pendampingan berkelanjutan
-• Akses ke teknologi dan informasi terbaru
-• Kerjasama dengan program pemerintah
-• Sertifikasi dan pengakuan kualitas produk`,
+â€¢ Pelatihan dan pendampingan berkelanjutan
+â€¢ Akses ke teknologi dan informasi terbaru
+â€¢ Kerjasama dengan program pemerintah
+â€¢ Sertifikasi dan pengakuan kualitas produk`,
       color: 'from-amber-500 to-orange-600'
     },
   ];
@@ -107,13 +107,13 @@ JARINGAN DUKUNGAN:
   return (
     <div className="space-y-8 sm:space-y-12 pt-8 sm:pt-12">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-lg sm:rounded-2xl bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-lg">
+      <div className="relative overflow-hidden rounded-lg sm:rounded-2xl bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,.1) 1px, transparent 1px)', backgroundSize: '50px 50px'}}></div>
         </div>
         <div className="relative p-8 sm:p-12">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">Rukun Ternak</h1>
-          <p className="text-lg sm:text-xl text-green-100 mb-4">
+          <p className="text-lg sm:text-xl text-primary-100 mb-4">
             Program Pemberdayaan Ekonomi Peternak Berbasis Kebersamaan dan Keberlanjutan
           </p>
           <div className="flex flex-wrap gap-4 mt-6">
@@ -136,13 +136,13 @@ JARINGAN DUKUNGAN:
           {statistics.map((stat, idx) => (
             <div
               key={idx}
-              className="bg-gradient-to-br from-emerald-50 to-green-50 border border-green-200 rounded-lg p-6 text-center hover:shadow-md transition-shadow"
+              className="bg-gradient-to-br from-primary-50 to-primary-50 border border-primary-200 rounded-lg p-6 text-center hover:shadow-md transition-shadow"
             >
-              <div className="text-3xl sm:text-4xl font-bold text-emerald-600 mb-2">
+              <div className="text-3xl sm:text-4xl font-bold text-primary-600 mb-2">
                 {stat.value}
               </div>
               <div className="font-semibold text-gray-900">{stat.label}</div>
-              <div className="text-sm text-gray-600 mt-1">{stat.description}</div>
+              <div className="text-sm text-gray-700 mt-1">{stat.description}</div>
             </div>
           ))}
         </div>
@@ -172,7 +172,7 @@ JARINGAN DUKUNGAN:
                     </p>
                   </div>
                   <div className="text-2xl flex-shrink-0 group-open:rotate-180 transition-transform">
-                    ▼
+                    â–¼
                   </div>
                 </summary>
                 <div className="p-6 bg-gray-50 border-t border-gray-200 whitespace-pre-wrap text-gray-800 text-sm leading-relaxed">
@@ -186,10 +186,10 @@ JARINGAN DUKUNGAN:
 
       {/* Penyebaran Ternak Section */}
       <section className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-6 sm:p-8">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-500 text-white p-6 sm:p-8">
           <BarChart3 size={32} className="mb-4" />
           <h2 className="text-2xl sm:text-3xl font-bold">Penyebaran Ternak</h2>
-          <p className="text-blue-100 mt-2">Komposisi jenis ternak dalam program Rukun Ternak</p>
+          <p className="text-primary-100 mt-2">Komposisi jenis ternak dalam program Rukun Ternak</p>
         </div>
         
         <div className="p-6 sm:p-8">
@@ -197,34 +197,34 @@ JARINGAN DUKUNGAN:
             {/* Chart Info */}
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-4 h-4 rounded bg-emerald-500"></div>
+                <div className="w-4 h-4 rounded bg-primary-500"></div>
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900">Domba</div>
-                  <div className="text-sm text-gray-600">35% dari total ternak</div>
+                  <div className="text-sm text-gray-700">35% dari total ternak</div>
                 </div>
-                <div className="text-2xl font-bold text-emerald-600">35%</div>
+                <div className="text-2xl font-bold text-primary-600">35%</div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-4 h-4 rounded bg-blue-500"></div>
+                <div className="w-4 h-4 rounded bg-primary-500"></div>
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900">Kambing</div>
-                  <div className="text-sm text-gray-600">30% dari total ternak</div>
+                  <div className="text-sm text-gray-700">30% dari total ternak</div>
                 </div>
-                <div className="text-2xl font-bold text-blue-600">30%</div>
+                <div className="text-2xl font-bold text-primary-600">30%</div>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-4 h-4 rounded bg-amber-500"></div>
+                <div className="w-4 h-4 rounded bg-warning-500"></div>
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900">Sapi</div>
-                  <div className="text-sm text-gray-600">20% dari total ternak</div>
+                  <div className="text-sm text-gray-700">20% dari total ternak</div>
                 </div>
-                <div className="text-2xl font-bold text-amber-600">20%</div>
+                <div className="text-2xl font-bold text-warning">20%</div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="w-4 h-4 rounded bg-orange-500"></div>
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900">Ayam</div>
-                  <div className="text-sm text-gray-600">15% dari total ternak</div>
+                  <div className="text-sm text-gray-700">15% dari total ternak</div>
                 </div>
                 <div className="text-2xl font-bold text-orange-600">15%</div>
               </div>
@@ -235,19 +235,19 @@ JARINGAN DUKUNGAN:
               <h3 className="font-bold text-gray-900">Manfaat Penyebaran</h3>
               <ul className="space-y-3 text-sm text-gray-700">
                 <li className="flex gap-3">
-                  <span className="text-emerald-600 font-bold flex-shrink-0">✓</span>
+                  <span className="text-primary-600 font-bold flex-shrink-0">âœ“</span>
                   <span>Mengurangi risiko kegagalan usaha karena diversifikasi</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-emerald-600 font-bold flex-shrink-0">✓</span>
+                  <span className="text-primary-600 font-bold flex-shrink-0">âœ“</span>
                   <span>Memanfaatkan limbah satu jenis ternak untuk jenis lain</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-emerald-600 font-bold flex-shrink-0">✓</span>
+                  <span className="text-primary-600 font-bold flex-shrink-0">âœ“</span>
                   <span>Meningkatkan pendapatan dari berbagai sumber</span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="text-emerald-600 font-bold flex-shrink-0">✓</span>
+                  <span className="text-primary-600 font-bold flex-shrink-0">âœ“</span>
                   <span>Menjaga keseimbangan ekosistem pertanian lokal</span>
                 </li>
               </ul>
@@ -257,46 +257,46 @@ JARINGAN DUKUNGAN:
       </section>
 
       {/* Global Analysis Section */}
-      <section className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6 sm:p-8">
+      <section className="bg-gradient-to-br from-purple-50 to-primary-50 border border-info-100 rounded-lg p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Analisis Global Rukun Ternak</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg p-6 border border-gray-200">
             <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <div className="w-3 h-3 rounded-full bg-primary-500"></div>
               Dampak Ekonomi
             </h3>
             <ul className="space-y-2 text-sm text-gray-700">
-              <li>• Peningkatan pendapatan peternak 40-60% per tahun</li>
-              <li>• Penciptaan lapangan kerja lokal</li>
-              <li>• Pengurangan impor daging nasional</li>
-              <li>• Stabilitas harga produk ternak lokal</li>
+              <li>â€¢ Peningkatan pendapatan peternak 40-60% per tahun</li>
+              <li>â€¢ Penciptaan lapangan kerja lokal</li>
+              <li>â€¢ Pengurangan impor daging nasional</li>
+              <li>â€¢ Stabilitas harga produk ternak lokal</li>
             </ul>
           </div>
 
           <div className="bg-white rounded-lg p-6 border border-gray-200">
             <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <div className="w-3 h-3 rounded-full bg-primary-500"></div>
               Dampak Sosial
             </h3>
             <ul className="space-y-2 text-sm text-gray-700">
-              <li>• Pemberdayaan masyarakat pedesaan</li>
-              <li>• Peningkatan status gizi keluarga peternak</li>
-              <li>• Penguatan kohesi sosial dalam kelompok</li>
-              <li>• Transfer pengetahuan antar peternak</li>
+              <li>â€¢ Pemberdayaan masyarakat pedesaan</li>
+              <li>â€¢ Peningkatan status gizi keluarga peternak</li>
+              <li>â€¢ Penguatan kohesi sosial dalam kelompok</li>
+              <li>â€¢ Transfer pengetahuan antar peternak</li>
             </ul>
           </div>
 
           <div className="bg-white rounded-lg p-6 border border-gray-200">
             <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+              <div className="w-3 h-3 rounded-full bg-primary-500"></div>
               Dampak Lingkungan
             </h3>
             <ul className="space-y-2 text-sm text-gray-700">
-              <li>• Pengurangan penggunaan pupuk sintetis</li>
-              <li>• Pengendalian limbah pertanian yang lebih baik</li>
-              <li>• Peningkatan kualitas tanah</li>
-              <li>• Konservasi keanekaragaman hayati</li>
+              <li>â€¢ Pengurangan penggunaan pupuk sintetis</li>
+              <li>â€¢ Pengendalian limbah pertanian yang lebih baik</li>
+              <li>â€¢ Peningkatan kualitas tanah</li>
+              <li>â€¢ Konservasi keanekaragaman hayati</li>
             </ul>
           </div>
 
@@ -306,17 +306,17 @@ JARINGAN DUKUNGAN:
               Target Pengembangan
             </h3>
             <ul className="space-y-2 text-sm text-gray-700">
-              <li>• Ekspansi ke 50 desa baru dalam 2 tahun</li>
-              <li>• Peningkatan populasi ternak 30%</li>
-              <li>• Sertifikasi organik untuk 80% kelompok</li>
-              <li>• Akses pasar digital untuk semua produk</li>
+              <li>â€¢ Ekspansi ke 50 desa baru dalam 2 tahun</li>
+              <li>â€¢ Peningkatan populasi ternak 30%</li>
+              <li>â€¢ Sertifikasi organik untuk 80% kelompok</li>
+              <li>â€¢ Akses pasar digital untuk semua produk</li>
             </ul>
           </div>
         </div>
       </section>
 
       {/* Call to Action */}
-      <section className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-lg p-6 sm:p-8 text-white text-center">
+      <section className="bg-gradient-to-r from-primary-600 to-primary-600 rounded-lg p-6 sm:p-8 text-white text-center">
         <h2 className="text-2xl sm:text-3xl font-bold mb-4">Bergabunglah dengan Rukun Ternak</h2>
         <p className="text-lg mb-6 max-w-2xl mx-auto">
           Jadilah bagian dari gerakan pemberdayaan ekonomi yang berkelanjutan dan menguntungkan untuk masyarakat desa
@@ -324,7 +324,7 @@ JARINGAN DUKUNGAN:
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
             href="/klg-dashboard"
-            className="inline-block bg-white text-emerald-600 px-8 py-3 rounded-lg font-bold hover:bg-green-50 transition-colors"
+            className="inline-block bg-white text-primary-600 px-8 py-3 rounded-lg font-bold hover:bg-primary-50 transition-colors">
           >
             Akses Dashboard Saya
           </a>
@@ -338,3 +338,5 @@ JARINGAN DUKUNGAN:
     </div>
   );
 }
+
+

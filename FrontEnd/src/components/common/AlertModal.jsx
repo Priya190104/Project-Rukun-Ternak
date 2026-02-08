@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
 
 /**
@@ -38,20 +38,20 @@ export default function AlertModal({
     switch (type) {
       case 'success':
         return {
-          bg: 'bg-green-50',
-          border: 'border-green-200',
-          icon: 'text-green-600',
+          bg: 'bg-success-50',
+          border: 'border-success-100',
+          icon: 'text-success',
           title: 'text-green-900',
-          button: 'bg-green-600 hover:bg-green-700',
+          button: 'bg-success hover:bg-green-700',
           buttonCancel: 'text-gray-700 hover:bg-gray-100'
         };
       case 'error':
         return {
-          bg: 'bg-red-50',
-          border: 'border-red-200',
-          icon: 'text-red-600',
+          bg: 'bg-danger-50',
+          border: 'border-danger-100',
+          icon: 'text-danger',
           title: 'text-red-900',
-          button: 'bg-red-600 hover:bg-red-700',
+          button: 'bg-danger hover:bg-red-700',
           buttonCancel: 'text-gray-700 hover:bg-gray-100'
         };
       case 'warning':
@@ -65,11 +65,11 @@ export default function AlertModal({
         };
       default:
         return {
-          bg: 'bg-blue-50',
-          border: 'border-blue-200',
-          icon: 'text-blue-600',
-          title: 'text-blue-900',
-          button: 'bg-blue-600 hover:bg-blue-700',
+          bg: 'bg-primary-50',
+          border: 'border-primary-200',
+          icon: 'text-primary-600',
+          title: 'text-primary-900',
+          button: 'bg-primary-600 hover:bg-primary-700',
           buttonCancel: 'text-gray-700 hover:bg-gray-100'
         };
     }
@@ -91,7 +91,7 @@ export default function AlertModal({
           {!onConfirm && (
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition flex-shrink-0"
+              className="text-gray-400 hover:text-gray-700 transition flex-shrink-0"
             >
               <X size={20} />
             </button>
@@ -121,3 +121,4 @@ export default function AlertModal({
     </div>
   );
 }
+

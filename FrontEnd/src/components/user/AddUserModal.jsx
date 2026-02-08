@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { X, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import client from '../../api/client';
 
@@ -115,14 +115,14 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
       <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-bold text-gray-900">Tambah Pengguna Baru</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition" disabled={loading}>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition" disabled={loading}>
             <X size={20} />
           </button>
         </div>
 
         {notification && (
           <div className={`p-3 border-l-4 flex items-start gap-2 ${
-            notification.type === 'success' ? 'bg-green-50 border-green-400 text-green-800' : 'bg-red-50 border-red-400 text-red-800'
+            notification.type === 'success' ? 'bg-primary-50 border-blue-400 text-primary-800' : 'bg-danger-50 border-red-400 text-red-800'
           }`}>
             <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
             <p className="text-sm font-medium">{notification.message}</p>
@@ -143,7 +143,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
                 errors.username ? 'border-red-500' : 'border-gray-300'
               }`}
             />
-            {errors.username && <p className="text-red-600 text-xs mt-1">{errors.username}</p>}
+            {errors.username && <p className="text-danger text-xs mt-1">{errors.username}</p>}
           </div>
 
           <div>
@@ -169,7 +169,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password}</p>}
+            {errors.password && <p className="text-danger text-xs mt-1">{errors.password}</p>}
           </div>
 
           <div>
@@ -195,7 +195,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
                 {showPasswordConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {errors.passwordConfirm && <p className="text-red-600 text-xs mt-1">{errors.passwordConfirm}</p>}
+            {errors.passwordConfirm && <p className="text-danger text-xs mt-1">{errors.passwordConfirm}</p>}
           </div>
 
           <div>
@@ -211,7 +211,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
                 errors.full_name ? 'border-red-500' : 'border-gray-300'
               }`}
             />
-            {errors.full_name && <p className="text-red-600 text-xs mt-1">{errors.full_name}</p>}
+            {errors.full_name && <p className="text-danger text-xs mt-1">{errors.full_name}</p>}
           </div>
 
           <div>
@@ -229,7 +229,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
               <option value="admin">Admin</option>
               <option value="viewer">Viewer</option>
             </select>
-            {errors.role && <p className="text-red-600 text-xs mt-1">{errors.role}</p>}
+            {errors.role && <p className="text-danger text-xs mt-1">{errors.role}</p>}
           </div>
 
           {form.role === 'kelompok' && (
@@ -249,7 +249,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
                   <option key={k.id} value={k.id}>{k.name}</option>
                 ))}
               </select>
-              {errors.kelompok_id && <p className="text-red-600 text-xs mt-1">{errors.kelompok_id}</p>}
+              {errors.kelompok_id && <p className="text-danger text-xs mt-1">{errors.kelompok_id}</p>}
             </div>
           )}
 
@@ -265,7 +265,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 h-9 px-3 text-sm bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 h-9 px-3 text-sm bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -282,3 +282,4 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
     </div>
   );
 }
+

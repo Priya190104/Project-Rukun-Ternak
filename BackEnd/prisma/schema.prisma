@@ -85,28 +85,6 @@ model Notifikasi {
   @@map("notifikasi")
 }
 
-model Berita {
-  id          Int       @id @default(autoincrement())
-  caption     String
-  slug        String?   @unique
-  content     String?   // HTML content from editor
-  imageUrl    String    @map("image_url")
-  publishedAt DateTime? @map("published_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  @@map("berita")
-}
-
-model Banner {
-  id        Int       @id @default(autoincrement())
-  imageUrl  String    @map("image_url")
-  createdAt DateTime  @default(now()) @map("created_at")
-  isActive  Boolean   @default(true) @map("is_active")
-
-  @@map("banners")
-}
-
 model HewanTernak {
   id              Int             @id @default(autoincrement())
   idHewan         String?         @map("id_hewan") // User-provided identifier (ID Bisnis)
@@ -117,10 +95,11 @@ model HewanTernak {
   tanggalLahir    DateTime        @map("tanggal_lahir")
   bobot           Float?          // Bobot terakhir dalam kg
   catatan         String?         // Catatan tambahan untuk hewan
-  status          String          @default("AKTIF") // AKTIF, MATI, TERJUAL
+  status          String          @default("AKTIF") // AKTIF, TIDAK_AKTIF, TERJUAL
   source          String          @default("Kelahiran") @map("source") // Penyaluran, Kelahiran, Pembelian
   tanggalTerjual  DateTime?       @map("tanggal_terjual") // Tanggal hewan dijual
   umurSaatTerjual Int?            @map("umur_saat_terjual") // Umur (dalam bulan) saat dijual, untuk freeze age
+  tanggalStatusTidakAktif DateTime? @map("tanggal_status_tidak_aktif") // Tanggal hewan menjadi tidak aktif (mati, hilang, dll)
   idInduk         Int?            @map("id_induk")
   induk           HewanTernak?    @relation("AnakDariInduk", fields: [idInduk], references: [id])
   anak            HewanTernak[]   @relation("AnakDariInduk")

@@ -10,6 +10,7 @@
   ],
   "rules": {
     "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
-    "react/prop-types": "off"
+    "react/prop-types": "off",
+    "unicode-bom": "off"
   }
 }

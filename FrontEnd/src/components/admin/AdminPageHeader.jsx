@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,7 +24,7 @@ export default function AdminPageHeader({
   const navigate = useNavigate();
 
   return (
-    <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl shadow-lg p-8 mb-8">
+    <div className="bg-gradient-to-r from-primary-400 to-primary-400 rounded-2xl shadow-lg p-8 mb-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         {/* Left side - Title and subtitle */}
         <div className="flex-1">
@@ -51,7 +51,7 @@ export default function AdminPageHeader({
 
           {/* Subtitle */}
           {subtitle && (
-            <p className="text-emerald-100 text-sm md:text-base ml-12 md:ml-0">{subtitle}</p>
+            <p className="text-white text-sm md:text-base ml-12 md:ml-0">{subtitle}</p>
           )}
         </div>
 
@@ -68,3 +68,4 @@ export default function AdminPageHeader({
     </div>
   );
 }
+
