@@ -300,13 +300,6 @@ export default function AddKelompokModalWithMap({
     }));
   };
 
-  const handleLocationChange = ({ latitude, longitude }) => {
-    setForm(prev => ({ ...prev, latitude, longitude }));
-    if (errors.location) {
-      setErrors(prev => ({ ...prev, location: '' }));
-    }
-  };
-
   const handlePeralatanChange = (index, field, value) => {
     const newList = [...form.peralatanList];
     newList[index] = { ...newList[index], [field]: value };
