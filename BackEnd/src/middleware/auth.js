@@ -19,7 +19,10 @@ async function attachUser(req, res, next) {
 
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) {
-    console.warn('[Auth] No valid Authorization header');
+    // Only log in development - missing Authorization header is expected for public endpoints
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[Auth] No valid Authorization header');
+    }
     return next();
   }
   const token = auth.split(' ')[1];
