@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
       setError(null);
 
       // Call backend login endpoint
-      const response = await client.post('/api/auth/login', {
+      const response = await client.post('/auth/login', {
         username,
         password,
       });
