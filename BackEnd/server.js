@@ -18,6 +18,8 @@ const corsOptions = {
     'http://202.10.45.79:3000',
     'http://202.10.45.79',
     'http://202.10.45.79:80',
+    'https://rukunternakcilacap.id',
+    'https://www.rukunternakcilacap.id',
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true,
