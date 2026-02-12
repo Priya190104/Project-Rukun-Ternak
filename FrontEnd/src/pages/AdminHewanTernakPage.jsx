@@ -2,55 +2,28 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
+import Pagination from '../components/common/Pagination';
 import { AlertCircle, Loader } from 'lucide-react';
-import { useCachedData } from '../hooks/useCachedData';
+import client from '../api/client';
 
 export default function AdminHewanTernakPage() {
   const { appRole } = useAuth();
   
-  // Fetch admin hewan dengan caching (5 menit TTL)
-  const { data: cachedHewan, loading: hewanLoading } = useCachedData(
-    '/api/admin/hewan',
-    ['/api/admin/hewan'],
-    { ttl: 5 * 60 * 1000 }
-  );
-  
-  // Fetch kelompok dengan caching (15 menit TTL)
-  const { data: cachedKelompok, loading: kelompokLoading } = useCachedData(
-    '/api/kelompok',
-    ['/api/kelompok'],
-    { ttl: 15 * 60 * 1000 }
-  );
-  
   const [hewan, setHewan] = useState([]);
-  const [filteredHewan, setFilteredHewan] = useState([]);
+  const [kelompokList, setKelompokList] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage] = useState(20);
   
   // Filter states
-  const [kelompokList, setKelompokList] = useState([]);
   const [filterKelompok, setFilterKelompok] = useState('');
-  const [filterUmurMin, setFilterUmurMin] = useState('');
-  const [filterUmurMax, setFilterUmurMax] = useState('');
-  const [filterBobotMin, setFilterBobotMin] = useState('');
-  const [filterBobotMax, setFilterBobotMax] = useState('');
-
-  // Sync hewan data
-  useEffect(() => {
-    if (cachedHewan) {
-      const data = cachedHewan?.data || cachedHewan || [];
-      setHewan(data);
-      setFilteredHewan(data);
-    }
-  }, [cachedHewan]);
-
-  // Sync kelompok data
-  useEffect(() => {
-    if (cachedKelompok) {
-      const data = Array.isArray(cachedKelompok) ? cachedKelompok : (cachedKelompok?.data || []);
-      const names = data.map(k => k.name);
-      setKelompokList(names);
-    }
-  }, [cachedKelompok]);
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterSource, setFilterSource] = useState('');
 
   // Allow both admin and viewer (viewer in read-only mode)
   useEffect(() => {
@@ -59,39 +32,59 @@ export default function AdminHewanTernakPage() {
     }
   }, [appRole]);
 
-  const loading = hewanLoading || kelompokLoading;
-
-  // Apply filters (client-side, no reload)
+  // Fetch kelompok list for filter options
   useEffect(() => {
-    let filtered = [...hewan];
+    const fetchKelompok = async () => {
+      try {
+        const res = await client.get('/api/kelompok');
+        if (res.data?.success) {
+          const data = res.data?.data || [];
+          setKelompokList(data);
+        }
+      } catch (err) {
+        console.error('Error fetching kelompok:', err);
+      }
+    };
+    
+    fetchKelompok();
+  }, []);
 
-    // Filter by kelompok
-    if (filterKelompok) {
-      filtered = filtered.filter(h => h.nama_kelompok === filterKelompok);
-    }
-
-    // Filter by umur (dalam hari)
-    if (filterUmurMin || filterUmurMax) {
-      filtered = filtered.filter(h => {
-        const umurHari = h.umur.hari;
-        const minOk = !filterUmurMin || umurHari >= parseInt(filterUmurMin);
-        const maxOk = !filterUmurMax || umurHari <= parseInt(filterUmurMax);
-        return minOk && maxOk;
-      });
-    }
-
-    // Filter by bobot
-    if (filterBobotMin || filterBobotMax) {
-      filtered = filtered.filter(h => {
-        const bobot = h.bobot || 0;
-        const minOk = !filterBobotMin || bobot >= parseFloat(filterBobotMin);
-        const maxOk = !filterBobotMax || bobot <= parseFloat(filterBobotMax);
-        return minOk && maxOk;
-      });
-    }
-
-    setFilteredHewan(filtered);
-  }, [hewan, filterKelompok, filterUmurMin, filterUmurMax, filterBobotMin, filterBobotMax]);
+  // Fetch hewan with pagination and filters
+  useEffect(() => {
+    const fetchHewan = async () => {
+      try {
+        setLoading(true);
+        
+        // Build query params
+        const params = new URLSearchParams({
+          page: currentPage,
+          limit: itemsPerPage
+        });
+        
+        if (filterKelompok) params.append('kelompok_id', filterKelompok);
+        if (filterStatus) params.append('status', filterStatus);
+        if (filterSource) params.append('source', filterSource);
+        
+        const res = await client.get(`/api/admin/hewan?${params.toString()}`);
+        
+        if (res.data?.success) {
+          setHewan(res.data.data || []);
+          
+          if (res.data.pagination) {
+            setTotalPages(res.data.pagination.totalPages || 1);
+            setTotalItems(res.data.pagination.total || 0);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching hewan:', err);
+        setError('Gagal memuat data hewan ternak');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchHewan();
+  }, [currentPage, itemsPerPage, filterKelompok, filterStatus, filterSource]);
 
   const getStatusBadge = (status) => {
     const statusColors = {
@@ -126,10 +119,14 @@ export default function AdminHewanTernakPage() {
 
   const handleResetFilter = () => {
     setFilterKelompok('');
-    setFilterUmurMin('');
-    setFilterUmurMax('');
-    setFilterBobotMin('');
-    setFilterBobotMax('');
+    setFilterStatus('');
+    setFilterSource('');
+    setCurrentPage(1);
+  };
+  
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (loading) {
@@ -176,7 +173,7 @@ export default function AdminHewanTernakPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Filter Kelompok */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -184,89 +181,54 @@ export default function AdminHewanTernakPage() {
               </label>
               <select
                 value={filterKelompok}
-                onChange={(e) => setFilterKelompok(e.target.value)}
+                onChange={(e) => { setFilterKelompok(e.target.value); setCurrentPage(1); }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900 text-sm"
               >
                 <option value="">Semua Kelompok</option>
                 {kelompokList.map((k) => (
-                  <option key={k} value={k}>{k}</option>
+                  <option key={k.id} value={k.id}>{k.name}</option>
                 ))}
               </select>
             </div>
 
-            {/* Filter Umur Min */}
+            {/* Filter Status */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Umur Min (hari)
+                Status
               </label>
-              <input
-                type="number"
-                min="0"
-                value={filterUmurMin}
-                onChange={(e) => setFilterUmurMin(e.target.value)}
-                placeholder="Dari"
+              <select
+                value={filterStatus}
+                onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900 text-sm"
-              />
+              >
+                <option value="">Semua Status</option>
+                <option value="AKTIF">AKTIF</option>
+                <option value="TIDAK_AKTIF">TIDAK AKTIF</option>
+                <option value="TERJUAL">TERJUAL</option>
+              </select>
             </div>
 
-            {/* Filter Umur Max */}
+            {/* Filter Source */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Umur Max (hari)
+                Sumber
               </label>
-              <input
-                type="number"
-                min="0"
-                value={filterUmurMax}
-                onChange={(e) => setFilterUmurMax(e.target.value)}
-                placeholder="Sampai"
+              <select
+                value={filterSource}
+                onChange={(e) => { setFilterSource(e.target.value); setCurrentPage(1); }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900 text-sm"
-              />
+              >
+                <option value="">Semua Sumber</option>
+                <option value="Kelahiran">Kelahiran</option>
+                <option value="Penyaluran">Penyaluran</option>
+                <option value="Penambahan">Penambahan</option>
+              </select>
             </div>
-
-            {/* Filter Bobot Min */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Bobot Min (kg)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.5"
-                value={filterBobotMin}
-                onChange={(e) => setFilterBobotMin(e.target.value)}
-                placeholder="Dari"
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900 text-sm"
-              />
-            </div>
-
-            {/* Filter Bobot Max */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Bobot Max (kg)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.5"
-                value={filterBobotMax}
-                onChange={(e) => setFilterBobotMax(e.target.value)}
-                placeholder="Sampai"
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-gray-900 text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Filter Info */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-sm text-gray-700">
-              Menampilkan <span className="font-semibold text-gray-900">{filteredHewan.length}</span> dari <span className="font-semibold text-gray-900">{hewan.length}</span> hewan
-            </p>
           </div>
         </div>
 
         {/* Hewan List */}
-        {filteredHewan.length > 0 ? (
+        {hewan.length > 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <table className="w-full">
               <thead>
@@ -283,7 +245,7 @@ export default function AdminHewanTernakPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredHewan.map((h) => (
+                {hewan.map((h) => (
                   <tr key={h.id} className="border-b border-gray-100 hover:bg-primary-50 transition">
                     <td className="px-6 py-4 text-sm text-gray-900 font-semibold">{h.id_hewan || `#${h.id}`}</td>
                     <td className="px-6 py-4 text-sm">
@@ -313,13 +275,23 @@ export default function AdminHewanTernakPage() {
                 ))}
               </tbody>
             </table>
+            
+            {/* Pagination */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              disabled={loading}
+            />
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
             <div className="text-5xl mb-4">🐑</div>
             <p className="text-gray-700 font-semibold mb-2">Tidak ada data hewan ternak</p>
             <p className="text-gray-500 text-sm">
-              {hewan.length === 0 
+              {totalItems === 0 
                 ? 'Belum ada data hewan dari semua kelompok' 
                 : 'Filter yang Anda gunakan tidak menemukan hasil'}
             </p>

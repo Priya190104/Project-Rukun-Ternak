@@ -331,6 +331,39 @@ const getHewanAktif = async (req, res) => {
 // Get list semua hewan ternak (ADMIN) - dari semua kelompok
 const getAllHewanAdmin = async (req, res) => {
   try {
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const offset = (page - 1) * limit;
+
+    // Filter parameters
+    const { status, kelompok_id, source } = req.query;
+
+    // Build WHERE clause for filters
+    let whereConditions = [];
+    let params = [];
+    let paramCount = 1;
+
+    if (status) {
+      whereConditions.push(`h.status = $${paramCount++}`);
+      params.push(status);
+    }
+
+    if (kelompok_id) {
+      whereConditions.push(`h.kelompok_id = $${paramCount++}`);
+      params.push(parseInt(kelompok_id));
+    }
+
+    if (source) {
+      whereConditions.push(`h.source = $${paramCount++}`);
+      params.push(source);
+    }
+
+    const whereClause = whereConditions.length > 0 
+      ? 'WHERE ' + whereConditions.join(' AND ') 
+      : '';
+
+    // Query with pagination and calculate age at SQL level
     const query = `
       SELECT 
         h.id,
@@ -345,49 +378,100 @@ const getAllHewanAdmin = async (req, res) => {
         h.tanggal_status_tidak_aktif,
         h.tanggal_terjual,
         h.umur_saat_terjual,
-        k.name as nama_kelompok
+        k.name as nama_kelompok,
+        FLOOR(EXTRACT(DAY FROM (
+          CASE 
+            WHEN h.status = 'TIDAK_AKTIF' AND h.tanggal_status_tidak_aktif IS NOT NULL
+            THEN h.tanggal_status_tidak_aktif - h.tanggal_lahir
+            WHEN h.status = 'TERJUAL' AND h.tanggal_terjual IS NOT NULL
+            THEN h.tanggal_terjual - h.tanggal_lahir
+            ELSE NOW() - h.tanggal_lahir
+          END
+        ))) as umur_hari,
+        FLOOR(EXTRACT(DAY FROM (
+          CASE 
+            WHEN h.status = 'TIDAK_AKTIF' AND h.tanggal_status_tidak_aktif IS NOT NULL
+            THEN h.tanggal_status_tidak_aktif - h.tanggal_lahir
+            WHEN h.status = 'TERJUAL' AND h.tanggal_terjual IS NOT NULL
+            THEN h.tanggal_terjual - h.tanggal_lahir
+            ELSE NOW() - h.tanggal_lahir
+          END
+        )) / 30) as umur_bulan,
+        CASE 
+          WHEN EXTRACT(DAY FROM (
+            CASE 
+              WHEN h.status = 'TIDAK_AKTIF' AND h.tanggal_status_tidak_aktif IS NOT NULL
+              THEN h.tanggal_status_tidak_aktif - h.tanggal_lahir
+              WHEN h.status = 'TERJUAL' AND h.tanggal_terjual IS NOT NULL
+              THEN h.tanggal_terjual - h.tanggal_lahir
+              ELSE NOW() - h.tanggal_lahir
+            END
+          )) < 30 
+          THEN FLOOR(EXTRACT(DAY FROM (
+            CASE 
+              WHEN h.status = 'TIDAK_AKTIF' AND h.tanggal_status_tidak_aktif IS NOT NULL
+              THEN h.tanggal_status_tidak_aktif - h.tanggal_lahir
+              WHEN h.status = 'TERJUAL' AND h.tanggal_terjual IS NOT NULL
+              THEN h.tanggal_terjual - h.tanggal_lahir
+              ELSE NOW() - h.tanggal_lahir
+            END
+          ))) || ' hari'
+          ELSE FLOOR(EXTRACT(DAY FROM (
+            CASE 
+              WHEN h.status = 'TIDAK_AKTIF' AND h.tanggal_status_tidak_aktif IS NOT NULL
+              THEN h.tanggal_status_tidak_aktif - h.tanggal_lahir
+              WHEN h.status = 'TERJUAL' AND h.tanggal_terjual IS NOT NULL
+              THEN h.tanggal_terjual - h.tanggal_lahir
+              ELSE NOW() - h.tanggal_lahir
+            END
+          )) / 30) || ' bulan'
+        END as umur_display
       FROM hewan_ternak h
       LEFT JOIN kelompok k ON h.kelompok_id = k.id
+      ${whereClause}
       ORDER BY h.tanggal_lahir DESC
+      LIMIT $${paramCount++} OFFSET $${paramCount++}
     `;
 
-    const result = await db.query(query);
+    params.push(limit, offset);
+
+    // Get total count for pagination
+    const countQuery = `
+      SELECT COUNT(*)::int as total
+      FROM hewan_ternak h
+      ${whereClause}
+    `;
+
+    const [result, countResult] = await Promise.all([
+      db.query(query, params),
+      db.query(countQuery, params.slice(0, -2)) // Remove limit and offset
+    ]);
+
+    const total = countResult.rows[0].total;
     
-    console.log(`[getAllHewanAdmin] Total hewan retrieved: ${result.rows.length}`);
+    console.log(`[getAllHewanAdmin] Page ${page}, retrieved: ${result.rows.length} of ${total} total`);
     
-    // Log status breakdown
-    const statusBreakdown = {};
-    result.rows.forEach(h => {
-      statusBreakdown[h.status] = (statusBreakdown[h.status] || 0) + 1;
-    });
-    console.log(`[getAllHewanAdmin] Status breakdown:`, statusBreakdown);
-    
-    // Tambahkan umur untuk setiap hewan
-    const hewanDenganUmur = result.rows.map(hewan => {
-      let umurData;
-      
-      // Freeze age calculation sesuai status
-      if (hewan.status === 'TIDAK_AKTIF' && hewan.tanggal_status_tidak_aktif) {
-        // Gunakan tanggal_status_tidak_aktif sebagai freeze point
-        umurData = hitungUmur(hewan.tanggal_lahir, hewan.tanggal_status_tidak_aktif);
-      } else if (hewan.status === 'TERJUAL' && hewan.tanggal_terjual) {
-        // Gunakan tanggal_terjual untuk freeze age saat dijual
-        umurData = hitungUmur(hewan.tanggal_lahir, hewan.tanggal_terjual);
-      } else {
-        // Hitung umur normal untuk status AKTIF
-        umurData = hitungUmur(hewan.tanggal_lahir);
+    // Format response with umur data
+    const hewanDenganUmur = result.rows.map(hewan => ({
+      ...hewan,
+      umur: {
+        hari: hewan.umur_hari,
+        bulan: hewan.umur_bulan,
+        display: hewan.umur_display
       }
-      
-      return {
-        ...hewan,
-        umur: umurData
-      };
-    });
+    }));
 
     res.json({
       success: true,
       data: hewanDenganUmur,
-      total: hewanDenganUmur.length
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1
+      }
     });
   } catch (error) {
     console.error('[getAllHewanAdmin] Error:', error.message);

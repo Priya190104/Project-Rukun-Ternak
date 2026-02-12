@@ -2,27 +2,26 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
+import Pagination from '../components/common/Pagination';
 import client from '../api/client';
 import { AlertCircle, Loader, Plus } from 'lucide-react';
 import AddHewanModal from '../components/AddHewanModal';
-import { useCachedData, useInvalidateCache } from '../hooks/useCachedData';
 
 export default function HewanTernakPage() {
   const { appRole } = useAuth();
-  const invalidate = useInvalidateCache();
-  
-  // Fetch hewan dengan caching (5 menit TTL)
-  const { data: cachedHewan, loading: hewanLoading, refetch } = useCachedData(
-    '/api/hewan',
-    ['/api/hewan'],
-    { ttl: 5 * 60 * 1000 }
-  );
   
   const [hewan, setHewan] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAddingHewan, setIsAddingHewan] = useState(false);
   const [duplicateIDModal, setDuplicateIDModal] = useState(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage] = useState(20);
 
   useEffect(() => {
     console.log('[HewanTernakPage] Mounted with appRole:', appRole);
@@ -34,22 +33,38 @@ export default function HewanTernakPage() {
     }
   }, [appRole]);
 
-  // Sync cached hewan data
-  useEffect(() => {
-    if (cachedHewan) {
-      console.log('[HewanTernakPage] API Response:', cachedHewan);
-      const data = cachedHewan?.data || cachedHewan || [];
-      const hewanData = Array.isArray(data) ? data : [];
-      if (hewanData.length > 0) {
-        const dataSources = {
-          penyaluran: hewanData.filter(h => h.source === 'Penyaluran').length,
-          kelahiran: hewanData.filter(h => h.source === 'Kelahiran').length
-        };
-        console.log('[HewanTernakPage] Data sources:', dataSources, 'Total:', hewanData.length);
+  // Fetch hewan data with pagination
+  const fetchHewan = async () => {
+    try {
+      setLoading(true);
+      
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: itemsPerPage
+      });
+      
+      const res = await client.get(`/api/hewan?${params.toString()}`);
+      
+      if (res.data?.success) {
+        const data = res.data.data || [];
+        setHewan(data);
+        
+        if (res.data.pagination) {
+          setTotalPages(res.data.pagination.pages || 1);
+          setTotalItems(res.data.pagination.total || 0);
+        }
       }
-      setHewan(hewanData);
+    } catch (err) {
+      console.error('Error fetching hewan:', err);
+      setError('Gagal memuat data hewan ternak');
+    } finally {
+      setLoading(false);
     }
-  }, [cachedHewan]);
+  };
+
+  useEffect(() => {
+    fetchHewan();
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
     // Listen for refetch trigger from other pages (e.g., ClientTambahLaporan)
@@ -58,8 +73,7 @@ export default function HewanTernakPage() {
       const triggerData = JSON.parse(localStorage.getItem('hewanDataRefetchTrigger'));
       if (triggerData) {
         console.log('[HewanTernakPage] Refetch triggered by:', triggerData.message);
-        invalidate('/api/hewan');
-        refetch();
+        fetchHewan();
       }
     };
 
@@ -68,7 +82,7 @@ export default function HewanTernakPage() {
     return () => {
       window.removeEventListener('storage', handleRefetchTrigger);
     };
-  }, [invalidate, refetch]);
+  }, []);
 
   const handleAddHewan = async (formData) => {
     try {
@@ -84,9 +98,8 @@ export default function HewanTernakPage() {
       });
 
       if (res.data?.success) {
-        // Invalidate cache dan refresh data
-        invalidate('/api/hewan');
-        refetch();
+        // Refresh data
+        fetchHewan();
         
         setIsAddModalOpen(false);
         alert('✅ Hewan ternak berhasil ditambahkan!');
@@ -122,6 +135,11 @@ export default function HewanTernakPage() {
     };
     return statusColors[status] || 'bg-gray-100 text-gray-800';
   };
+  
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const getJenisKelaminDisplay = (jk) => {
     return jk === 'JANTAN' ? 'Jantan' : 'Betina';
@@ -145,7 +163,7 @@ export default function HewanTernakPage() {
     return colorMap[source] || 'bg-gray-100 text-gray-800';
   };
 
-  if (hewanLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center">
@@ -181,7 +199,7 @@ export default function HewanTernakPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h2 className="font-semibold text-gray-900">Total Hewan Ternak</h2>
-              <p className="text-2xl font-bold text-primary-600 mt-1">{hewan.length} Ekor</p>
+              <p className="text-2xl font-bold text-primary-600 mt-1">{totalItems} Ekor</p>
             </div>
             <div className="flex flex-col items-end gap-2">
               <button
@@ -244,6 +262,16 @@ export default function HewanTernakPage() {
                 ))}
               </tbody>
             </table>
+            
+            {/* Pagination */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              disabled={loading}
+            />
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">

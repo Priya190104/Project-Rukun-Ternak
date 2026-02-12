@@ -1,80 +1,75 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
-import { Filter, Eye, Download } from 'lucide-react';
+import Pagination from '../components/common/Pagination';
+import { Filter, Eye, Download, Loader } from 'lucide-react';
 import { exportToCSV, exportToPDF } from '../utils/exportUtils';
-import { useCachedData } from '../hooks/useCachedData';
+import client from '../api/client';
 
 const jenisLaporan = ['Budidaya', 'Kelahiran', 'Kematian', 'Penjualan'];
 
 export default function ClientDaftarLaporan() {
-  // Fetch laporan dengan caching (5 menit TTL)
-  const { data: cachedLaporan } = useCachedData(
-    '/api/laporan',
-    ['/api/laporan'],
-    { ttl: 5 * 60 * 1000 }
-  );
-  
   const [reports, setReports] = useState([]);
-  const [filteredReports, setFilteredReports] = useState([]);
-  const [filterJenis, setFilterJenis] = useState('Semua Jenis');
-  const [filterBulan, setFilterBulan] = useState('Semua Bulan');
-  const [filterSubJenis, setFilterSubJenis] = useState('Semua');
+  const [loading, setLoading] = useState(true);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage] = useState(20);
+  
+  // Filter states
+  const [filterJenis, setFilterJenis] = useState('');
 
-  // Sync laporan data
+  // Fetch laporan with pagination and filters
   useEffect(() => {
-    if (cachedLaporan) {
-      const data = (Array.isArray(cachedLaporan) ? cachedLaporan : (cachedLaporan?.data || [])).map(item => ({
-        ...item,
-        kelompok: item.kelompok || item.kelompok_name || '-'
-      }));
-      setReports(data);
-      setFilteredReports(data);
-    }
-  }, [cachedLaporan]);
-
-  useEffect(() => {
-    let filtered = reports;
-
-    if (filterJenis !== 'Semua Jenis') {
-      filtered = filtered.filter(r => r.jenis === filterJenis);
-    }
-
-    if (filterBulan !== 'Semua Bulan') {
-      const now = new Date();
-      filtered = filtered.filter(r => {
-        if (!r.tanggal) return false;
-        const reportDate = new Date(r.tanggal);
+    const fetchLaporan = async () => {
+      try {
+        setLoading(true);
         
-        if (filterBulan === 'Bulan Ini') {
-          return reportDate.getMonth() === now.getMonth() && reportDate.getFullYear() === now.getFullYear();
-        } else if (filterBulan === 'Bulan Kemarin') {
-          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
-          return reportDate.getMonth() === lastMonth.getMonth() && reportDate.getFullYear() === lastMonth.getFullYear();
-        } else {
-          const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-          const monthIndex = monthNames.indexOf(filterBulan);
-          return monthIndex >= 0 && reportDate.getMonth() === monthIndex && reportDate.getFullYear() === now.getFullYear();
+        // Build query params
+        const params = new URLSearchParams({
+          page: currentPage,
+          limit: itemsPerPage
+        });
+        
+        if (filterJenis) params.append('jenis', filterJenis);
+        
+        const res = await client.get(`/api/laporan/list?${params.toString()}`);
+        
+        if (res.data?.success) {
+          const data = res.data.data || [];
+          setReports(data);
+          
+          if (res.data.pagination) {
+            setTotalPages(res.data.pagination.totalPages || 1);
+            setTotalItems(res.data.pagination.total || 0);
+          }
         }
-      });
-    }
-
-    if (filterSubJenis !== 'Semua' && filterJenis === 'Penjualan') {
-      filtered = filtered.filter(r => r.data?.jenis_penjualan === filterSubJenis);
-    }
-
-    setFilteredReports(filtered);
-  }, [filterJenis, filterBulan, filterSubJenis, reports]);
+      } catch (err) {
+        console.error('Error fetching laporan:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchLaporan();
+  }, [currentPage, itemsPerPage, filterJenis]);
 
   const handleExportCSV = () => {
-    exportToCSV(filteredReports, `laporan_${new Date().toISOString().split('T')[0]}.csv`);
+    exportToCSV(reports, `laporan_${new Date().toISOString().split('T')[0]}.csv`);
     setShowExportMenu(false);
   };
 
   const handleExportPDF = () => {
-    exportToPDF(filteredReports, `laporan_${new Date().toISOString().split('T')[0]}.pdf`);
+    exportToPDF(reports, `laporan_${new Date().toISOString().split('T')[0]}.pdf`);
     setShowExportMenu(false);
+  };
+  
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -90,64 +85,18 @@ export default function ClientDaftarLaporan() {
           <Filter size={20} className="text-emerald-600" />
           <h2 className="text-lg font-semibold text-gray-900">Filter Laporan</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Filter Jenis Laporan</label>
             <select
               value={filterJenis}
-              onChange={(e) => {
-                setFilterJenis(e.target.value);
-                if (e.target.value !== 'Penjualan') {
-                  setFilterSubJenis('Semua');
-                }
-              }}
+              onChange={(e) => { setFilterJenis(e.target.value); setCurrentPage(1); }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
-              <option value="Semua Jenis">Semua Jenis</option>
+              <option value="">Semua Jenis</option>
               {jenisLaporan.map(j => (
                 <option key={j} value={j}>{j}</option>
               ))}
-            </select>
-          </div>
-          
-          {filterJenis === 'Penjualan' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sub Jenis Penjualan</label>
-              <select
-                value={filterSubJenis}
-                onChange={(e) => setFilterSubJenis(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="Semua">Semua</option>
-                <option value="Aqiqah">Aqiqah</option>
-                <option value="Kurban">Kurban</option>
-                <option value="Retail">Retail</option>
-              </select>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Filter Bulan</label>
-            <select
-              value={filterBulan}
-              onChange={(e) => setFilterBulan(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            >
-              <option value="Semua Bulan">Semua Bulan</option>
-              <option value="Bulan Ini">Bulan Ini</option>
-              <option value="Bulan Kemarin">Bulan Kemarin</option>
-              <option value="Januari">Januari</option>
-              <option value="Februari">Februari</option>
-              <option value="Maret">Maret</option>
-              <option value="April">April</option>
-              <option value="Mei">Mei</option>
-              <option value="Juni">Juni</option>
-              <option value="Juli">Juli</option>
-              <option value="Agustus">Agustus</option>
-              <option value="September">September</option>
-              <option value="Oktober">Oktober</option>
-              <option value="November">November</option>
-              <option value="Desember">Desember</option>
             </select>
           </div>
         </div>
@@ -184,14 +133,20 @@ export default function ClientDaftarLaporan() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {filteredReports.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="text-gray-500 font-medium">Belum ada laporan</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+      {loading ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <Loader className="w-12 h-12 text-primary-600 mx-auto mb-3 animate-spin" />
+          <p className="text-gray-700">Memuat data laporan...</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          {reports.length === 0 ? (
+            <div className="p-12 text-center">
+              <p className="text-gray-500 font-medium">Belum ada laporan</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">No</th>
@@ -202,9 +157,9 @@ export default function ClientDaftarLaporan() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredReports.map((report, index) => (
+                {reports.map((report, index) => (
                   <tr key={report.id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">{index + 1}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {report.tanggal ? new Date(report.tanggal).toLocaleDateString('id-ID') : '-'}
                     </td>
@@ -233,9 +188,20 @@ export default function ClientDaftarLaporan() {
                 ))}
               </tbody>
             </table>
+            
+            {/* Pagination */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              disabled={loading}
+            />
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
