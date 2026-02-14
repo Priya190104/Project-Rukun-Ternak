@@ -14,6 +14,11 @@ const client = axios.create({
 // Add request interceptor to include JWT token from localStorage
 client.interceptors.request.use(
   (config) => {
+    // Smart path handling: remove duplicate /api if baseURL already has it
+    if (config.baseURL?.includes('/api') && config.url?.startsWith('/api/')) {
+      config.url = config.url.replace('/api/', '/');
+    }
+    
     const token = localStorage.getItem('rukun_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
