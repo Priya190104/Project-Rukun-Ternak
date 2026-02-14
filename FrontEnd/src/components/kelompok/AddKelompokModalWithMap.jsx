@@ -3,62 +3,6 @@ import { X, AlertCircle } from 'lucide-react';
 import client from '../../api/client';
 import AlertModal from '../common/AlertModal';
 
-const KECAMATAN_OPTIONS = [
-  { value: 'Adipala', label: 'Adipala' },
-  { value: 'Bantarsari', label: 'Bantarsari' },
-  { value: 'Binangun', label: 'Binangun' },
-  { value: 'Camplong', label: 'Camplong' },
-  { value: 'Cilacap Selatan', label: 'Cilacap Selatan' },
-  { value: 'Cilacap Tengah', label: 'Cilacap Tengah' },
-  { value: 'Cilacap Utara', label: 'Cilacap Utara' },
-  { value: 'Cimanggu', label: 'Cimanggu' },
-  { value: 'Cipari', label: 'Cipari' },
-  { value: 'Dayeuhluhur', label: 'Dayeuhluhur' },
-  { value: 'Gandrungmangu', label: 'Gandrungmangu' },
-  { value: 'Jeruklegi', label: 'Jeruklegi' },
-  { value: 'Kampung Laut', label: 'Kampung Laut' },
-  { value: 'Karangpucung', label: 'Karangpucung' },
-  { value: 'Kawunganten', label: 'Kawunganten' },
-  { value: 'Kedungreja', label: 'Kedungreja' },
-  { value: 'Kesugihan', label: 'Kesugihan' },
-  { value: 'Kroya', label: 'Kroya' },
-  { value: 'Majenang', label: 'Majenang' },
-  { value: 'Maos', label: 'Maos' },
-  { value: 'Nusawungu', label: 'Nusawungu' },
-  { value: 'Patimuan', label: 'Patimuan' },
-  { value: 'Sampang', label: 'Sampang' },
-  { value: 'Sidareja', label: 'Sidareja' },
-  { value: 'Wanareja', label: 'Wanareja' },
-];
-
-const DESA_BY_KECAMATAN = {
-  'Adipala': ['Adipala', 'Karanganyar', 'Tegalanom', 'Kedawung', 'Danawarih', 'Lengkong', 'Cilimus', 'Kemiri', 'Adiarsa Wetan', 'Adiarsa Kulon', 'Karangsembung', 'Karangtengah', 'Kalimanah', 'Legokhandil', 'Jatimulya', 'Jatibarang'],
-  'Bantarsari': ['Bantarsari', 'Bojongbata', 'Bojongsari', 'Sidamulih', 'Banjar', 'Cingebul', 'Candiwulan'],
-  'Binangun': ['Binangun', 'Kemukus', 'Karangasem', 'Sumur', 'Cipaku', 'Sidakarya', 'Jambe', 'Bonjok', 'Tanjungsari', 'Tanjungwangi', 'Babakan', 'Karangbenda', 'Pamijen', 'Karangasri', 'Kebonsari'],
-  'Camplong': ['Camplong', 'Candilangit', 'Kembaran', 'Jepara'],
-  'Cilacap Selatan': ['Sidakaya', 'Cilacap', 'Tambakreja', 'Tegalkamulyan', 'Tegalrejo'],
-  'Cilacap Tengah': ['Lomanis', 'Gunungsimping', 'Sidanegara', 'Donan', 'Kutawaru'],
-  'Cilacap Utara': ['Mertasinga', 'Gumilir', 'Karangtalun', 'Tritih Kulon', 'Kebonmanis'],
-  'Cimanggu': ['Cimanggu', 'Baturaden', 'Banyugede', 'Sigambiran', 'Kedung', 'Tajug', 'Plembutan', 'Cikondang', 'Karanganyar', 'Kabud', 'Karangrandu', 'Karangbenda', 'Cigugur', 'Kalisari', 'Kutamandala'],
-  'Cipari': ['Cipari', 'Karangtalun', 'Jagatpura', 'Purbalingga', 'Jatimulya', 'Selorejo', 'Bukateja', 'Desa Bawah', 'Karangduwur', 'Lekok', 'Sunyaragi'],
-  'Dayeuhluhur': ['Dayeuhluhur', 'Karangtalun', 'Tanggulwulung', 'Bojongsari', 'Kemranjen', 'Panjorenan', 'Tembuku', 'Cigugur', 'Mandirancan', 'Danasari', 'Gunungpati', 'Karangduwur', 'Pelabuhan Ratu', 'Pameungpeuk'],
-  'Gandrungmangu': ['Gandrungmangu', 'Kedunggudel', 'Bojongsari', 'Sugihwaras', 'Jeguran', 'Buwaran', 'Sindurejo', 'Kandang', 'Siding', 'Kebondalem', 'Gunungwarno', 'Bangsri', 'Tanjungsari', 'Jeruk'],
-  'Jeruklegi': ['Jeruklegi Wetan', 'Jeruklegi Kulon', 'Kampung Laut', 'Cihara', 'Depeha', 'Gondang', 'Kumpulrejo', 'Karangganyar', 'Widarapayung', 'Gombang', 'Bangsri', 'Kalianget', 'Margaasih'],
-  'Kampung Laut': ['Klaces', 'Karanggayam', 'Margajaya', 'Purwodadi'],
-  'Karangpucung': ['Karangpucung', 'Sindang', 'Tajugsari', 'Tamansari', 'Kembang', 'Palayon', 'Banjarsari', 'Benteng', 'Karangsari', 'Kedung Lali', 'Karangtalun', 'Sumingkir', 'Bojongsari', 'Ciwaru'],
-  'Kawunganten': ['Kawunganten', 'Karangsari', 'Bojanegara', 'Tanjung', 'Kedung', 'Banjarsari', 'Karangtalun', 'Karangnongko', 'Karangwano', 'Pasirwangi', 'Karangwulung', 'Tanjungsari'],
-  'Kedungreja': ['Ciklapa', 'Kedungreja', 'Bukateja', 'Bangsri', 'Karangjati', 'Karangrejo', 'Sukarame', 'Kembangsari', 'Banyadana', 'Tegalkamulyan', 'Sumpiuh'],
-  'Kesugihan': ['Kesugihan Kidul', 'Kesugihan Lor', 'Sindangagung', 'Sindang', 'Karangasem', 'Cipari', 'Kedungwringin', 'Karyasari', 'Dukuh Rata', 'Kemancaran', 'Pageruyuk', 'Karanggude', 'Karangsambung', 'Bangsari', 'Kedunglali', 'Kebondalem'],
-  'Kroya': ['Kroya', 'Bukateja', 'Karangduwur', 'Siledug', 'Bangsri', 'Tambakrejo', 'Karangmulya', 'Kedunglali', 'Kedungwuni', 'Karanggayam', 'Babakan', 'Gunung', 'Kebonsari', 'Karangkunci', 'Tangkisan', 'Gombang', 'Kraton'],
-  'Majenang': ['Jenang', 'Majenang', 'Bantarwulung', 'Karangayu', 'Bojongsari', 'Sidem', 'Karangsari', 'Bandung', 'Karangtalun', 'Kalitengah', 'Karangmulya', 'Karangrejo', 'Karangan', 'Karangdalem', 'Tanjungsari', 'Panyabrayan', 'Tambakrejo'],
-  'Maos': ['Klapagada', 'Maos', 'Cijelekong', 'Karangsambung', 'Baladewa', 'Suko', 'Wlingi', 'Bangsri', 'Karangnangka', 'Karanggebang'],
-  'Nusawungu': ['Nusawungu', 'Banjarsari', 'Karangasem', 'Karanggawang', 'Bojongsari', 'Banyumeneng', 'Karangduwur', 'Karangmulya', 'Karangtalun', 'Ledok Bareng', 'Karangsari', 'Sindang', 'Mandiraja', 'Tajug', 'Kedalon', 'Pangkalan', 'Nusagede'],
-  'Patimuan': ['Patimuan', 'Parakan', 'Balanegara', 'Cisayong', 'Tangkilan', 'Karangtalun', 'Sukamulya'],
-  'Sampang': ['Sampang', 'Candiwulan', 'Karangtalun', 'Muara', 'Purwadadi', 'Ujung Alur', 'Bangsari', 'Bandrek', 'Bejalen', 'Karangduwur'],
-  'Sidareja': ['Sidareja', 'Sitanala', 'Karanganyar', 'Cikarang', 'Langensari', 'Purwodadi', 'Wanalaya', 'Sari Asih', 'Bangsri', 'Baladewa'],
-  'Wanareja': ['Wanareja', 'Randegan', 'Danawarih', 'Karangduwur', 'Karangmulya', 'Merta Sari', 'Suweng', 'Bangsri', 'Banjarsari', 'Jipang', 'Jatirejo', 'Tanjungharjo', 'Karangkudi', 'Karangtalun', 'Kemiri', 'Tegalanom'],
-};
-
 export default function AddKelompokModalWithMap({
   isOpen,
   onClose,
@@ -89,11 +33,6 @@ export default function AddKelompokModalWithMap({
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [errors, setErrors] = useState({});
-  const [desaOptions, setDesaOptions] = useState([]);
-  const [kecamatanFilter, setKecamatanFilter] = useState('');
-  const [desaFilter, setDesaFilter] = useState('');
-  const [showKecamatanDropdown, setShowKecamatanDropdown] = useState(false);
-  const [showDesaDropdown, setShowDesaDropdown] = useState(false);
   const [alert, setAlert] = useState({ isOpen: false, type: 'success', title: '', message: '' });
 
   useEffect(() => {
@@ -117,11 +56,6 @@ export default function AddKelompokModalWithMap({
           peralatanList: [{ jenisPeralatan: '', jumlahPeralatan: '' }],
           kesehatanList: [{ jenisKesehatan: '', jumlah: '' }],
         });
-        if (initialData.kecamatan) {
-          setDesaOptions(DESA_BY_KECAMATAN[initialData.kecamatan] || []);
-          setKecamatanFilter(initialData.kecamatan);
-          setDesaFilter(initialData.desa || '');
-        }
       } else {
         setForm({
           namaKelompok: '',
@@ -141,8 +75,6 @@ export default function AddKelompokModalWithMap({
           peralatanList: [{ jenisPeralatan: '', jumlahPeralatan: '' }],
           kesehatanList: [{ jenisKesehatan: '', jumlah: '' }],
         });
-        setKecamatanFilter('');
-        setDesaFilter('');        setDesaOptions([]);
       }
       setErrors({});
       setNotification(null);
@@ -160,8 +92,8 @@ export default function AddKelompokModalWithMap({
     if (!form.emailKelompok.trim()) newErrors.emailKelompok = 'Wajib diisi';
     else if (!validateEmail(form.emailKelompok)) newErrors.emailKelompok = 'Format email salah';
 
-    if (!form.kecamatan) newErrors.kecamatan = 'Wajib dipilih';
-    if (!form.desa) newErrors.desa = 'Wajib dipilih';
+    if (!form.kecamatan.trim()) newErrors.kecamatan = 'Wajib diisi';
+    if (!form.desa.trim()) newErrors.desa = 'Wajib diisi';
 
     // Validasi lokasi - WAJIB dipilih
     if (!form.latitude || !form.longitude) {
@@ -235,58 +167,9 @@ export default function AddKelompokModalWithMap({
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-
-    if (name === 'kecamatan') {
-      setDesaOptions(DESA_BY_KECAMATAN[value] || []);
-      setForm(prev => ({ ...prev, desa: '' }));
-      setKecamatanFilter('');
-      setDesaFilter('');
-      setShowKecamatanDropdown(false);
-    }
   };
 
-  const handleKecamatanFilterChange = (value) => {
-    setKecamatanFilter(value);
-    if (value) {
-      setShowKecamatanDropdown(true);
-    }
-  };
 
-  const handleKecamatanSelect = (value) => {
-    setForm(prev => ({ ...prev, kecamatan: value }));
-    setDesaOptions(DESA_BY_KECAMATAN[value] || []);
-    setForm(prev => ({ ...prev, desa: '' }));
-    setKecamatanFilter(value);
-    setDesaFilter('');
-    setShowKecamatanDropdown(false);
-  };
-
-  const handleDesaFilterChange = (value) => {
-    setDesaFilter(value);
-    if (value) {
-      setShowDesaDropdown(true);
-    }
-  };
-
-  const handleDesaSelect = (value) => {
-    setForm(prev => ({ ...prev, desa: value }));
-    setDesaFilter(value);
-    setShowDesaDropdown(false);
-  };
-
-  const getFilteredKecamatan = () => {
-    if (!kecamatanFilter) return KECAMATAN_OPTIONS;
-    return KECAMATAN_OPTIONS.filter(opt =>
-      opt.label.toLowerCase().includes(kecamatanFilter.toLowerCase())
-    );
-  };
-
-  const getFilteredDesa = () => {
-    if (!desaFilter) return desaOptions;
-    return desaOptions.filter(desa =>
-      desa.toLowerCase().includes(desaFilter.toLowerCase())
-    );
-  };
 
   const handleTernakChange = (index, field, value) => {
     const newTernakDetails = [...form.ternakDetails];
@@ -503,38 +386,17 @@ export default function AddKelompokModalWithMap({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Kecamatan <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Cari atau ketik kecamatan"
-                    value={kecamatanFilter}
-                    onChange={(e) => handleKecamatanFilterChange(e.target.value)}
-                    onFocus={() => setShowKecamatanDropdown(true)}
-                    disabled={loading}
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.kecamatan ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {showKecamatanDropdown && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {getFilteredKecamatan().length > 0 ? (
-                        getFilteredKecamatan().map(opt => (
-                          <div
-                            key={opt.value}
-                            onClick={() => handleKecamatanSelect(opt.value)}
-                            className={`px-3 py-2 cursor-pointer hover:bg-primary-50 ${
-                              form.kecamatan === opt.value ? 'bg-primary-100 font-semibold' : ''
-                            }`}
-                          >
-                            {opt.label}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-3 py-2 text-gray-500 text-sm">Tidak ada hasil</div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  name="kecamatan"
+                  placeholder="Masukkan nama kecamatan"
+                  value={form.kecamatan}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.kecamatan ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
                 {errors.kecamatan && <p className="text-danger text-xs mt-1">{errors.kecamatan}</p>}
               </div>
 
@@ -542,38 +404,17 @@ export default function AddKelompokModalWithMap({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Desa <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Cari atau ketik desa"
-                    value={desaFilter}
-                    onChange={(e) => handleDesaFilterChange(e.target.value)}
-                    onFocus={() => setShowDesaDropdown(true)}
-                    disabled={loading || !form.kecamatan}
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.desa ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {showDesaDropdown && form.kecamatan && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {getFilteredDesa().length > 0 ? (
-                        getFilteredDesa().map(desa => (
-                          <div
-                            key={desa}
-                            onClick={() => handleDesaSelect(desa)}
-                            className={`px-3 py-2 cursor-pointer hover:bg-primary-50 ${
-                              form.desa === desa ? 'bg-primary-100 font-semibold' : ''
-                            }`}
-                          >
-                            {desa}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-3 py-2 text-gray-500 text-sm">Tidak ada hasil</div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  name="desa"
+                  placeholder="Masukkan nama desa"
+                  value={form.desa}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.desa ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
                 {errors.desa && <p className="text-danger text-xs mt-1">{errors.desa}</p>}
               </div>
             </div>
