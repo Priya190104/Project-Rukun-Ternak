@@ -33,7 +33,7 @@ export default function Footer() {
                 <MapPin className="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-gray-600">
                   <p className="font-medium text-gray-700">Alamat</p>
-                  <p>Jl. Peternakan No. 123, Jakarta, Indonesia</p>
+                  <p>Jl. Gunung RT 04 RW 01, Panisihan, Maos</p>
                 </div>
               </div>
 
@@ -41,7 +41,7 @@ export default function Footer() {
                 <Phone className="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-gray-600">
                   <p className="font-medium text-gray-700">Telepon</p>
-                  <p>+62 21 1234 5678</p>
+                  <p>085169922525</p>
                 </div>
               </div>
 
