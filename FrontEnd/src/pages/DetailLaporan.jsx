@@ -2,10 +2,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, User, FileText, AlertCircle, Download } from 'lucide-react';
 import client from '../api/client';
+import { useAuth } from '../hooks/useAuth';
 
 export default function DetailLaporan() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [laporan, setLaporan] = useState(null);
   const [hewanMap, setHewanMap] = useState({}); // Map of hewan ID to id_hewan (ID Bisnis)
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,11 @@ export default function DetailLaporan() {
   const fetchHewanMapping = async (_kelompokId) => {
     try {
       console.log('[DetailLaporan] Fetching hewan mapping for kelompok:', _kelompokId);
-      const response = await client.get(`/api/hewan`);
+      const isAdmin = user?.role === 'admin' || user?.role === 'viewer';
+      const endpoint = isAdmin
+        ? `/api/admin/hewan?kelompok_id=${_kelompokId}&limit=100`
+        : `/api/hewan`;
+      const response = await client.get(endpoint);
       console.log('[DetailLaporan] API response from /api/hewan:', response.data);
       if (response.data?.success && Array.isArray(response.data.data)) {
         // Create a map of hewan.id -> hewan.id_hewan (ID Bisnis)
