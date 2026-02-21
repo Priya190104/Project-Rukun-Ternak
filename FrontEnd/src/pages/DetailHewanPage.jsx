@@ -13,8 +13,8 @@ export default function DetailHewanPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Support admin, kelompok, and viewer roles
-    if (appRole !== 'kelompok' && appRole !== 'admin' && appRole !== 'viewer') {
+    // Support admin, kelompok, mitra_kelompok, and viewer roles
+    if (appRole !== 'kelompok' && appRole !== 'admin' && appRole !== 'viewer' && appRole !== 'mitra_kelompok') {
       setError('Akses ditolak. Halaman ini hanya untuk user kelompok atau admin.');
       setLoading(false);
       return;

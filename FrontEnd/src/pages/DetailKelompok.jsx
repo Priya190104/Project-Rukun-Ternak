@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Edit2, Trash2, MapPin, Phone, Mail, User, Users, Building2, Loader, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, MapPin, Phone, Mail, User, Users, Building2, Loader, AlertCircle, Network } from 'lucide-react';
 import { useCachedData, useInvalidateCache } from '../hooks/useCachedData';
 import client from '../api/client';
 import { useAuth } from '../hooks/useAuth';
@@ -17,6 +17,14 @@ export default function DetailKelompok() {
     [`/api/kelompok/${id}`],
     { ttl: 5 * 60 * 1000 }
   );
+
+  const { data: mitraData, loading: mitraLoading } = useCachedData(
+    `/api/mitra-kelompok?parent_id=${id}`,
+    [`/api/mitra-kelompok?parent_id=${id}`],
+    { ttl: 5 * 60 * 1000 }
+  );
+
+  const mitraList = mitraData?.data || mitraData || [];
   
   const [kelompok, setKelompok] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -55,6 +63,11 @@ export default function DetailKelompok() {
     invalidate(`/api/kelompok/${id}`);
     invalidate('/api/kelompok');
     refetch();
+  };
+
+  const openEditModal = () => {
+    console.log('[DetailKelompok] Opening edit modal with data:', kelompok);
+    setIsEditModalOpen(true);
   };
 
   if (loading) {
@@ -107,14 +120,21 @@ export default function DetailKelompok() {
           </button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{kelompok.name}</h1>
-            <p className="text-sm text-gray-600 mt-1">ID: {kelompok.id}</p>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-sm text-gray-600">ID Internal: {kelompok.id}</p>
+              {kelompok.kode_kelompok && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary-100 text-primary-700">
+                  {kelompok.kode_kelompok}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
         {appRole === 'admin' && (
           <div className="flex gap-2">
             <button
-              onClick={() => setIsEditModalOpen(true)}
+              onClick={openEditModal}
               className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition"
             >
               <Edit2 size={18} />
@@ -153,6 +173,15 @@ export default function DetailKelompok() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Informasi Dasar</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-2">Kode Kelompok</label>
+                <p className="text-gray-900">
+                  {kelompok.kode_kelompok
+                    ? <span className="font-bold text-primary-700">{kelompok.kode_kelompok}</span>
+                    : <span className="text-gray-400 italic">Belum diset</span>
+                  }
+                </p>
+              </div>
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">Nama Kelompok</label>
                 <p className="text-gray-900 text-lg">{kelompok.name || '-'}</p>
@@ -318,6 +347,85 @@ export default function DetailKelompok() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Mitra Kelompok Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <Network size={20} className="text-emerald-600" />
+          Mitra Kelompok
+        </h2>
+        {mitraLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader className="w-6 h-6 text-emerald-600 animate-spin mr-2" />
+            <span className="text-gray-600 text-sm">Memuat data mitra...</span>
+          </div>
+        ) : mitraList.length === 0 ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+            <Users className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+            <p className="text-gray-500 text-sm">Belum ada mitra kelompok terdaftar</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-emerald-50 border-b border-gray-200 text-left">
+                  <th className="px-4 py-3 font-semibold text-gray-700 w-10">No</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Kode</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Nama Mitra</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Email</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Kecamatan</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Desa</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Penanggung Jawab</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">No. HP</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {mitraList.map((mitra, idx) => (
+                  <tr key={mitra.id} className="hover:bg-gray-50 transition">
+                    <td className="px-4 py-3 text-gray-500 text-center">{idx + 1}</td>
+                    <td className="px-4 py-3">
+                      {mitra.kode_kelompok ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                          {mitra.kode_kelompok}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 italic text-xs">-</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-gray-900">{mitra.name || '-'}</td>
+                    <td className="px-4 py-3 text-gray-700">
+                      {mitra.email ? (
+                        <div className="flex items-center gap-1">
+                          <Mail size={13} className="text-gray-400 flex-shrink-0" />
+                          <span>{mitra.email}</span>
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">{mitra.kecamatan || '-'}</td>
+                    <td className="px-4 py-3 text-gray-700">{mitra.desa || '-'}</td>
+                    <td className="px-4 py-3 text-gray-900">
+                      {mitra.pic1_nama ? (
+                        <div className="flex items-center gap-1">
+                          <User size={13} className="text-emerald-500 flex-shrink-0" />
+                          <span>{mitra.pic1_nama}</span>
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">
+                      {mitra.pic1_no_hp ? (
+                        <div className="flex items-center gap-1">
+                          <Phone size={13} className="text-gray-400 flex-shrink-0" />
+                          <span>{mitra.pic1_no_hp}</span>
+                        </div>
+                      ) : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Edit Modal */}

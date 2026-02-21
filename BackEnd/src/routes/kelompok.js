@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getKelompok, getKelompokById, createKelompok, updateKelompok, deleteKelompok } = require('../controllers/kelompokController');
+const { getKelompok, getKelompokById, createKelompok, updateKelompok, updateKelompokKode, deleteKelompok } = require('../controllers/kelompokController');
 const { attachUser, ViewerReadOnlyGuard, RoleGuard } = require('../middleware/auth');
 
 // Public GET routes - no auth required
@@ -14,6 +14,7 @@ router.use(ViewerReadOnlyGuard);
 // Admin-only kelompok management
 router.post('/', RoleGuard(['admin', 'kelompok']), createKelompok);
 router.put('/:id', RoleGuard(['admin', 'kelompok']), updateKelompok);
+router.patch('/:id/kode', RoleGuard(['admin', 'kelompok']), updateKelompokKode);
 router.delete('/:id', RoleGuard(['admin']), deleteKelompok);
 
 module.exports = router;

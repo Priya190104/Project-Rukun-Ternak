@@ -24,9 +24,9 @@ export default function ListKelompokMap({ kelompokList = [], onSelectKelompok = 
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-white rounded-lg shadow-md">
+    <div className="w-full h-full flex flex-col bg-white rounded-lg shadow-md border border-gray-200">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <h3 className="font-semibold text-gray-800 mb-3">Daftar Kelompok</h3>
         <input
           type="text"
@@ -37,9 +37,8 @@ export default function ListKelompokMap({ kelompokList = [], onSelectKelompok = 
         />
       </div>
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto">
-        {kelompokWithLocation.length === 0 ? (
+      {/* List - scrollable */}
+      <div className="flex-1 overflow-y-auto min-h-0">      {kelompokWithLocation.length === 0 ? (
           <div className="p-4 text-center text-gray-500 text-sm">
             {kelompokList.length === 0 ? (
               <div>
@@ -96,7 +95,7 @@ export default function ListKelompokMap({ kelompokList = [], onSelectKelompok = 
 
       {/* Footer info */}
       {kelompokWithLocation.length > 0 && (
-        <div className="p-3 bg-primary-50 border-t border-gray-200 text-xs text-primary-700">
+        <div className="p-3 bg-primary-50 border-t border-gray-200 text-xs text-primary-700 flex-shrink-0">
           ℹ️ Menampilkan {kelompokWithLocation.length} kelompok dengan lokasi
         </div>
       )}

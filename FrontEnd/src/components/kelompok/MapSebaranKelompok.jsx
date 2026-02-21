@@ -112,7 +112,7 @@ export default function MapSebaranKelompok({ kelompokList = [], onMarkerClick = 
     <div 
       ref={mapContainer}
       className="w-full h-96 md:h-[600px] rounded-lg shadow-md"
-      style={{ minHeight: '500px' }}
+      style={{ minHeight: '500px', position: 'relative', zIndex: 1 }}
     />
   );
 }

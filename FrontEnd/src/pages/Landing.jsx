@@ -13,29 +13,29 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-primary-50 to-primary-100 text-gray-900">
       {/* Navigation Header */}
-      <header className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-primary-100">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <AppLogo size="2xl" variant="icon" />
-            <div>
-              <div className="text-xl font-bold">Rukun Ternak</div>
-              <p className="text-xs text-primary-700">Program Cilacap Makmur</p>
+      <header className="sticky top-0 z-[9999] bg-white/90 backdrop-blur-md border-b border-primary-100 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+          <Link to="/" className="flex items-center gap-2 min-w-0">
+            <AppLogo size="xl" variant="icon" className="shrink-0" />
+            <div className="min-w-0">
+              <div className="text-base sm:text-xl font-bold leading-tight truncate">Rukun Ternak</div>
+              <p className="text-xs text-primary-700 truncate">Program Cilacap Makmur</p>
             </div>
-            {/* Divider and Supported By Logo */}
-            <div className="flex items-center gap-2 ml-3 pl-3 border-l-2 border-gray-300 max-w-[150px]">
+            {/* Divider and Supported By Logo — hidden on mobile */}
+            <div className="hidden sm:flex items-center gap-2 ml-3 pl-3 border-l-2 border-gray-300 max-w-[150px] shrink-0">
               <SupportedByLogo size="md"/>
             </div>
           </Link>
           <Link
             to="/login"
-            className="px-4 py-2 bg-primary-600 text-white rounded-full font-semibold shadow hover:bg-primary-700 transition"
+            className="shrink-0 px-4 py-2 bg-primary-600 text-white rounded-full font-semibold shadow hover:bg-primary-700 transition text-sm sm:text-base"
           >
             Login
           </Link>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 pb-20">
+      <main className="relative max-w-6xl mx-auto px-4 pb-20 z-0">
         {/* Hero Section */}
         <section className="py-12">
           <div className="space-y-5">

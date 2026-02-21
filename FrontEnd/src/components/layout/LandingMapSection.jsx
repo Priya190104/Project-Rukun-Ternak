@@ -96,7 +96,7 @@ export default function LandingMapSection() {
   }
 
   return (
-    <section className="mt-16 bg-white/80 border border-primary-100 rounded-3xl shadow-lg p-8">
+    <section className="mt-16 bg-white/80 border border-primary-100 rounded-3xl shadow-lg p-8 relative z-0">
       <div className="flex items-center gap-3 mb-8">
         <div className="w-12 h-12 rounded-2xl bg-primary-600 text-white flex items-center justify-center text-xl font-bold">
           📍
@@ -105,10 +105,10 @@ export default function LandingMapSection() {
       </div>
 
       {/* Map and list layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
         {/* Map section */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 h-96 md:h-[500px]">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 h-96 md:h-[500px] relative z-0">
             <MapSebaranKelompok
               kelompokList={kelompok}
               onMarkerClick={handleMarkerClick}
@@ -117,7 +117,7 @@ export default function LandingMapSection() {
           </div>
 
           {/* Map info */}
-          <div className="mt-4 bg-primary-50 border border-primary-200 rounded-lg p-4 text-sm text-primary-800">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 text-sm text-primary-800">
             <p className="font-medium mb-1">ℹ️ Informasi Peta</p>
             <ul className="text-xs space-y-1">
               <li>• Klik marker untuk melihat informasi kelompok</li>
@@ -128,8 +128,8 @@ export default function LandingMapSection() {
           </div>
         </div>
 
-        {/* List section */}
-        <div className="lg:col-span-1">
+        {/* List section - tinggi sama dengan peta */}
+        <div className="lg:col-span-1 h-96 md:h-[500px]">
           <ListKelompokMap
             kelompokList={kelompok}
             onSelectKelompok={handleSelectFromList}

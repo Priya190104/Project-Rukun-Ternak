@@ -137,17 +137,14 @@ async function renderCertificate(data) {
   // ========================================
   const replacements = {
     namaKelompok: data.namaKelompok || '-',
-    peternak: data.peternak || '-',
     tanggalLahir: data.tanggalLahir || '-',
     noRegistrasi: data.noRegistrasi || '-',
     idTernak: data.idTernak || '-',
     jenisKelamin: data.jenisKelamin || '-',
-    warna: data.warna || '-',
     ras: data.ras || '-',
     induk: data.induk || '-',
     pejantan: data.pejantan || '-',
     bobot: data.bobot || '-',
-    tanggal: data.tanggal || new Date().toLocaleDateString('id-ID'),
   };
 
   console.log('[RenderCertificate] Replacing placeholders:');

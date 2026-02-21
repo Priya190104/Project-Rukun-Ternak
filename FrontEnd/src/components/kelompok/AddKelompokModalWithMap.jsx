@@ -9,8 +9,11 @@ export default function AddKelompokModalWithMap({
   onKelompokAdded,
   mode = 'add',
   initialData = null,
+  isMitraMode = false,
+  parentKelompokId = null,
 }) {
   const [form, setForm] = useState({
+    kodeKelompok: '',
     namaKelompok: '',
     emailKelompok: '',
     kecamatan: '',
@@ -34,11 +37,15 @@ export default function AddKelompokModalWithMap({
   const [notification, setNotification] = useState(null);
   const [errors, setErrors] = useState({});
   const [alert, setAlert] = useState({ isOpen: false, type: 'success', title: '', message: '' });
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       if (mode === 'edit' && initialData) {
+        // Untuk edit mode, tampilkan hanya data yang tersedia
+        console.log('[AddKelompokModal] Initial Data:', initialData);
         setForm({
+          kodeKelompok: initialData.kode_kelompok || '',
           namaKelompok: initialData.name || '',
           emailKelompok: initialData.email || '',
           kecamatan: initialData.kecamatan || '',
@@ -48,8 +55,9 @@ export default function AddKelompokModalWithMap({
           pic1_nik: initialData.pic1_nik || '',
           pic1_nama: initialData.pic1_nama || '',
           pic1_alamat: initialData.pic1_alamat || '',
-          pic1_noHp: initialData.pic1_noHp || '',
+          pic1_noHp: initialData.pic1_no_hp || initialData.pic1_noHp || '',
           pic1_email: initialData.pic1_email || '',
+          // Field berikut tidak digunakan di edit mode
           jumlahKandang: '',
           jumlahTernak: '',
           ternakDetails: [],
@@ -57,7 +65,9 @@ export default function AddKelompokModalWithMap({
           kesehatanList: [{ jenisKesehatan: '', jumlah: '' }],
         });
       } else {
+        // Untuk add mode, reset semua field
         setForm({
+          kodeKelompok: '',
           namaKelompok: '',
           emailKelompok: '',
           kecamatan: '',
@@ -78,6 +88,7 @@ export default function AddKelompokModalWithMap({
       }
       setErrors({});
       setNotification(null);
+      setShowConfirmation(false);
     }
   }, [isOpen, mode, initialData]);
 
@@ -236,6 +247,12 @@ export default function AddKelompokModalWithMap({
       return;
     }
 
+    // Show confirmation dialog
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmAdd = async () => {
+    setShowConfirmation(false);
     setLoading(true);
     try {
       // Filter and normalize ternakDetails - remove empty rows and convert jenisKelamin to uppercase
@@ -251,6 +268,7 @@ export default function AddKelompokModalWithMap({
         }));
       
       const payload = {
+        kode_kelompok: form.kodeKelompok.trim() ? form.kodeKelompok.trim().toUpperCase() : null,
         name: form.namaKelompok.trim(),
         email: form.emailKelompok.trim(),
         kecamatan: form.kecamatan,
@@ -268,12 +286,16 @@ export default function AddKelompokModalWithMap({
         ternakDetails: normalizedTernakDetails,
         pakanList: form.peralatanList.filter(p => p.jenisPeralatan && p.jumlahPeralatan),
         kesehatanList: form.kesehatanList.filter(k => k.jenisKesehatan && k.jumlah),
+        // Mitra mode: include parent reference
+        ...(isMitraMode && parentKelompokId ? { parent_kelompok_id: parentKelompokId } : {}),
       };
 
+      // Determine API endpoint based on mode (mitra vs regular kelompok)
+      const baseUrl = isMitraMode ? '/api/mitra-kelompok' : '/api/kelompok';
       const response =
         mode === 'edit' && initialData?.id
-          ? await client.put(`/api/kelompok/${initialData.id}`, payload)
-          : await client.post('/api/kelompok', payload);
+          ? await client.put(`${baseUrl}/${initialData.id}`, payload)
+          : await client.post(baseUrl, payload);
 
       if (response.data?.success) {
         const isEdit = mode === 'edit';
@@ -315,8 +337,48 @@ export default function AddKelompokModalWithMap({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-3">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] overflow-y-auto">
+    <>
+      {/* Confirmation Dialog */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              {mode === 'edit' ? 'Konfirmasi Perbarui Kelompok' : 'Konfirmasi Tambah Kelompok'}
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              {mode === 'edit' 
+                ? 'Apakah Anda yakin ingin memperbarui data kelompok ini?'
+                : 'Apakah Anda yakin ingin menambahkan kelompok dengan data berikut?'}
+            </p>
+            <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2 text-sm">
+              <div><span className="font-semibold">Nama Kelompok:</span> {form.namaKelompok}</div>
+              <div><span className="font-semibold">Email:</span> {form.emailKelompok}</div>
+              <div><span className="font-semibold">Kecamatan:</span> {form.kecamatan}</div>
+              <div><span className="font-semibold">Desa:</span> {form.desa}</div>
+              {form.latitude && form.longitude && (
+                <div><span className="font-semibold">Koordinat:</span> {form.latitude}, {form.longitude}</div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmation(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmAdd}
+                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
+              >
+                {mode === 'edit' ? 'Ya, Perbarui' : 'Ya, Tambahkan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col">
         <div className="sticky top-0 bg-white z-10 flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-bold text-gray-900">
             {mode === 'edit' ? 'Edit Kelompok' : 'Tambah Kelompok Baru'}
@@ -330,9 +392,10 @@ export default function AddKelompokModalWithMap({
           </button>
         </div>
 
+        <div className="overflow-y-auto flex-1">
         {notification && (
           <div
-            className={`p-3 border-l-4 flex items-start gap-2 text-sm ${
+            className={`p-3 border-l-4 flex items-start gap-2 text-sm mx-4 mt-4 ${
               notification.type === 'success'
                 ? 'bg-success-50 border-green-400 text-green-800'
                 : 'bg-danger-50 border-red-400 text-red-800'
@@ -348,6 +411,29 @@ export default function AddKelompokModalWithMap({
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Informasi Kelompok</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Kode Kelompok */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Kode Kelompok
+                  <span className="ml-1 text-xs text-gray-500 font-normal">(opsional, contoh: KLM-001 atau RT001)</span>
+                </label>
+                <input
+                  type="text"
+                  name="kodeKelompok"
+                  value={form.kodeKelompok}
+                  onChange={handleChange}
+                  disabled={loading}
+                  placeholder="Contoh: KLM-001"
+                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.kodeKelompok ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.kodeKelompok && <p className="text-danger text-xs mt-1">{errors.kodeKelompok}</p>}
+                <p className="text-xs text-gray-400 mt-1">
+                  Kode ini dapat diubah sewaktu-waktu. Akan otomatis diubah menjadi huruf kapital.
+                </p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nama Kelompok <span className="text-red-500">*</span>
@@ -550,7 +636,8 @@ export default function AddKelompokModalWithMap({
             </div>
           </div>
 
-          {/* Penyaluran & Bantuan */}
+          {/* Penyaluran & Bantuan - Hanya tampil di mode Add */}
+          {mode === 'add' && (
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">Penyaluran & Bantuan</h3>
 
@@ -787,9 +874,13 @@ export default function AddKelompokModalWithMap({
               </div>
             </div>
           </div>
+          )}
 
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+        </form>
+        </div>
+
+          {/* Buttons - Selalu terlihat di bawah */}
+          <div className="flex gap-3 p-4 border-t border-gray-200 bg-white">
             <button
               type="button"
               onClick={onClose}
@@ -799,8 +890,8 @@ export default function AddKelompokModalWithMap({
               Batal
             </button>
             <button
-              type="submit"
               disabled={loading}
+              onClick={handleSubmit}
               className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
@@ -815,7 +906,8 @@ export default function AddKelompokModalWithMap({
               )}
             </button>
           </div>
-        </form>
+        </div>
+        </div>
 
         {/* Alert Modal */}
         <AlertModal
@@ -826,8 +918,7 @@ export default function AddKelompokModalWithMap({
           onClose={() => setAlert({ ...alert, isOpen: false })}
           autoCloseMs={alert.autoCloseMs || 3000}
         />
-      </div>
-    </div>
-  );
+      </>
+    );
 }
 

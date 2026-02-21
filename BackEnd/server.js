@@ -90,6 +90,7 @@ try {
   app.use('/api/laporan', require('./src/routes/laporan'));
   app.use('/api/users', require('./src/routes/users'));
   app.use('/api/kelompok', require('./src/routes/kelompok'));
+  app.use('/api/mitra-kelompok', require('./src/routes/mitraKelompok'));
   app.use('/api/notifikasi', require('./src/routes/notifikasi'));
   app.use('/api/stats', require('./src/routes/stats'));
   app.use('/api/public', require('./src/routes/public'));

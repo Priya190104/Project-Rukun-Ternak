@@ -1,5 +1,6 @@
-﻿import React, { useState } from 'react';
-import { X } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { X, Loader } from 'lucide-react';
+import { fetchNextBisnisId, buildBisnisId } from '../utils/bisnisIdGenerator';
 
 export default function AddHewanModal({ isOpen, onClose, onSubmit, isLoading }) {
   const [form, setForm] = useState({
@@ -12,6 +13,40 @@ export default function AddHewanModal({ isOpen, onClose, onSubmit, isLoading }) 
   });
   const [error, setError] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+
+  // State untuk ID bisnis terstruktur
+  const [idPrefix, setIdPrefix] = useState('');       // e.g. "RT.NB" — tidak bisa diedit
+  const [idYearMonth, setIdYearMonth] = useState(''); // e.g. "26.01" — bisa diedit
+  const [idSequence, setIdSequence] = useState('');   // e.g. "001" — bisa diedit
+  const [loadingId, setLoadingId] = useState(false);
+
+  // Auto-generate ID bisnis saat modal dibuka
+  useEffect(() => {
+    if (!isOpen) return;
+    const generate = async () => {
+      try {
+        setLoadingId(true);
+        const result = await fetchNextBisnisId();
+        setIdPrefix(result.prefix);
+        setIdYearMonth(result.year_month);
+        setIdSequence(result.sequence);
+        setForm(prev => ({ ...prev, id_hewan: result.next_id }));
+      } catch (err) {
+        console.error('Gagal generate ID bisnis:', err);
+        // Biarkan user isi manual jika gagal
+      } finally {
+        setLoadingId(false);
+      }
+    };
+    generate();
+  }, [isOpen]);
+
+  // Sync id_hewan setiap kali bagian yang bisa diedit berubah
+  useEffect(() => {
+    if (idPrefix && idYearMonth && idSequence) {
+      setForm(prev => ({ ...prev, id_hewan: buildBisnisId(idPrefix, idYearMonth, idSequence) }));
+    }
+  }, [idPrefix, idYearMonth, idSequence]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,6 +97,9 @@ export default function AddHewanModal({ isOpen, onClose, onSubmit, isLoading }) 
       umur: '',
       catatan: ''
     });
+    setIdPrefix('');
+    setIdYearMonth('');
+    setIdSequence('');
   };
 
   if (!isOpen) return null;
@@ -92,18 +130,57 @@ export default function AddHewanModal({ isOpen, onClose, onSubmit, isLoading }) 
           {/* ID Hewan Ternak */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              ID Hewan Ternak *
+              ID Hewan Ternak (ID Bisnis) *
             </label>
-            <input
-              type="text"
-              name="id_hewan"
-              value={form.id_hewan}
-              onChange={handleChange}
-              placeholder="e.g. HW-001, SAPI-2024-001"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-              disabled={isLoading}
-            />
-            <p className="text-xs text-gray-500 mt-1">ID bisnis hewan, bukan ID sistem</p>
+            {loadingId ? (
+              <div className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg bg-gray-50">
+                <Loader size={14} className="animate-spin text-gray-400" />
+                <span className="text-sm text-gray-400">Membuat ID bisnis...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                {/* Prefix — locked */}
+                <input
+                  type="text"
+                  value={idPrefix}
+                  disabled
+                  title="Prefix dari kode kelompok, tidak dapat diubah"
+                  className="w-24 px-3 py-2 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 text-center text-sm cursor-not-allowed"
+                />
+                <span className="text-gray-400 font-bold">.</span>
+                {/* Tahun.Bulan — editable */}
+                <input
+                  type="text"
+                  value={idYearMonth}
+                  onChange={(e) => setIdYearMonth(e.target.value)}
+                  placeholder="26.01"
+                  maxLength={5}
+                  title="Format: YY.MM (tahun 2 digit . bulan 2 digit)"
+                  className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none text-center text-sm "
+                  disabled={isLoading}
+                />
+                <span className="text-gray-400 font-bold">.</span>
+                {/* Sequence — editable */}
+                <input
+                  type="text"
+                  value={idSequence}
+                  onChange={(e) => setIdSequence(e.target.value)}
+                  placeholder="001"
+                  maxLength={5}
+                  title="Nomor urut hewan"
+                  className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none text-center text-sm "
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+            <div className="mt-1 flex items-center gap-2">
+              <p className="text-xs text-gray-500">
+                Hasil: <span className="font-semibold text-gray-700">{form.id_hewan || '-'}</span>
+              </p>
+              <span className="text-xs text-gray-400">|</span>
+              <span className="text-xs text-gray-400 bg-gray-100 px-1 rounded">{idPrefix}</span>
+              <span className="text-xs text-gray-400">= dari kode kelompok (terkunci)</span>
+            </div>
           </div>
 
           {/* Jenis Kelamin */}

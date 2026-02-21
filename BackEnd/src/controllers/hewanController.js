@@ -971,6 +971,185 @@ const getIndukCandidates = async (req, res) => {
   }
 };
 
+// Generate next ID bisnis hewan ternak berdasarkan kode_kelompok + tahun + bulan
+const getNextBisnisId = async (req, res) => {
+  try {
+    const { kelompok_id } = req.user;
+    if (!kelompok_id) {
+      return res.status(403).json({ success: false, message: 'User tidak terikat dengan kelompok' });
+    }
+
+    // Ambil kode_kelompok
+    const kelompokResult = await db.query(
+      'SELECT kode_kelompok FROM kelompok WHERE id = $1',
+      [kelompok_id]
+    );
+    if (!kelompokResult.rows.length || !kelompokResult.rows[0].kode_kelompok) {
+      return res.status(404).json({ success: false, message: 'Kode kelompok tidak ditemukan' });
+    }
+
+    const kodeKelompok = kelompokResult.rows[0].kode_kelompok;
+    // Ambil 2 segment pertama: "RT.NB.24.06" → "RT.NB"
+    const prefix = kodeKelompok.split('.').slice(0, 2).join('.');
+
+    // Tahun & bulan dari query param (opsional), default: sekarang
+    const now = new Date();
+    const yy = req.query.year  || String(now.getFullYear()).slice(-2);
+    const mm = req.query.month || String(now.getMonth() + 1).padStart(2, '0');
+
+    const pattern = `${prefix}.${yy}.${mm}.`;
+
+    // COUNT hewan yang ID-nya dimulai dengan pattern tersebut
+    const countResult = await db.query(
+      `SELECT COUNT(*) as total FROM hewan_ternak WHERE kelompok_id = $1 AND id_hewan LIKE $2`,
+      [kelompok_id, `${pattern}%`]
+    );
+
+    const count = parseInt(countResult.rows[0].total) || 0;
+    const nextSeq = String(count + 1).padStart(3, '0');
+    const nextId = `${pattern}${nextSeq}`;
+
+    return res.json({
+      success: true,
+      data: {
+        next_id: nextId,
+        prefix,         // "RT.NB" — bagian yang dikunci
+        year_month: `${yy}.${mm}`, // bagian yang bisa diedit
+        sequence: nextSeq,         // bagian yang bisa diedit
+        pattern
+      }
+    });
+  } catch (error) {
+    console.error('Error getNextBisnisId:', error);
+    return res.status(500).json({ success: false, message: 'Gagal generate ID bisnis', error: error.message });
+  }
+};
+
+// Get semua hewan ternak milik mitra kelompok (untuk kelompok role - Tab Mitra)
+const getHewanTernakMitra = async (req, res) => {
+  try {
+    const { kelompok_id } = req.user;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = (page - 1) * limit;
+
+    if (!kelompok_id) {
+      return res.status(403).json({
+        success: false,
+        message: 'User tidak terikat dengan kelompok'
+      });
+    }
+
+    const query = `
+      SELECT
+        h.id,
+        h.id_hewan,
+        h.jenis_kelamin,
+        h.ras,
+        h.tanggal_lahir,
+        h.status,
+        h.bobot,
+        h.catatan,
+        h.source,
+        h.id_induk,
+        h.id_pejantan,
+        h.tanggal_status_tidak_aktif,
+        h.tanggal_terjual,
+        h.umur_saat_terjual,
+        h.kelompok_id,
+        k.name AS mitra_name,
+        k.kode_kelompok AS mitra_kode,
+        FLOOR(EXTRACT(DAY FROM (
+          CASE
+            WHEN h.status = 'TIDAK_AKTIF' AND h.tanggal_status_tidak_aktif IS NOT NULL
+            THEN h.tanggal_status_tidak_aktif - h.tanggal_lahir
+            WHEN h.status = 'TERJUAL' AND h.tanggal_terjual IS NOT NULL
+            THEN h.tanggal_terjual - h.tanggal_lahir
+            ELSE NOW() - h.tanggal_lahir
+          END
+        ))) as umur_hari,
+        FLOOR(EXTRACT(DAY FROM (
+          CASE
+            WHEN h.status = 'TIDAK_AKTIF' AND h.tanggal_status_tidak_aktif IS NOT NULL
+            THEN h.tanggal_status_tidak_aktif - h.tanggal_lahir
+            WHEN h.status = 'TERJUAL' AND h.tanggal_terjual IS NOT NULL
+            THEN h.tanggal_terjual - h.tanggal_lahir
+            ELSE NOW() - h.tanggal_lahir
+          END
+        )) / 30) as umur_bulan,
+        CASE
+          WHEN EXTRACT(DAY FROM (
+            CASE
+              WHEN h.status = 'TIDAK_AKTIF' AND h.tanggal_status_tidak_aktif IS NOT NULL
+              THEN h.tanggal_status_tidak_aktif - h.tanggal_lahir
+              WHEN h.status = 'TERJUAL' AND h.tanggal_terjual IS NOT NULL
+              THEN h.tanggal_terjual - h.tanggal_lahir
+              ELSE NOW() - h.tanggal_lahir
+            END
+          )) < 30
+          THEN FLOOR(EXTRACT(DAY FROM (
+            CASE
+              WHEN h.status = 'TIDAK_AKTIF' AND h.tanggal_status_tidak_aktif IS NOT NULL
+              THEN h.tanggal_status_tidak_aktif - h.tanggal_lahir
+              WHEN h.status = 'TERJUAL' AND h.tanggal_terjual IS NOT NULL
+              THEN h.tanggal_terjual - h.tanggal_lahir
+              ELSE NOW() - h.tanggal_lahir
+            END
+          ))) || ' hari'
+          ELSE FLOOR(EXTRACT(DAY FROM (
+            CASE
+              WHEN h.status = 'TIDAK_AKTIF' AND h.tanggal_status_tidak_aktif IS NOT NULL
+              THEN h.tanggal_status_tidak_aktif - h.tanggal_lahir
+              WHEN h.status = 'TERJUAL' AND h.tanggal_terjual IS NOT NULL
+              THEN h.tanggal_terjual - h.tanggal_lahir
+              ELSE NOW() - h.tanggal_lahir
+            END
+          )) / 30) || ' bulan'
+        END as umur_display
+      FROM hewan_ternak h
+      JOIN kelompok k ON k.id = h.kelompok_id
+      WHERE k.parent_kelompok_id = $1
+      ORDER BY k.name ASC, h.tanggal_lahir DESC
+      LIMIT $2 OFFSET $3
+    `;
+
+    const [result, countRes] = await Promise.all([
+      db.query(query, [kelompok_id, limit, offset]),
+      db.query(
+        `SELECT COUNT(*)::int as total
+         FROM hewan_ternak h
+         JOIN kelompok k ON k.id = h.kelompok_id
+         WHERE k.parent_kelompok_id = $1`,
+        [kelompok_id]
+      )
+    ]);
+
+    const total = countRes.rows[0].total;
+
+    console.log(`[hewanController] getHewanTernakMitra for parent kelompok ${kelompok_id}: ${result.rows.length} records (total: ${total})`);
+
+    res.json({
+      success: true,
+      data: result.rows.map(hewan => ({
+        ...hewan,
+        umur: {
+          hari: hewan.umur_hari,
+          bulan: hewan.umur_bulan,
+          display: hewan.umur_display
+        }
+      })),
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) }
+    });
+  } catch (error) {
+    console.error('Error getHewanTernakMitra:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data hewan ternak mitra',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getHewanTernak,
   getDetailHewan,
@@ -980,5 +1159,7 @@ module.exports = {
   createHewan,
   getPejantanCandidates,
   getIndukCandidates,
+  getNextBisnisId,
+  getHewanTernakMitra,
   hitungUmur
 };

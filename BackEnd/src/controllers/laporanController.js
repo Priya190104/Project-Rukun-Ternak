@@ -37,8 +37,8 @@ async function getLaporanList(req, res) {
     if (userRole === 'admin' || userRole === 'viewer') {
       // Admin and Viewer see all
       whereCondition = '1=1';
-    } else if (userRole === 'kelompok') {
-      // Kelompok sees own data
+    } else if (userRole === 'kelompok' || userRole === 'mitra_kelompok') {
+      // Kelompok & Mitra Kelompok see their own kelompok's data
       whereCondition = 'l.kelompok_id = $' + (paramCount++);
       params.push(userKelompokId);
     } else {
@@ -259,8 +259,8 @@ async function getLaporanById(req, res) {
     let hasAccess = false;
     if (userRole === 'admin' || userRole === 'viewer') {
       hasAccess = true; // Admin and Viewer can access everything
-    } else if (userRole === 'kelompok') {
-      // Kelompok can access if laporan belongs to their kelompok
+    } else if (userRole === 'kelompok' || userRole === 'mitra_kelompok') {
+      // Kelompok and Mitra Kelompok can access if laporan belongs to their kelompok
       hasAccess = laporanOwnership.kelompok_id === userKelompokId;
     } else {
       // Other roles can access if they created it
@@ -395,17 +395,17 @@ async function createLaporan(req, res) {
     // OWNERSHIP ENFORCEMENT: Determine which kelompok_id to use
     let finalKelompokId = kelompok_id;
     
-    if (userRole === 'kelompok') {
-      // Kelompok users can only create laporan for their own kelompok
+    if (userRole === 'kelompok' || userRole === 'mitra_kelompok') {
+      // Kelompok & Mitra Kelompok can only create laporan for their own kelompok
       if (kelompok_id && kelompok_id !== userKelompokId) {
-        console.warn(`[laporanController] Security: Kelompok user ${userId} attempted to create laporan for different kelompok ${kelompok_id}. Assigning to their own kelompok ${userKelompokId}`);
+        console.warn(`[laporanController] Security: User ${userId} (${userRole}) attempted to create laporan for different kelompok ${kelompok_id}. Assigning to their own kelompok ${userKelompokId}`);
       }
       finalKelompokId = userKelompokId; // OVERRIDE with user's kelompok_id
       
       if (!finalKelompokId) {
         return res.status(403).json({
           success: false,
-          message: 'Kelompok user must be assigned to a kelompok'
+          message: 'User must be assigned to a kelompok'
         });
       }
     } else if (userRole === 'admin') {

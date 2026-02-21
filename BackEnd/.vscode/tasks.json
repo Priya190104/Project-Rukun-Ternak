@@ -1,0 +1,29 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Password Reset Migration 1",
+			"type": "shell",
+			"command": "psql -U postgres -d rukunternak -f migrations/20260217_add_password_reset_tokens.sql",
+			"isBackground": false
+		},
+		{
+			"label": "Migration 1: Create password_reset_tokens table",
+			"type": "shell",
+			"command": "psql -U postgres -d rukunternak -f migrations/20260217_add_password_reset_tokens.sql",
+			"isBackground": false
+		},
+		{
+			"label": "Run Password Reset Migrations",
+			"type": "shell",
+			"command": "psql -U postgres -d rukunternak -f migrations/20260217_add_password_reset_tokens.sql && psql -U postgres -d rukunternak -f migrations/20260217_add_email_to_users.sql",
+			"isBackground": false
+		},
+		{
+			"label": "Run Password Reset Migration 1",
+			"type": "shell",
+			"command": "psql -U postgres -d rukunternak -f migrations/20260217_add_password_reset_tokens.sql",
+			"isBackground": false
+		}
+	]
+}

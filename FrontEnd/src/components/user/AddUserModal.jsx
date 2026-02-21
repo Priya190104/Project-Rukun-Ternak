@@ -5,6 +5,7 @@ import client from '../../api/client';
 export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokList = [] }) {
   const [form, setForm] = useState({
     username: '',
+    email: '',
     password: '',
     passwordConfirm: '',
     full_name: '',
@@ -16,14 +17,16 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
   const [errors, setErrors] = useState({});
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setForm({ username: '', password: '', passwordConfirm: '', full_name: '', role: 'kelompok', kelompok_id: '' });
+      setForm({ username: '', email: '', password: '', passwordConfirm: '', full_name: '', role: 'kelompok', kelompok_id: '' });
       setErrors({});
       setNotification(null);
       setShowPassword(false);
       setShowPasswordConfirm(false);
+      setShowConfirmation(false);
     }
   }, [isOpen]);
 
@@ -36,6 +39,15 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
     const newErrors = {};
     if (!form.username.trim()) {
       newErrors.username = 'Username wajib diisi';
+    }
+    if (!form.email.trim()) {
+      newErrors.email = 'Email wajib diisi';
+    } else {
+      // Validasi format email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.email)) {
+        newErrors.email = 'Format email tidak valid';
+      }
     }
     if (!form.password.trim() || form.password.length < 6) {
       newErrors.password = 'Password minimal 6 karakter';
@@ -76,10 +88,17 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
       return;
     }
 
+    // Show confirmation dialog
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmAdd = async () => {
+    setShowConfirmation(false);
     setLoading(true);
     try {
       const payload = {
         username: form.username.trim(),
+        email: form.email.trim(),
         password: form.password.trim(),
         full_name: form.full_name.trim(),
         role: form.role,
@@ -90,7 +109,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
 
       if (response.data?.success) {
         showNotification('success', 'Pengguna berhasil ditambahkan!');
-        setForm({ username: '', password: '', passwordConfirm: '', full_name: '', role: 'kelompok', kelompok_id: '' });
+        setForm({ username: '', email: '', password: '', passwordConfirm: '', full_name: '', role: 'kelompok', kelompok_id: '' });
         setShowPassword(false);
         setShowPasswordConfirm(false);
         setTimeout(() => {
@@ -111,8 +130,44 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
+    <>
+      {/* Confirmation Dialog */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">Konfirmasi Tambah Pengguna</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Apakah Anda yakin ingin menambahkan pengguna dengan data berikut?
+            </p>
+            <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2 text-sm">
+              <div><span className="font-semibold">Username:</span> {form.username}</div>
+              <div><span className="font-semibold">Email:</span> {form.email}</div>
+              <div><span className="font-semibold">Nama:</span> {form.full_name}</div>
+              <div><span className="font-semibold">Role:</span> {form.role}</div>
+              {form.role === 'kelompok' && form.kelompok_id && (
+                <div><span className="font-semibold">Kelompok:</span> {kelompokList.find(k => k.id === parseInt(form.kelompok_id))?.name}</div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmation(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmAdd}
+                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
+              >
+                Ya, Tambahkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-bold text-gray-900">Tambah Pengguna Baru</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition" disabled={loading}>
@@ -144,6 +199,23 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
               }`}
             />
             {errors.username && <p className="text-danger text-xs mt-1">{errors.username}</p>}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-900 mb-1">Email *</label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="user@example.com"
+              disabled={loading}
+              className={`w-full h-9 px-3 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition ${
+                errors.email ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.email && <p className="text-danger text-xs mt-1">{errors.email}</p>}
+            <p className="text-gray-500 text-xs mt-1">📧 Required untuk fitur reset password</p>
           </div>
 
           <div>
@@ -280,6 +352,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, kelompokLis
         </form>
       </div>
     </div>
+    </>
   );
 }
 

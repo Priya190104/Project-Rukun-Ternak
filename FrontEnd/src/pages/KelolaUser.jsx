@@ -186,7 +186,7 @@ export default function KelolaUser() {
                 {filtered.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{user.full_name || user.username}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{user.username}</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">{user.email || <span className="text-gray-400 italic">Belum diset</span>}</td>
                     <td className="px-6 py-4 text-sm text-gray-700">
                       <select
                         value={user.kelompok_id || ''}
@@ -209,6 +209,7 @@ export default function KelolaUser() {
                         <option value="belum ditentukan">Belum Ditentukan</option>
                         <option value="admin">Admin</option>
                         <option value="kelompok">Kelompok</option>
+                        <option value="mitra_kelompok">Mitra Kelompok</option>
                         <option value="viewer">Viewer</option>
                       </select>
                     </td>

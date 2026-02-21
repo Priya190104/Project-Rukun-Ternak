@@ -1,7 +1,30 @@
 import axios from 'axios';
 import { setInCache } from '../hooks/useApiCache';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+// Smart API URL detection
+// - In development: use localhost:4000
+// - In production: use same domain as frontend
+const getApiBaseUrl = () => {
+  // TEMPORARY FIX: Force localhost in development
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    console.log('[API Client] Detected localhost - forcing localhost:4000/api');
+    return 'http://localhost:4000/api';
+  }
+  
+  // If environment variable is set, use it
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // Production (use same domain as frontend)
+  const protocol = window.location.protocol;
+  return `${protocol}//${hostname}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('[API Client] Using API URL:', API_BASE_URL);
 
 const client = axios.create({
   baseURL: API_BASE_URL,

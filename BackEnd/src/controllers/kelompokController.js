@@ -6,26 +6,30 @@ async function getKelompok(req, res) {
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
 
-    // Get data with pagination
+    // Only return top-level kelompok (parent_kelompok_id IS NULL)
+    // Mitra kelompok retrieved via separate /api/mitra-kelompok endpoint
     const { rows } = await db.query(`
-      SELECT k.id, k.name, k.email, k.kecamatan, k.desa, k.catatan,
+      SELECT k.id, k.kode_kelompok, k.name, k.email, k.kecamatan, k.desa, k.catatan,
              k.latitude, k.longitude,
-             k.pic1_nik, k.pic1_nama,
+             k.pic1_nik, k.pic1_nama, k.pic1_alamat, k.pic1_no_hp, k.pic1_email,
              k.jumlah_kandang, k.jumlah_ternak, k.pakan_list, k.kesehatan_list,
+             k.parent_kelompok_id,
              COUNT(u.id)::int as anggota_count 
       FROM kelompok k 
       LEFT JOIN users u ON u.kelompok_id = k.id 
-      GROUP BY k.id, k.name, k.email, k.kecamatan, k.desa, k.catatan,
+      WHERE k.parent_kelompok_id IS NULL
+      GROUP BY k.id, k.kode_kelompok, k.name, k.email, k.kecamatan, k.desa, k.catatan,
                k.latitude, k.longitude,
-               k.pic1_nik, k.pic1_nama,
-               k.jumlah_kandang, k.jumlah_ternak, k.pakan_list, k.kesehatan_list
+               k.pic1_nik, k.pic1_nama, k.pic1_alamat, k.pic1_no_hp, k.pic1_email,
+               k.jumlah_kandang, k.jumlah_ternak, k.pakan_list, k.kesehatan_list,
+               k.parent_kelompok_id
       ORDER BY k.id
       LIMIT $1 OFFSET $2
     `, [limit, offset]);
 
-    // Get total count
+    // Get total count (top-level only)
     const { rows: countResult } = await db.query(`
-      SELECT COUNT(DISTINCT k.id)::int as total FROM kelompok k
+      SELECT COUNT(DISTINCT k.id)::int as total FROM kelompok k WHERE k.parent_kelompok_id IS NULL
     `);
 
     const total = countResult[0].total;
@@ -54,18 +58,20 @@ async function getKelompokById(req, res) {
     }
 
     const { rows } = await db.query(`
-      SELECT k.id, k.name, k.email, k.kecamatan, k.desa, k.catatan,
+      SELECT k.id, k.kode_kelompok, k.name, k.email, k.kecamatan, k.desa, k.catatan,
              k.latitude, k.longitude,
              k.pic1_nik, k.pic1_nama, k.pic1_alamat, k.pic1_no_hp, k.pic1_email,
              k.jumlah_kandang, k.jumlah_ternak, k.pakan_list, k.kesehatan_list,
+             k.parent_kelompok_id,
              COUNT(u.id)::int as anggota_count 
       FROM kelompok k 
       LEFT JOIN users u ON u.kelompok_id = k.id 
       WHERE k.id = $1
-      GROUP BY k.id, k.name, k.email, k.kecamatan, k.desa, k.catatan,
+      GROUP BY k.id, k.kode_kelompok, k.name, k.email, k.kecamatan, k.desa, k.catatan,
                k.latitude, k.longitude,
                k.pic1_nik, k.pic1_nama, k.pic1_alamat, k.pic1_no_hp, k.pic1_email,
-               k.jumlah_kandang, k.jumlah_ternak, k.pakan_list, k.kesehatan_list
+               k.jumlah_kandang, k.jumlah_ternak, k.pakan_list, k.kesehatan_list,
+               k.parent_kelompok_id
     `, [id]);
 
     if (!rows[0]) {
@@ -82,12 +88,23 @@ async function getKelompokById(req, res) {
 async function createKelompok(req, res) {
   try {
     if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'kelompok')) return res.status(403).json({ success: false, message: 'Forbidden' });
-    const { name, email, kecamatan, desa, catatan, latitude, longitude, pic1_nik, pic1_nama, pic1_alamat, pic1_noHp, pic1_email, jumlahKandang, jumlahTernak, ternakDetails, pakanList, kesehatanList } = req.body || {};
+    const { name, kode_kelompok, email, kecamatan, desa, catatan, latitude, longitude, pic1_nik, pic1_nama, pic1_alamat, pic1_noHp, pic1_email, jumlahKandang, jumlahTernak, ternakDetails, pakanList, kesehatanList } = req.body || {};
     
     // DEBUG: Log received ternakDetails to verify data arrives correctly
     console.log(`[DEBUG createKelompok] Received ternakDetails:`, JSON.stringify(ternakDetails, null, 2));
     
     if (!name) return res.status(400).json({ success: false, message: 'Missing name' });
+    
+    // Validate kode_kelompok if provided - must be unique
+    if (kode_kelompok && kode_kelompok.trim()) {
+      const existingKode = await db.query(
+        `SELECT id FROM kelompok WHERE kode_kelompok = $1`,
+        [kode_kelompok.trim().toUpperCase()]
+      );
+      if (existingKode.rows.length > 0) {
+        return res.status(400).json({ success: false, message: `Kode kelompok "${kode_kelompok}" sudah digunakan` });
+      }
+    }
     
     // Validate NIK and No HP - must be numeric only
     if (pic1_nik && typeof pic1_nik === 'string' && !/^\d+$/.test(pic1_nik.trim())) {
@@ -116,11 +133,12 @@ async function createKelompok(req, res) {
       await client.query('BEGIN');
 
       // 1. Create kelompok
+      const kodeKelompokValue = kode_kelompok && kode_kelompok.trim() ? kode_kelompok.trim().toUpperCase() : null;
       const kelompokResult = await client.query(
-        `INSERT INTO kelompok (name, email, kecamatan, desa, catatan, latitude, longitude, pic1_nik, pic1_nama, pic1_alamat, pic1_no_hp, pic1_email, jumlah_kandang, jumlah_ternak, pakan_list, kesehatan_list) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) 
+        `INSERT INTO kelompok (kode_kelompok, name, email, kecamatan, desa, catatan, latitude, longitude, pic1_nik, pic1_nama, pic1_alamat, pic1_no_hp, pic1_email, jumlah_kandang, jumlah_ternak, pakan_list, kesehatan_list) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) 
          RETURNING *`,
-        [name, email || null, kecamatan || null, desa || null, catatan || null, latToUse, lonToUse,
+        [kodeKelompokValue, name, email || null, kecamatan || null, desa || null, catatan || null, latToUse, lonToUse,
          nikValue, pic1_nama || null, pic1_alamat || null, noHpValue, pic1_email || null,
          jumlahKandang || null, jumlahTernak || null, pakanListJson, kesehatanListJson]
       );
@@ -286,8 +304,19 @@ async function updateKelompok(req, res) {
   try {
     if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'kelompok')) return res.status(403).json({ success: false, message: 'Forbidden' });
     const id = parseInt(req.params.id, 10);
-    const { name, email, kecamatan, desa, catatan, latitude, longitude, pic1_nik, pic1_nama, pic1_alamat, pic1_noHp, pic1_email, jumlahKandang, jumlahTernak, pakanList, kesehatanList } = req.body || {};
+    const { name, kode_kelompok, email, kecamatan, desa, catatan, latitude, longitude, pic1_nik, pic1_nama, pic1_alamat, pic1_noHp, pic1_email, jumlahKandang, jumlahTernak, pakanList, kesehatanList } = req.body || {};
     if (!name) return res.status(400).json({ success: false, message: 'Missing name' });
+    
+    // Validate kode_kelompok if provided - must be unique (exclude current record)
+    if (kode_kelompok && kode_kelompok.trim()) {
+      const existingKode = await db.query(
+        `SELECT id FROM kelompok WHERE kode_kelompok = $1 AND id != $2`,
+        [kode_kelompok.trim().toUpperCase(), id]
+      );
+      if (existingKode.rows.length > 0) {
+        return res.status(400).json({ success: false, message: `Kode kelompok "${kode_kelompok}" sudah digunakan oleh kelompok lain` });
+      }
+    }
     
     // Validate NIK and No HP - must be numeric only
     if (pic1_nik && typeof pic1_nik === 'string' && !/^\d+$/.test(pic1_nik.trim())) {
@@ -310,16 +339,33 @@ async function updateKelompok(req, res) {
     const pakanListJson = pakanList ? JSON.stringify(pakanList) : null;
     const kesehatanListJson = kesehatanList ? JSON.stringify(kesehatanList) : null;
     
-    const { rows } = await db.query(
-      `UPDATE kelompok SET name=$1, email=$2, kecamatan=$3, desa=$4, catatan=$5, 
+    const kodeKelompokValue = kode_kelompok !== undefined
+      ? (kode_kelompok && kode_kelompok.trim() ? kode_kelompok.trim().toUpperCase() : null)
+      : undefined;
+    
+    // Build query dynamically — only update kode_kelompok if it was sent in body
+    let updateQuery, updateParams;
+    if (kodeKelompokValue !== undefined) {
+      updateQuery = `UPDATE kelompok SET kode_kelompok=$1, name=$2, email=$3, kecamatan=$4, desa=$5, catatan=$6, 
+       latitude=$7, longitude=$8,
+       pic1_nik=$9, pic1_nama=$10, pic1_alamat=$11, pic1_no_hp=$12, pic1_email=$13,
+       jumlah_kandang=$14, jumlah_ternak=$15, pakan_list=$16, kesehatan_list=$17
+       WHERE id=$18 RETURNING *`;
+      updateParams = [kodeKelompokValue, name, email || null, kecamatan || null, desa || null, catatan || null, latToUse, lonToUse,
+       nikValue, pic1_nama || null, pic1_alamat || null, noHpValue, pic1_email || null,
+       jumlahKandang || null, jumlahTernak || null, pakanListJson, kesehatanListJson, id];
+    } else {
+      updateQuery = `UPDATE kelompok SET name=$1, email=$2, kecamatan=$3, desa=$4, catatan=$5, 
        latitude=$6, longitude=$7,
        pic1_nik=$8, pic1_nama=$9, pic1_alamat=$10, pic1_no_hp=$11, pic1_email=$12,
        jumlah_kandang=$13, jumlah_ternak=$14, pakan_list=$15, kesehatan_list=$16
-       WHERE id=$17 RETURNING *`,
-      [name, email || null, kecamatan || null, desa || null, catatan || null, latToUse, lonToUse,
+       WHERE id=$17 RETURNING *`;
+      updateParams = [name, email || null, kecamatan || null, desa || null, catatan || null, latToUse, lonToUse,
        nikValue, pic1_nama || null, pic1_alamat || null, noHpValue, pic1_email || null,
-       jumlahKandang || null, jumlahTernak || null, pakanListJson, kesehatanListJson, id]
-    );
+       jumlahKandang || null, jumlahTernak || null, pakanListJson, kesehatanListJson, id];
+    }
+    
+    const { rows } = await db.query(updateQuery, updateParams);
     if (!rows[0]) return res.status(404).json({ success: false, message: 'Not found' });
     return res.json({ success: true, data: rows[0] });
   } catch (e) {
@@ -349,6 +395,28 @@ async function deleteKelompok(req, res) {
       console.log(`[kelompokController] Deleting kelompok ID ${id} (${kelompokName}) and all related data...`);
 
       // Delete in order of foreign key dependencies
+      // 0. Get all mitra kelompok IDs of this kelompok (children)
+      const mitraRes = await client.query(
+        'SELECT id FROM kelompok WHERE parent_kelompok_id=$1',
+        [id]
+      );
+      const mitraIds = mitraRes.rows.map(r => r.id);
+      
+      // Delete each mitra kelompok and their related data
+      for (const mitraId of mitraIds) {
+        await client.query('DELETE FROM update_ternak WHERE kelompok_id=$1', [mitraId]);
+        await client.query(
+          'DELETE FROM riwayat_bobot WHERE hewan_id IN (SELECT id FROM hewan_ternak WHERE kelompok_id=$1)',
+          [mitraId]
+        );
+        await client.query('UPDATE hewan_ternak SET id_induk=NULL, id_pejantan=NULL WHERE kelompok_id=$1', [mitraId]);
+        await client.query('DELETE FROM hewan_ternak WHERE kelompok_id=$1', [mitraId]);
+        await client.query('DELETE FROM laporan WHERE kelompok_id=$1', [mitraId]);
+        await client.query('DELETE FROM users WHERE kelompok_id=$1', [mitraId]);
+        await client.query('DELETE FROM kelompok WHERE id=$1', [mitraId]);
+        console.log(`[kelompokController] Deleted mitra kelompok ID ${mitraId}`);
+      }
+
       // 1. Delete update_ternak (references hewan_ternak)
       const deleteUpdateTernakRes = await client.query(
         'DELETE FROM update_ternak WHERE kelompok_id=$1',
@@ -419,4 +487,59 @@ async function deleteKelompok(req, res) {
   }
 }
 
-module.exports = { getKelompok, getKelompokById, createKelompok, updateKelompok, deleteKelompok };
+async function updateKelompokKode(req, res) {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'kelompok')) {
+      return res.status(403).json({ success: false, message: 'Forbidden' });
+    }
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ success: false, message: 'ID kelompok tidak valid' });
+    }
+
+    const { kode_kelompok } = req.body || {};
+
+    // Validate: kode_kelompok must be provided
+    if (kode_kelompok === undefined || kode_kelompok === null) {
+      return res.status(400).json({ success: false, message: 'kode_kelompok wajib diisi' });
+    }
+
+    const kodeValue = kode_kelompok.trim() ? kode_kelompok.trim().toUpperCase() : null;
+
+    // Check uniqueness (exclude current record)
+    if (kodeValue) {
+      const existing = await db.query(
+        `SELECT id FROM kelompok WHERE kode_kelompok = $1 AND id != $2`,
+        [kodeValue, id]
+      );
+      if (existing.rows.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Kode kelompok "${kodeValue}" sudah digunakan oleh kelompok lain`
+        });
+      }
+    }
+
+    const { rows } = await db.query(
+      `UPDATE kelompok SET kode_kelompok = $1 WHERE id = $2 RETURNING id, kode_kelompok, name`,
+      [kodeValue, id]
+    );
+
+    if (!rows[0]) {
+      return res.status(404).json({ success: false, message: 'Kelompok tidak ditemukan' });
+    }
+
+    return res.json({
+      success: true,
+      data: rows[0],
+      message: kodeValue
+        ? `Kode kelompok berhasil diperbarui menjadi "${kodeValue}"`
+        : 'Kode kelompok berhasil dihapus'
+    });
+  } catch (e) {
+    console.error('[kelompokController] Error updateKelompokKode:', e);
+    return res.status(500).json({ success: false, message: 'Server error: ' + e.message });
+  }
+}
+
+module.exports = { getKelompok, getKelompokById, createKelompok, updateKelompok, updateKelompokKode, deleteKelompok };

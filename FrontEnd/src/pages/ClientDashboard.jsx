@@ -20,20 +20,20 @@ export default function ClientDashboard() {
   
   // Fetch dashboard kelompok dengan caching
   const { data: cachedDashboardKelompok, loading: dashKelLoading } = useCachedData(
-    appRole === 'kelompok' ? '/api/stats/dashboard/kelompok' : null,
+    (appRole === 'kelompok' || appRole === 'mitra_kelompok') ? '/api/stats/dashboard/kelompok' : null,
     [appRole],
     { ttl: 10 * 60 * 1000 }
   );
   
   // Fetch kelahiran stats dengan caching
   const { data: cachedKelahiranStats, loading: kelahiranLoading } = useCachedData(
-    appRole === 'kelompok' ? '/api/stats/kelahiran' : null,
+    (appRole === 'kelompok' || appRole === 'mitra_kelompok') ? '/api/stats/kelahiran' : null,
     [appRole],
     { ttl: 10 * 60 * 1000 }
   );
   
   // Fetch kelompok data dengan caching
-  const kelompokUrl = appRole === 'kelompok' && user?.kelompok_id ? `/api/kelompok/${user.kelompok_id}` : null;
+  const kelompokUrl = (appRole === 'kelompok' || appRole === 'mitra_kelompok') && user?.kelompok_id ? `/api/kelompok/${user.kelompok_id}` : null;
   const { data: cachedKelompok, loading: kelompokLoading } = useCachedData(
     kelompokUrl,
     [kelompokUrl],
@@ -71,14 +71,18 @@ export default function ClientDashboard() {
     }
   }, [cachedKelompok]);
 
-  const loading = statsLoading || (appRole === 'kelompok' && (dashKelLoading || kelahiranLoading || kelompokLoading));
+  const loading = statsLoading || ((appRole === 'kelompok' || appRole === 'mitra_kelompok') && (dashKelLoading || kelahiranLoading || kelompokLoading));
 
   const dashboardTitle = appRole === 'kelompok' 
-    ? `Dashboard Kelompok` 
+    ? 'Dashboard Kelompok'
+    : appRole === 'mitra_kelompok'
+    ? 'Dashboard Mitra Kelompok'
     : 'Dashboard 📋';
   
   const dashboardDesc = appRole === 'kelompok'
     ? 'Kelola data kelompok dan laporan ternak dengan mudah'
+    : appRole === 'mitra_kelompok'
+    ? 'Kelola data mitra kelompok dan laporan ternak dengan mudah'
     : 'Kelola laporan Anda dengan mudah dan cepat';
 
   const formatTanggal = (tanggal) => {
@@ -114,18 +118,18 @@ export default function ClientDashboard() {
         </div>
       </div>
 
-      {/* SECTION A: Profil Kelompok (untuk kelompok role) */}
-      {appRole === 'kelompok' && (
+      {/* SECTION A: Profil Kelompok (untuk kelompok & mitra_kelompok role) */}
+      {(appRole === 'kelompok' || appRole === 'mitra_kelompok') && (
         <KelompokDashboardCard kelompok={kelompok} loading={loading} />
       )}
 
-      {/* SECTION B: Penyaluran dan Bantuan (untuk kelompok role) */}
-      {appRole === 'kelompok' && (
+      {/* SECTION B: Penyaluran dan Bantuan (untuk kelompok & mitra_kelompok role) */}
+      {(appRole === 'kelompok' || appRole === 'mitra_kelompok') && (
         <PenyaluranBantuanCard penyaluran={dashboardKelompok?.penyaluran} bantuan={dashboardKelompok?.bantuan} loading={loading} />
       )}
 
       {/* Quick Stats */}
-      {appRole !== 'kelompok' && (
+      {appRole !== 'kelompok' && appRole !== 'mitra_kelompok' && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
             <div className="text-gray-700 text-sm font-semibold mb-2">Total Laporan</div>
@@ -145,7 +149,7 @@ export default function ClientDashboard() {
       )}
 
       {/* SECTION D: Dashboard Kelompok (8 Cards) */}
-      {appRole === 'kelompok' && (
+      {(appRole === 'kelompok' || appRole === 'mitra_kelompok') && (
         <>
           <div className="pt-6 sm:pt-8 border-t-2 border-gray-200">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Progress Kelompok</h2>

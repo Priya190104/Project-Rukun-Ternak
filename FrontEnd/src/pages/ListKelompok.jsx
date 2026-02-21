@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { Users, Search, Phone, MapPin, User, Mail, MapPinIcon, Plus, Map, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Users, Search, Phone, User, Mail, Plus, Map, Eye, Edit2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import AdminPageHeader from '../components/admin/AdminPageHeader';
@@ -128,6 +128,7 @@ export default function ListKelompok() {
   };
 
   const openEditModal = (data) => {
+    console.log('[ListKelompok] Opening edit modal with data:', data);
     setModalMode('edit');
     setEditingKelompok(data);
     setIsModalOpen(true);
@@ -252,7 +253,7 @@ export default function ListKelompok() {
         )}
       </div>
 
-      {/* Kelompok Cards */}
+      {/* Kelompok Table */}
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="text-gray-700">Loading...</div>
@@ -267,105 +268,96 @@ export default function ListKelompok() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {filtered.map((kelompokItem) => (
-            <div
-              key={kelompokItem.id}
-              className="bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden"
-            >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-primary-50 to-primary-100 px-6 py-4 border-b border-gray-200">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-primary-600 text-white">
-                      <Users size={20} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 truncate">{kelompokItem.name || '-'}</h3>
-                      {kelompokItem.email && (
-                        <div className="flex items-center gap-1 text-xs text-gray-700 mt-1">
-                          <Mail size={12} />
-                          <span className="truncate">{kelompokItem.email}</span>
-                        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-primary-50 border-b border-gray-200 text-left">
+                  <th className="px-4 py-3 font-semibold text-gray-700 w-10">No</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Kode</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Nama Kelompok</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Email</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Kecamatan</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Desa</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Penanggung Jawab</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">No. HP</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filtered.map((kelompokItem, idx) => (
+                  <tr key={kelompokItem.id} className="hover:bg-gray-50 transition">
+                    <td className="px-4 py-3 text-gray-500 text-center">{idx + 1}</td>
+                    <td className="px-4 py-3">
+                      {kelompokItem.kode_kelompok ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-primary-100 text-primary-700 border border-primary-200">
+                          {kelompokItem.kode_kelompok}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 italic text-xs">-</span>
                       )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Location Info */}
-              <div className="px-6 py-4 space-y-2 border-b border-gray-200">
-                {kelompokItem.kecamatan && (
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <MapPin size={16} className="text-primary-600 flex-shrink-0" />
-                    <span className="font-medium">{kelompokItem.kecamatan}</span>
-                  </div>
-                )}
-                {kelompokItem.desa && (
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <MapPinIcon size={16} className="text-primary-600 flex-shrink-0" />
-                    <span>{kelompokItem.desa}</span>
-                  </div>
-                )}
-                {kelompokItem.catatan && (
-                  <div className="text-xs text-gray-700 italic mt-2 p-2 bg-gray-50 rounded">
-                    {`"${kelompokItem.catatan}"`}
-                  </div>
-                )}
-              </div>
-
-              {/* PIC Info */}
-              <div className="px-6 py-4 space-y-3">
-                {/* PIC 1 */}
-                {(kelompokItem.pic1Nama || kelompokItem.pic1NoHp) && (
-                  <div className="bg-primary-50 rounded-lg p-3 border border-primary-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <User size={14} className="text-primary-600" />
-                      <span className="text-xs font-semibold text-primary-600">PENANGGUNG JAWAB 1</span>
-                    </div>
-                    {kelompokItem.pic1Nama && (
-                      <div className="text-sm font-semibold text-gray-900">{kelompokItem.pic1Nama}</div>
-                    )}
-                    {kelompokItem.pic1NoHp && (
-                      <div className="flex items-center gap-1 text-xs text-gray-700 mt-1">
-                        <Phone size={12} />
-                        {kelompokItem.pic1NoHp}
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-gray-900">{kelompokItem.name || '-'}</td>
+                    <td className="px-4 py-3 text-gray-700">
+                      {kelompokItem.email ? (
+                        <div className="flex items-center gap-1">
+                          <Mail size={13} className="text-gray-400 flex-shrink-0" />
+                          <span>{kelompokItem.email}</span>
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">{kelompokItem.kecamatan || '-'}</td>
+                    <td className="px-4 py-3 text-gray-700">{kelompokItem.desa || '-'}</td>
+                    <td className="px-4 py-3 text-gray-900">
+                      {kelompokItem.pic1_nama ? (
+                        <div className="flex items-center gap-1">
+                          <User size={13} className="text-primary-500 flex-shrink-0" />
+                          <span>{kelompokItem.pic1_nama}</span>
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">
+                      {kelompokItem.pic1_no_hp ? (
+                        <div className="flex items-center gap-1">
+                          <Phone size={13} className="text-gray-400 flex-shrink-0" />
+                          <span>{kelompokItem.pic1_no_hp}</span>
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => navigate(`/kelompok/${kelompokItem.id}`)}
+                          title="Lihat detail"
+                          className="p-1.5 text-primary-600 hover:bg-primary-100 rounded transition"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        {appRole === 'admin' && (
+                          <>
+                            <button
+                              onClick={() => openEditModal(kelompokItem)}
+                              title="Edit kelompok"
+                              className="p-1.5 text-warning hover:bg-warning-100 rounded transition"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(kelompokItem.id)}
+                              title="Hapus kelompok"
+                              className="p-1.5 text-danger hover:bg-danger-100 rounded transition"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        )}
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-2">
-                <button
-                  onClick={() => navigate(`/kelompok/${kelompokItem.id}`)}
-                  title="Lihat detail"
-                  className="p-2 text-primary-600 hover:bg-primary-100 rounded transition"
-                >
-                  <Eye size={18} />
-                </button>
-                {appRole === 'admin' && (
-                  <>
-                    <button
-                      onClick={() => openEditModal(kelompokItem)}
-                      title="Edit kelompok"
-                      className="p-2 text-warning hover:bg-warning-100 rounded transition"
-                    >
-                      <Edit2 size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(kelompokItem.id)}
-                      title="Hapus kelompok"
-                      className="p-2 text-danger hover:bg-danger-100 rounded transition"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

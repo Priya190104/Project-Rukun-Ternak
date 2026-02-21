@@ -49,6 +49,11 @@ export default function RoleGuard({ allowedRoles = [], children }) {
     return <Navigate to="/viewer-dashboard" replace />;
   }
 
+  if (appRole === 'mitra_kelompok') {
+    console.log('[RoleGuard] Mitra kelompok user denied access, redirecting to client dashboard');
+    return <Navigate to="/client" replace />;
+  }
+
   // Fallback: redirect to login
   console.log('[RoleGuard] Fallback: redirecting to login');
   return <Navigate to="/login" replace />;

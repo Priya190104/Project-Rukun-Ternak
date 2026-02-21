@@ -23,6 +23,8 @@ export default function Login() {
         navigate('/client', { replace: true });
       } else if (user.role === 'viewer') {
         navigate('/viewer-dashboard', { replace: true });
+      } else if (user.role === 'mitra_kelompok') {
+        navigate('/client', { replace: true });
       }
     }
   }, [loading, user, navigate]);
@@ -41,6 +43,8 @@ export default function Login() {
         navigate('/client');
       } else if (result.user.role === 'viewer') {
         navigate('/viewer-dashboard');
+      } else if (result.user.role === 'mitra_kelompok') {
+        navigate('/client');
       }
     } else {
       // Show specific error message for invalid credentials
@@ -104,6 +108,14 @@ export default function Login() {
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
+            </div>
+            <div className="text-right mt-2">
+              <Link 
+                to="/forgot-password" 
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium transition"
+              >
+                Lupa Password?
+              </Link>
             </div>
           </div>
 

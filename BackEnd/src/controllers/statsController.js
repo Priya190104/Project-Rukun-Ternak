@@ -876,8 +876,8 @@ async function getKelahiranStats(req, res) {
     const params = [];
     let paramIndex = 1;
 
-    // If user is from kelompok, only get stats for their kelompok
-    if (userRole === 'kelompok') {
+    // If user is from kelompok or mitra_kelompok, only get stats for their kelompok
+    if (userRole === 'kelompok' || userRole === 'mitra_kelompok') {
       whereCondition = `source = 'Kelahiran' AND kelompok_id = $${paramIndex++}`;
       params.push(userKelompokId);
     }

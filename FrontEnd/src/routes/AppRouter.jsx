@@ -8,6 +8,8 @@ import { useAuth } from '../hooks/useAuth';
 // Lazy load all page components
 const Landing = lazy(() => import('../pages/Landing'));
 const Login = lazy(() => import('../pages/Login'));
+const ForgotPassword = lazy(() => import('../pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('../pages/ResetPassword'));
 const Profil = lazy(() => import('../pages/Profil'));
 const Dashboard = lazy(() => import('../pages/Dashboard'));
 const ViewerDashboard = lazy(() => import('../pages/ViewerDashboard'));
@@ -27,6 +29,9 @@ const DetailHewanPage = lazy(() => import('../pages/DetailHewanPage'));
 const FormUpdateTernakPage = lazy(() => import('../pages/FormUpdateTernakPage'));
 const AdminHewanTernakPage = lazy(() => import('../pages/AdminHewanTernakPage'));
 const DetailKelompok = lazy(() => import('../pages/DetailKelompok'));
+const ListMitraKelompok = lazy(() => import('../pages/ListMitraKelompok'));
+const DetailMitraKelompok = lazy(() => import('../pages/DetailMitraKelompok'));
+const KelolaKelompokUser = lazy(() => import('../pages/KelolaKelompokUser'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -55,6 +60,8 @@ export default function AppRouter() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/profil" element={<Profil />} />
           <Route path="/menunggu" element={<MenungguHakAkses />} />
 
@@ -200,7 +207,7 @@ export default function AppRouter() {
             path="/klg-dashboard"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'kelompok' ]}>
+                <RoleGuard allowedRoles={[ 'kelompok', 'mitra_kelompok' ]}>
                   <AppLayout>
                     <ClientDashboard />
                   </AppLayout>
@@ -213,7 +220,7 @@ export default function AppRouter() {
             path="/klg-laporan"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'kelompok' ]}>
+                <RoleGuard allowedRoles={[ 'kelompok', 'mitra_kelompok' ]}>
                   <AppLayout>
                     <ClientDaftarLaporan />
                   </AppLayout>
@@ -226,7 +233,7 @@ export default function AppRouter() {
             path="/hewan-ternak"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'kelompok' ]}>
+                <RoleGuard allowedRoles={[ 'kelompok', 'mitra_kelompok' ]}>
                   <AppLayout>
                     <HewanTernakPage />
                   </AppLayout>
@@ -239,7 +246,7 @@ export default function AppRouter() {
             path="/hewan-ternak/:id"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'kelompok' ]}>
+                <RoleGuard allowedRoles={[ 'kelompok', 'mitra_kelompok' ]}>
                   <AppLayout>
                     <DetailHewanPage />
                   </AppLayout>
@@ -252,9 +259,52 @@ export default function AppRouter() {
             path="/form-update-ternak"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'kelompok' ]}>
+                <RoleGuard allowedRoles={[ 'kelompok', 'mitra_kelompok' ]}>
                   <AppLayout>
                     <FormUpdateTernakPage />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* MITRA KELOMPOK ROUTES */}
+          <Route
+            path="/mitra-kelompok"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'kelompok', 'viewer' ]}>
+                  <AppLayout>
+                    <ListMitraKelompok />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/mitra-kelompok/:id"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'kelompok', 'viewer' ]}>
+                  <AppLayout>
+                    <DetailMitraKelompok />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+
+
+          {/* KELOLA PENGGUNA MITRA — hanya kelompok */}
+          <Route
+            path="/kelola-mitra-user"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[ 'kelompok' ]}>
+                  <AppLayout>
+                    <KelolaKelompokUser />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>
@@ -266,7 +316,7 @@ export default function AppRouter() {
             path="/client"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin', 'kelompok' ]}>
+                <RoleGuard allowedRoles={[ 'admin', 'kelompok', 'mitra_kelompok' ]}>
                   <AppLayout>
                     <ClientDashboard />
                   </AppLayout>
@@ -279,7 +329,7 @@ export default function AppRouter() {
             path="/pilih-jenis"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'kelompok' ]}>
+                <RoleGuard allowedRoles={[ 'kelompok', 'mitra_kelompok' ]}>
                   <AppLayout>
                     <ClientPilihJenisLaporan />
                   </AppLayout>
@@ -288,12 +338,12 @@ export default function AppRouter() {
             }
           />
 
-          {/* LAPORAN DETAIL - Accessible by admin, kelompok, viewer (read-only for viewer) */}
+          {/* LAPORAN DETAIL - Accessible by admin, kelompok, mitra_kelompok, viewer */}
           <Route
             path="/laporan/:id"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[ 'admin', 'kelompok', 'viewer' ]}>
+                <RoleGuard allowedRoles={[ 'admin', 'kelompok', 'mitra_kelompok', 'viewer' ]}>
                   <AppLayout>
                     <DetailLaporan />
                   </AppLayout>

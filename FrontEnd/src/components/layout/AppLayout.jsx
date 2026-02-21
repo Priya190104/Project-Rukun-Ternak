@@ -5,7 +5,7 @@ import SupportedByLogo from '../branding/SupportedByLogo';
 import NotificationBell from '../notification/NotificationBell';
 import KelompokBadge from '../kelompok/KelompokBadge';
 import { useAuth } from '../../hooks/useAuth';
-import { Menu, X, LogOut, Home, FileText, Users, BarChart3, User, Heart } from 'lucide-react';
+import { Menu, X, LogOut, Home, FileText, Users, BarChart3, User, Heart, Network } from 'lucide-react';
 
 export default function AppLayout({ children }) {
   const { user, appRole, logout, isAdmin } = useAuth();
@@ -42,11 +42,22 @@ export default function AppLayout({ children }) {
     { key: 'hewan', label: 'Hewan Ternak', to: '/admin/hewan-ternak', icon: Heart },
     { key: 'laporan', label: 'Semua Laporan', to: '/laporan', icon: FileText },
     { key: 'kelompok', label: 'Kelompok', to: '/kelompok', icon: Users },
+    { key: 'mitra', label: 'Mitra Kelompok', to: '/mitra-kelompok', icon: Network },
     { key: 'analisis', label: 'Analisis', to: '/analisis', icon: BarChart3 },
     { key: 'pengguna', label: 'Pengguna', to: '/kelola-user', icon: User },
   ];
 
   const kelompokMenu = [
+    { key: 'client', label: 'Dashboard', to: '/client', icon: Home },
+    { key: 'hewan', label: 'Hewan Ternak', to: '/hewan-ternak', icon: Heart },
+    { key: 'mitra', label: 'Mitra Kelompok', to: '/mitra-kelompok', icon: Network },
+    { key: 'buat', label: 'Buat Laporan', to: '/pilih-jenis', icon: FileText },
+    { key: 'mylaporan', label: 'Laporan Saya', to: '/klg-laporan', icon: FileText },
+    { key: 'pengguna', label: 'Pengguna', to: '/kelola-mitra-user', icon: User },
+  ];
+
+  // Menu untuk mitra_kelompok (sama seperti kelompok tapi tanpa menu mitra)
+  const mitraKelompokMenu = [
     { key: 'client', label: 'Dashboard', to: '/client', icon: Home },
     { key: 'hewan', label: 'Hewan Ternak', to: '/hewan-ternak', icon: Heart },
     { key: 'buat', label: 'Buat Laporan', to: '/pilih-jenis', icon: FileText },
@@ -56,7 +67,8 @@ export default function AppLayout({ children }) {
   // Viewer uses viewer-specific menu, others use their respective menus
   const menu = 
     appRole === 'admin' ? adminMenu : 
-    appRole === 'viewer' ? viewerMenu : 
+    appRole === 'viewer' ? viewerMenu :
+    appRole === 'mitra_kelompok' ? mitraKelompokMenu :
     kelompokMenu;
   const isActive = (path) => location.pathname === path;
 
@@ -124,9 +136,9 @@ export default function AppLayout({ children }) {
 
               <div className="hidden md:block">
                 <h1 className="text-xl font-bold text-gray-900">
-                  {appRole === 'admin' ? 'Dashboard Admin' : appRole === 'viewer' ? 'Dashboard Viewer (Read-Only)' : 'Dashboard Kelompok'}
+                  {appRole === 'admin' ? 'Dashboard Admin' : appRole === 'viewer' ? 'Dashboard Viewer (Read-Only)' : appRole === 'mitra_kelompok' ? 'Dashboard Mitra Kelompok' : 'Dashboard Kelompok'}
                 </h1>
-                {appRole === 'kelompok' && user?.kelompok && (
+                {(appRole === 'kelompok' || appRole === 'mitra_kelompok') && user?.kelompok && (
                   <div className="mt-1">
                     <KelompokBadge kelompokName={user.kelompok} />
                   </div>
@@ -140,7 +152,7 @@ export default function AppLayout({ children }) {
                   <div className="text-right">
                     <div className="text-sm font-semibold text-gray-900">{user.full_name || user.username}</div>
                     <div className="text-xs text-gray-500">
-                      {user.username} • {appRole === 'admin' ? 'Admin' : appRole === 'viewer' ? '👁 Viewer' : 'Kelompok'}
+                      {user.username} • {appRole === 'admin' ? 'Admin' : appRole === 'viewer' ? '👁 Viewer' : appRole === 'mitra_kelompok' ? 'Mitra Kelompok' : 'Kelompok'}
                     </div>
                   </div>
                 </div>
